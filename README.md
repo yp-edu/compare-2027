@@ -44,14 +44,13 @@ Create a local `.env` file with the required variables:
 ```bash
 PAYLOAD_SECRET=your-local-secret
 POSTGRES_URL=postgres://user:password@host:5432/database
-NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 BETTER_AUTH_SECRET=your-local-auth-secret
 BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
-`BLOB_READ_WRITE_TOKEN`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` are optional locally. Without a Blob token, media uploads fall back to local Payload storage. Without Google credentials, auth still supports email/password.
+`BLOB_READ_WRITE_TOKEN`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` are optional locally. Without a Blob token, media uploads fall back to local Payload storage. Without Google credentials, auth still supports email/password. The server URL is derived from Vercel's automatic `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL` variables, with `http://localhost:3000` as the local fallback.
 
 Start the development server:
 
@@ -105,10 +104,11 @@ This project is intended to run on Vercel. Configure the same environment variab
 
 - `PAYLOAD_SECRET`
 - `POSTGRES_URL`
-- `NEXT_PUBLIC_SERVER_URL`
 - `BETTER_AUTH_SECRET`
 - `BLOB_READ_WRITE_TOKEN`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
+
+Vercel automatically provides `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL`; do not configure them manually.
 
 The repository no longer includes Docker setup because local Docker deployment is not part of the current workflow.

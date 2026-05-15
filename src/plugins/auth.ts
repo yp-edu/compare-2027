@@ -6,7 +6,12 @@ import type { BetterAuthOptions, PayloadAuthOptions } from 'payload-auth/better-
 
 import { adminPanelRoles, publicRoles } from '@/access'
 
-const baseURL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+const baseURL =
+  process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 
