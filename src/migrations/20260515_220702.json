@@ -69,12 +69,8 @@
           "name": "users_role_parent_fk",
           "tableFrom": "users_role",
           "tableTo": "users",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -358,12 +354,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -371,12 +363,8 @@
           "name": "sessions_impersonated_by_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "impersonated_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["impersonated_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -539,12 +527,8 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -768,12 +752,8 @@
           "name": "two_factors_user_id_users_id_fk",
           "tableFrom": "two_factors",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1208,12 +1188,8 @@
           "name": "sources_file_id_media_id_fk",
           "tableFrom": "sources",
           "tableTo": "media",
-          "columnsFrom": [
-            "file_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["file_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1500,12 +1476,8 @@
           "name": "_sources_v_parent_id_sources_id_fk",
           "tableFrom": "_sources_v",
           "tableTo": "sources",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1513,12 +1485,8 @@
           "name": "_sources_v_version_file_id_media_id_fk",
           "tableFrom": "_sources_v",
           "tableTo": "media",
-          "columnsFrom": [
-            "version_file_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_file_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1686,12 +1654,8 @@
           "name": "parties_logo_id_media_id_fk",
           "tableFrom": "parties",
           "tableTo": "media",
-          "columnsFrom": [
-            "logo_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["logo_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1804,12 +1768,8 @@
           "name": "parties_rels_parent_fk",
           "tableFrom": "parties_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1817,12 +1777,8 @@
           "name": "parties_rels_sources_fk",
           "tableFrom": "parties_rels",
           "tableTo": "sources",
-          "columnsFrom": [
-            "sources_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sources_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2074,12 +2030,8 @@
           "name": "_parties_v_parent_id_parties_id_fk",
           "tableFrom": "_parties_v",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2087,12 +2039,8 @@
           "name": "_parties_v_version_logo_id_media_id_fk",
           "tableFrom": "_parties_v",
           "tableTo": "media",
-          "columnsFrom": [
-            "version_logo_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_logo_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2205,12 +2153,8 @@
           "name": "_parties_v_rels_parent_fk",
           "tableFrom": "_parties_v_rels",
           "tableTo": "_parties_v",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2218,12 +2162,8 @@
           "name": "_parties_v_rels_sources_fk",
           "tableFrom": "_parties_v_rels",
           "tableTo": "sources",
-          "columnsFrom": [
-            "sources_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sources_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2442,12 +2382,8 @@
           "name": "candidates_photo_id_media_id_fk",
           "tableFrom": "candidates",
           "tableTo": "media",
-          "columnsFrom": [
-            "photo_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["photo_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2455,12 +2391,8 @@
           "name": "candidates_current_party_id_parties_id_fk",
           "tableFrom": "candidates",
           "tableTo": "parties",
-          "columnsFrom": [
-            "current_party_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["current_party_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2573,12 +2505,8 @@
           "name": "candidates_rels_parent_fk",
           "tableFrom": "candidates_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2586,12 +2514,8 @@
           "name": "candidates_rels_sources_fk",
           "tableFrom": "candidates_rels",
           "tableTo": "sources",
-          "columnsFrom": [
-            "sources_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sources_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2894,12 +2818,8 @@
           "name": "_candidates_v_parent_id_candidates_id_fk",
           "tableFrom": "_candidates_v",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2907,12 +2827,8 @@
           "name": "_candidates_v_version_photo_id_media_id_fk",
           "tableFrom": "_candidates_v",
           "tableTo": "media",
-          "columnsFrom": [
-            "version_photo_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_photo_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2920,12 +2836,8 @@
           "name": "_candidates_v_version_current_party_id_parties_id_fk",
           "tableFrom": "_candidates_v",
           "tableTo": "parties",
-          "columnsFrom": [
-            "version_current_party_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_current_party_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3038,12 +2950,8 @@
           "name": "_candidates_v_rels_parent_fk",
           "tableFrom": "_candidates_v_rels",
           "tableTo": "_candidates_v",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3051,12 +2959,8 @@
           "name": "_candidates_v_rels_sources_fk",
           "tableFrom": "_candidates_v_rels",
           "tableTo": "sources",
-          "columnsFrom": [
-            "sources_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sources_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3234,12 +3138,8 @@
           "name": "topics_parent_id_topics_id_fk",
           "tableFrom": "topics",
           "tableTo": "topics",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3501,12 +3401,8 @@
           "name": "_topics_v_parent_id_topics_id_fk",
           "tableFrom": "_topics_v",
           "tableTo": "topics",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3514,12 +3410,8 @@
           "name": "_topics_v_version_parent_id_topics_id_fk",
           "tableFrom": "_topics_v",
           "tableTo": "topics",
-          "columnsFrom": [
-            "version_parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3711,12 +3603,8 @@
           "name": "programs_source_id_sources_id_fk",
           "tableFrom": "programs",
           "tableTo": "sources",
-          "columnsFrom": [
-            "source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3724,12 +3612,8 @@
           "name": "programs_file_id_media_id_fk",
           "tableFrom": "programs",
           "tableTo": "media",
-          "columnsFrom": [
-            "file_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["file_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3863,12 +3747,8 @@
           "name": "programs_rels_parent_fk",
           "tableFrom": "programs_rels",
           "tableTo": "programs",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3876,12 +3756,8 @@
           "name": "programs_rels_candidates_fk",
           "tableFrom": "programs_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3889,12 +3765,8 @@
           "name": "programs_rels_parties_fk",
           "tableFrom": "programs_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4170,12 +4042,8 @@
           "name": "_programs_v_parent_id_programs_id_fk",
           "tableFrom": "_programs_v",
           "tableTo": "programs",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4183,12 +4051,8 @@
           "name": "_programs_v_version_source_id_sources_id_fk",
           "tableFrom": "_programs_v",
           "tableTo": "sources",
-          "columnsFrom": [
-            "version_source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_source_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -4196,12 +4060,8 @@
           "name": "_programs_v_version_file_id_media_id_fk",
           "tableFrom": "_programs_v",
           "tableTo": "media",
-          "columnsFrom": [
-            "version_file_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_file_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -4335,12 +4195,8 @@
           "name": "_programs_v_rels_parent_fk",
           "tableFrom": "_programs_v_rels",
           "tableTo": "_programs_v",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4348,12 +4204,8 @@
           "name": "_programs_v_rels_candidates_fk",
           "tableFrom": "_programs_v_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4361,12 +4213,8 @@
           "name": "_programs_v_rels_parties_fk",
           "tableFrom": "_programs_v_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4703,12 +4551,8 @@
           "name": "proposals_rels_parent_fk",
           "tableFrom": "proposals_rels",
           "tableTo": "proposals",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4716,12 +4560,8 @@
           "name": "proposals_rels_candidates_fk",
           "tableFrom": "proposals_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4729,12 +4569,8 @@
           "name": "proposals_rels_parties_fk",
           "tableFrom": "proposals_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4742,12 +4578,8 @@
           "name": "proposals_rels_topics_fk",
           "tableFrom": "proposals_rels",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topics_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topics_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -4755,12 +4587,8 @@
           "name": "proposals_rels_sources_fk",
           "tableFrom": "proposals_rels",
           "tableTo": "sources",
-          "columnsFrom": [
-            "sources_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sources_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5014,12 +4842,8 @@
           "name": "_proposals_v_parent_id_proposals_id_fk",
           "tableFrom": "_proposals_v",
           "tableTo": "proposals",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -5195,12 +5019,8 @@
           "name": "_proposals_v_rels_parent_fk",
           "tableFrom": "_proposals_v_rels",
           "tableTo": "_proposals_v",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5208,12 +5028,8 @@
           "name": "_proposals_v_rels_candidates_fk",
           "tableFrom": "_proposals_v_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5221,12 +5037,8 @@
           "name": "_proposals_v_rels_parties_fk",
           "tableFrom": "_proposals_v_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5234,12 +5046,8 @@
           "name": "_proposals_v_rels_topics_fk",
           "tableFrom": "_proposals_v_rels",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topics_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topics_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5247,12 +5055,8 @@
           "name": "_proposals_v_rels_sources_fk",
           "tableFrom": "_proposals_v_rels",
           "tableTo": "sources",
-          "columnsFrom": [
-            "sources_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sources_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5445,12 +5249,8 @@
           "name": "public_positions_source_id_sources_id_fk",
           "tableFrom": "public_positions",
           "tableTo": "sources",
-          "columnsFrom": [
-            "source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -5605,12 +5405,8 @@
           "name": "public_positions_rels_parent_fk",
           "tableFrom": "public_positions_rels",
           "tableTo": "public_positions",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5618,12 +5414,8 @@
           "name": "public_positions_rels_candidates_fk",
           "tableFrom": "public_positions_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5631,12 +5423,8 @@
           "name": "public_positions_rels_parties_fk",
           "tableFrom": "public_positions_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -5644,12 +5432,8 @@
           "name": "public_positions_rels_topics_fk",
           "tableFrom": "public_positions_rels",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topics_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topics_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5926,12 +5710,8 @@
           "name": "_public_positions_v_parent_id_public_positions_id_fk",
           "tableFrom": "_public_positions_v",
           "tableTo": "public_positions",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -5939,12 +5719,8 @@
           "name": "_public_positions_v_version_source_id_sources_id_fk",
           "tableFrom": "_public_positions_v",
           "tableTo": "sources",
-          "columnsFrom": [
-            "version_source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["version_source_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -6099,12 +5875,8 @@
           "name": "_public_positions_v_rels_parent_fk",
           "tableFrom": "_public_positions_v_rels",
           "tableTo": "_public_positions_v",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6112,12 +5884,8 @@
           "name": "_public_positions_v_rels_candidates_fk",
           "tableFrom": "_public_positions_v_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6125,12 +5893,8 @@
           "name": "_public_positions_v_rels_parties_fk",
           "tableFrom": "_public_positions_v_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6138,12 +5902,8 @@
           "name": "_public_positions_v_rels_topics_fk",
           "tableFrom": "_public_positions_v_rels",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topics_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topics_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6464,12 +6224,8 @@
           "name": "search_rels_parent_fk",
           "tableFrom": "search_rels",
           "tableTo": "search",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6477,12 +6233,8 @@
           "name": "search_rels_parties_fk",
           "tableFrom": "search_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6490,12 +6242,8 @@
           "name": "search_rels_candidates_fk",
           "tableFrom": "search_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6503,12 +6251,8 @@
           "name": "search_rels_topics_fk",
           "tableFrom": "search_rels",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topics_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topics_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6516,12 +6260,8 @@
           "name": "search_rels_programs_fk",
           "tableFrom": "search_rels",
           "tableTo": "programs",
-          "columnsFrom": [
-            "programs_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["programs_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6529,12 +6269,8 @@
           "name": "search_rels_proposals_fk",
           "tableFrom": "search_rels",
           "tableTo": "proposals",
-          "columnsFrom": [
-            "proposals_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["proposals_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -6542,12 +6278,8 @@
           "name": "search_rels_public_positions_fk",
           "tableFrom": "search_rels",
           "tableTo": "public_positions",
-          "columnsFrom": [
-            "public_positions_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["public_positions_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -7086,12 +6818,8 @@
           "name": "payload_locked_documents_rels_parent_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "payload_locked_documents",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7099,12 +6827,8 @@
           "name": "payload_locked_documents_rels_users_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "users",
-          "columnsFrom": [
-            "users_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["users_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7112,12 +6836,8 @@
           "name": "payload_locked_documents_rels_sessions_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "sessions",
-          "columnsFrom": [
-            "sessions_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sessions_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7125,12 +6845,8 @@
           "name": "payload_locked_documents_rels_accounts_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "accounts_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["accounts_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7138,12 +6854,8 @@
           "name": "payload_locked_documents_rels_verifications_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "verifications",
-          "columnsFrom": [
-            "verifications_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["verifications_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7151,12 +6863,8 @@
           "name": "payload_locked_documents_rels_two_factors_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "two_factors",
-          "columnsFrom": [
-            "two_factors_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["two_factors_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7164,12 +6872,8 @@
           "name": "payload_locked_documents_rels_admin_invitations_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "admin_invitations",
-          "columnsFrom": [
-            "admin_invitations_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["admin_invitations_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7177,12 +6881,8 @@
           "name": "payload_locked_documents_rels_media_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "media",
-          "columnsFrom": [
-            "media_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["media_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7190,12 +6890,8 @@
           "name": "payload_locked_documents_rels_sources_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "sources",
-          "columnsFrom": [
-            "sources_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sources_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7203,12 +6899,8 @@
           "name": "payload_locked_documents_rels_parties_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "parties",
-          "columnsFrom": [
-            "parties_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parties_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7216,12 +6908,8 @@
           "name": "payload_locked_documents_rels_candidates_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "candidates",
-          "columnsFrom": [
-            "candidates_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["candidates_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7229,12 +6917,8 @@
           "name": "payload_locked_documents_rels_topics_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "topics",
-          "columnsFrom": [
-            "topics_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topics_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7242,12 +6926,8 @@
           "name": "payload_locked_documents_rels_programs_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "programs",
-          "columnsFrom": [
-            "programs_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["programs_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7255,12 +6935,8 @@
           "name": "payload_locked_documents_rels_proposals_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "proposals",
-          "columnsFrom": [
-            "proposals_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["proposals_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7268,12 +6944,8 @@
           "name": "payload_locked_documents_rels_public_positions_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "public_positions",
-          "columnsFrom": [
-            "public_positions_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["public_positions_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7281,12 +6953,8 @@
           "name": "payload_locked_documents_rels_search_fk",
           "tableFrom": "payload_locked_documents_rels",
           "tableTo": "search",
-          "columnsFrom": [
-            "search_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["search_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -7490,12 +7158,8 @@
           "name": "payload_preferences_rels_parent_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "payload_preferences",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7503,12 +7167,8 @@
           "name": "payload_preferences_rels_users_fk",
           "tableFrom": "payload_preferences_rels",
           "tableTo": "users",
-          "columnsFrom": [
-            "users_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["users_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -7600,20 +7260,12 @@
     "public.enum_users_role": {
       "name": "enum_users_role",
       "schema": "public",
-      "values": [
-        "admin",
-        "editor",
-        "user"
-      ]
+      "values": ["admin", "editor", "user"]
     },
     "public.enum_admin_invitations_role": {
       "name": "enum_admin_invitations_role",
       "schema": "public",
-      "values": [
-        "admin",
-        "editor",
-        "user"
-      ]
+      "values": ["admin", "editor", "user"]
     },
     "public.enum_sources_type": {
       "name": "enum_sources_type",
@@ -7632,20 +7284,12 @@
     "public.enum_sources_verification_status": {
       "name": "enum_sources_verification_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "verified",
-        "disputed",
-        "archived"
-      ]
+      "values": ["pending", "verified", "disputed", "archived"]
     },
     "public.enum_sources_status": {
       "name": "enum_sources_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum__sources_v_version_type": {
       "name": "enum__sources_v_version_type",
@@ -7664,208 +7308,112 @@
     "public.enum__sources_v_version_verification_status": {
       "name": "enum__sources_v_version_verification_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "verified",
-        "disputed",
-        "archived"
-      ]
+      "values": ["pending", "verified", "disputed", "archived"]
     },
     "public.enum__sources_v_version_status": {
       "name": "enum__sources_v_version_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum_parties_status": {
       "name": "enum_parties_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum__parties_v_version_status": {
       "name": "enum__parties_v_version_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum_candidates_candidacy_status": {
       "name": "enum_candidates_candidacy_status",
       "schema": "public",
-      "values": [
-        "declared",
-        "expected",
-        "exploring",
-        "withdrawn",
-        "not_candidate"
-      ]
+      "values": ["declared", "expected", "exploring", "withdrawn", "not_candidate"]
     },
     "public.enum_candidates_status": {
       "name": "enum_candidates_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum__candidates_v_version_candidacy_status": {
       "name": "enum__candidates_v_version_candidacy_status",
       "schema": "public",
-      "values": [
-        "declared",
-        "expected",
-        "exploring",
-        "withdrawn",
-        "not_candidate"
-      ]
+      "values": ["declared", "expected", "exploring", "withdrawn", "not_candidate"]
     },
     "public.enum__candidates_v_version_status": {
       "name": "enum__candidates_v_version_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum_topics_status": {
       "name": "enum_topics_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum__topics_v_version_status": {
       "name": "enum__topics_v_version_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum_programs_status": {
       "name": "enum_programs_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum__programs_v_version_status": {
       "name": "enum__programs_v_version_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum_proposals_proposal_status": {
       "name": "enum_proposals_proposal_status",
       "schema": "public",
-      "values": [
-        "announced",
-        "confirmed",
-        "changed",
-        "withdrawn",
-        "unclear"
-      ]
+      "values": ["announced", "confirmed", "changed", "withdrawn", "unclear"]
     },
     "public.enum_proposals_status": {
       "name": "enum_proposals_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum__proposals_v_version_proposal_status": {
       "name": "enum__proposals_v_version_proposal_status",
       "schema": "public",
-      "values": [
-        "announced",
-        "confirmed",
-        "changed",
-        "withdrawn",
-        "unclear"
-      ]
+      "values": ["announced", "confirmed", "changed", "withdrawn", "unclear"]
     },
     "public.enum__proposals_v_version_status": {
       "name": "enum__proposals_v_version_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum_public_positions_position_type": {
       "name": "enum_public_positions_position_type",
       "schema": "public",
-      "values": [
-        "speech",
-        "interview",
-        "vote",
-        "social_post",
-        "press_release",
-        "debate",
-        "other"
-      ]
+      "values": ["speech", "interview", "vote", "social_post", "press_release", "debate", "other"]
     },
     "public.enum_public_positions_stance": {
       "name": "enum_public_positions_stance",
       "schema": "public",
-      "values": [
-        "supports",
-        "opposes",
-        "mixed",
-        "unclear",
-        "not_applicable"
-      ]
+      "values": ["supports", "opposes", "mixed", "unclear", "not_applicable"]
     },
     "public.enum_public_positions_status": {
       "name": "enum_public_positions_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     },
     "public.enum__public_positions_v_version_position_type": {
       "name": "enum__public_positions_v_version_position_type",
       "schema": "public",
-      "values": [
-        "speech",
-        "interview",
-        "vote",
-        "social_post",
-        "press_release",
-        "debate",
-        "other"
-      ]
+      "values": ["speech", "interview", "vote", "social_post", "press_release", "debate", "other"]
     },
     "public.enum__public_positions_v_version_stance": {
       "name": "enum__public_positions_v_version_stance",
       "schema": "public",
-      "values": [
-        "supports",
-        "opposes",
-        "mixed",
-        "unclear",
-        "not_applicable"
-      ]
+      "values": ["supports", "opposes", "mixed", "unclear", "not_applicable"]
     },
     "public.enum__public_positions_v_version_status": {
       "name": "enum__public_positions_v_version_status",
       "schema": "public",
-      "values": [
-        "draft",
-        "published"
-      ]
+      "values": ["draft", "published"]
     }
   },
   "schemas": {},

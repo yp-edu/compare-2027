@@ -49,7 +49,8 @@ export const betterAuthOptions = {
 
 export const betterAuthPluginOptions = {
   admin: {
-    loginMethods: googleClientId && googleClientSecret ? ['emailPassword', 'google'] : ['emailPassword'],
+    loginMethods:
+      googleClientId && googleClientSecret ? ['emailPassword', 'google'] : ['emailPassword'],
   },
   betterAuthOptions,
   hidePluginCollections: true,
