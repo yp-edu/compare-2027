@@ -44,7 +44,14 @@ Create a local `.env` file with the required variables:
 ```bash
 PAYLOAD_SECRET=your-local-secret
 POSTGRES_URL=postgres://user:password@host:5432/database
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your-local-auth-secret
+BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
+
+`BLOB_READ_WRITE_TOKEN`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` are optional locally. Without a Blob token, media uploads fall back to local Payload storage. Without Google credentials, auth still supports email/password.
 
 Start the development server:
 
@@ -79,6 +86,12 @@ Open <http://localhost:3000> for the public site and <http://localhost:3000/admi
 
 Payload is configured in `src/payload.config.ts` and currently uses Vercel Postgres. The generated types are stored in `src/payload-types.ts`.
 
+Backend plugins live in `src/plugins`:
+
+- `auth.ts` configures Payload Auth / Better Auth with public `user` accounts and `editor` / `admin` admin roles.
+- `search.ts` indexes public content collections through `@payloadcms/plugin-search`.
+- `vercelBlob.ts` stores media in Vercel Blob when `BLOB_READ_WRITE_TOKEN` is configured.
+
 After changing collections or Payload config, run:
 
 ```bash
@@ -92,5 +105,10 @@ This project is intended to run on Vercel. Configure the same environment variab
 
 - `PAYLOAD_SECRET`
 - `POSTGRES_URL`
+- `NEXT_PUBLIC_SERVER_URL`
+- `BETTER_AUTH_SECRET`
+- `BLOB_READ_WRITE_TOKEN`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
 
 The repository no longer includes Docker setup because local Docker deployment is not part of the current workflow.

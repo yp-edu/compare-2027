@@ -5,21 +5,26 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
-import { Users } from './collections/Users'
-import { Media } from './collections/Media'
+import { collections } from './collections'
+import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const serverURL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+const allowedOrigins = [serverURL].filter(Boolean)
 
 export default buildConfig({
   admin: {
-    user: Users.slug,
+    user: 'users',
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  collections,
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
   editor: lexicalEditor(),
+  serverURL,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -30,5 +35,5 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins,
 })
