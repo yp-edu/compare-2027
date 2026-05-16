@@ -1,4 +1,5 @@
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -32,6 +33,11 @@ export default buildConfig({
   cors: allowedOrigins,
   csrf: allowedOrigins,
   editor: lexicalEditor(),
+  email: resendAdapter({
+    defaultFromAddress: 'noreply@compare2027.fr',
+    defaultFromName: 'Compare 2027',
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
   serverURL,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
