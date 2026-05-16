@@ -11,7 +11,7 @@
     "generate:db-schema": "cross-env NODE_OPTIONS=--no-deprecation payload generate:db-schema",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
-    "generate": "pnpm generate:db-schema && pnpm generate:importmap && pnpm generate:types",
+    "generate": "pnpm generate:db-schema && pnpm generate:importmap && pnpm generate:types && pnpm format",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "format": "cross-env NODE_OPTIONS=--no-deprecation prettier --write .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
