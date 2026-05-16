@@ -28,21 +28,25 @@ export function LegalConsentForm({ nextPath }: LegalConsentFormProps) {
       return
     }
 
-    const response = await fetch('/api/legal-consent', {
-      body: JSON.stringify({ accepted: true }),
-      headers: { 'content-type': 'application/json' },
-      method: 'POST',
-    })
+    try {
+      const response = await fetch('/api/legal-consent', {
+        body: JSON.stringify({ accepted: true }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      })
 
-    setIsSubmitting(false)
+      if (!response.ok) {
+        setError('Le consentement n’a pas pu être enregistré. Veuillez réessayer.')
+        return
+      }
 
-    if (!response.ok) {
-      setError('Le consentement n’a pas pu être enregistré. Veuillez réessayer.')
-      return
+      router.push(nextPath)
+      router.refresh()
+    } catch {
+      setError('Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    router.push(nextPath)
-    router.refresh()
   }
 
   return (

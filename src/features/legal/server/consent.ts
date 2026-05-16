@@ -36,9 +36,11 @@ export function hashClientIp(ip: string | null) {
     process.env.BETTER_AUTH_SECRET ||
     process.env.PAYLOAD_SECRET
 
-  return createHash('sha256')
-    .update(`${salt || 'compare-2027'}:${ip}`)
-    .digest('hex')
+  if (!salt) {
+    return null
+  }
+
+  return createHash('sha256').update(`${salt}:${ip}`).digest('hex')
 }
 
 export function createLegalConsentAudit(headers: Headers | undefined, providerIds: string[]) {

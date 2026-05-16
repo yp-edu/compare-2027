@@ -28,6 +28,7 @@ export async function requireChatSession(request: Request) {
   const user = await payload.findByID({
     collection: 'users',
     depth: 0,
+    disableErrors: true,
     id: session.user.id,
   })
 
