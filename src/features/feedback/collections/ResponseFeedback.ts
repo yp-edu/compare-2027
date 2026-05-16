@@ -16,6 +16,17 @@ export const ResponseFeedback: CollectionConfig = {
     read: isAdminOrEditor,
     update: isAdminOrEditor,
   },
+  hooks: {
+    beforeValidate: [
+      ({ data, operation, req }) => {
+        if (operation === 'create' && req.user && data) {
+          data.user = req.user.id
+        }
+
+        return data
+      },
+    ],
+  },
   admin: {
     defaultColumns: ['rating', 'user', 'createdAt'],
     group: 'Product',
