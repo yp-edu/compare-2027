@@ -78,7 +78,6 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
   const [error, setError] = useState<string | null>(() => getAuthErrorMessage(initialError, ''))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
-  const [signupSuccess, setSignupSuccess] = useState(false)
 
   async function handleGoogleAuth() {
     setError(null)
@@ -101,7 +100,6 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
-    setSignupSuccess(false)
     setIsSubmitting(true)
 
     const formData = new FormData(event.currentTarget)
@@ -137,7 +135,9 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
     }
 
     if (mode === 'signup') {
-      setSignupSuccess(true)
+      const params = new URLSearchParams({ created: '1', email })
+
+      router.push(`/verify-email?${params.toString()}`)
       return
     }
 
@@ -226,11 +226,6 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           </span>
         </label>
       ) : null}
-      {signupSuccess ? (
-        <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-          Votre compte a été créé. Vérifiez votre boîte e-mail pour activer l’accès au comparateur.
-        </p>
-      ) : null}
       {error ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
           {error}
@@ -238,7 +233,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
       ) : null}
       <Button
         className="w-full"
-        disabled={isSubmitting || isGoogleSubmitting || signupSuccess}
+        disabled={isSubmitting || isGoogleSubmitting}
         size="lg"
         type="submit"
       >

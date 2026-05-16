@@ -21,6 +21,7 @@ type ResetPasswordFormProps = {
 
 type VerificationEmailFormProps = {
   initialEmail?: string
+  initialSuccessMessage?: string
 }
 
 const endpointErrorMessages: Record<string, string> = {
@@ -255,15 +256,21 @@ export function ResetPasswordForm({ initialError, token }: ResetPasswordFormProp
   )
 }
 
-export function VerificationEmailForm({ initialEmail = '' }: VerificationEmailFormProps) {
+const verificationEmailSuccessMessage =
+  'Si un compte non vérifié existe avec cette adresse, un e-mail de vérification vient d’être envoyé.'
+
+export function VerificationEmailForm({
+  initialEmail = '',
+  initialSuccessMessage,
+}: VerificationEmailFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(initialSuccessMessage ?? null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
-    setSuccess(false)
+    setSuccessMessage(null)
     setIsSubmitting(true)
 
     const formData = new FormData(event.currentTarget)
@@ -286,7 +293,7 @@ export function VerificationEmailForm({ initialEmail = '' }: VerificationEmailFo
         return
       }
 
-      setSuccess(true)
+      setSuccessMessage(verificationEmailSuccessMessage)
     } catch {
       setError(networkErrorMessage)
     } finally {
@@ -308,12 +315,7 @@ export function VerificationEmailForm({ initialEmail = '' }: VerificationEmailFo
           placeholder="vous@example.com"
         />
       </label>
-      {success ? (
-        <StatusMessage type="success">
-          Si un compte non vérifié existe avec cette adresse, un e-mail de vérification vient d’être
-          envoyé.
-        </StatusMessage>
-      ) : null}
+      {successMessage ? <StatusMessage type="success">{successMessage}</StatusMessage> : null}
       {error ? <StatusMessage type="error">{error}</StatusMessage> : null}
       <Button className="w-full" disabled={isSubmitting} size="lg" type="submit">
         {isSubmitting ? 'Envoi...' : 'Renvoyer l’e-mail'}
