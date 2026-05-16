@@ -51,7 +51,10 @@ function normalizeAuthError(value?: string | null) {
     .replace(/^_+|_+$/g, '')
 }
 
-function getAuthErrorMessage(error?: AuthClientError | string | null, fallback = 'Impossible de terminer cette action.') {
+function getAuthErrorMessage(
+  error?: AuthClientError | string | null,
+  fallback = 'Impossible de terminer cette action.',
+) {
   const code = typeof error === 'string' ? error : error?.code
   const message = typeof error === 'string' ? error : error?.message
   const candidates = [normalizeAuthError(code), normalizeAuthError(message)]
@@ -157,7 +160,12 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           {error}
         </p>
       ) : null}
-      <Button className="w-full" disabled={isSubmitting || isGoogleSubmitting} size="lg" type="submit">
+      <Button
+        className="w-full"
+        disabled={isSubmitting || isGoogleSubmitting}
+        size="lg"
+        type="submit"
+      >
         {isSubmitting
           ? 'Veuillez patienter...'
           : mode === 'signup'

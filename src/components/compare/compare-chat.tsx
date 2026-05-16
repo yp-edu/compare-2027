@@ -63,8 +63,8 @@ export function CompareChat() {
             <div className="max-w-2xl rounded-2xl bg-secondary p-4 text-secondary-foreground">
               <p className="font-semibold">Bienvenue dans le comparateur.</p>
               <p className="mt-2 leading-7 text-muted-foreground">
-                Posez une question sur un thème, un candidat, un parti ou une proposition. La réponse
-                doit distinguer les éléments sourcés, les écarts et les limites des données.
+                Posez une question sur un thème, un candidat, un parti ou une proposition. La
+                réponse doit distinguer les éléments sourcés, les écarts et les limites des données.
               </p>
             </div>
             {!isAuthenticated && !isPending ? (
@@ -120,7 +120,12 @@ export function CompareChat() {
                 }
                 value={input}
               />
-              <Button className="sm:self-end" disabled={isDisabled || !input.trim()} size="lg" type="submit">
+              <Button
+                className="sm:self-end"
+                disabled={isDisabled || !input.trim()}
+                size="lg"
+                type="submit"
+              >
                 Envoyer
                 <SendHorizontal aria-hidden="true" />
               </Button>

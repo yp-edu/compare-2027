@@ -92,13 +92,16 @@ export async function getComparisonContext() {
     }),
   ])
 
-  const topicLines = topics.docs.map((topic) => `- ${topic.title}: ${topic.description || 'Pas de description'}`)
+  const topicLines = topics.docs.map(
+    (topic) => `- ${topic.title}: ${topic.description || 'Pas de description'}`,
+  )
   const candidateLines = candidates.docs.map(
     (candidate) =>
       `- ${candidate.displayName}: statut ${candidate.candidacyStatus}; ${candidate.bio || 'pas de bio'}`,
   )
   const partyLines = parties.docs.map(
-    (party) => `- ${party.name}${party.shortName ? ` (${party.shortName})` : ''}: ${party.description || 'pas de description'}`,
+    (party) =>
+      `- ${party.name}${party.shortName ? ` (${party.shortName})` : ''}: ${party.description || 'pas de description'}`,
   )
   const proposalLines = proposals.docs.map(
     (proposal) =>

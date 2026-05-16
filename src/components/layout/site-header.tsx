@@ -6,9 +6,7 @@ import { useRouter } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 
-const navItems = [
-  { href: '/compare', label: 'Comparer' },
-]
+const navItems = [{ href: '/compare', label: 'Comparer' }]
 
 function hasAdminAccess(role: unknown) {
   if (Array.isArray(role)) {
