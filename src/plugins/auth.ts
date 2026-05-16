@@ -6,13 +6,10 @@ import type { BetterAuthOptions, PayloadAuthOptions } from 'payload-auth/better-
 
 import { adminPanelRoles, publicRoles } from '@/access'
 import { sendEmailVerificationEmail, sendPasswordResetEmail } from '@/features/email/server'
+import { getAllowedOrigins, getServerURL } from '@/lib/server-urls'
 
-const baseURL =
-  process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000'
+const baseURL = getServerURL()
+const trustedOrigins = getAllowedOrigins()
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
 
@@ -36,7 +33,7 @@ export const betterAuthOptions = {
   appName: 'Compare 2027',
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET || process.env.PAYLOAD_SECRET,
-  trustedOrigins: [baseURL],
+  trustedOrigins,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
