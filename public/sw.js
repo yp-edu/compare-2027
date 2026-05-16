@@ -12,20 +12,16 @@ const STATIC_ASSETS = [
   '/manifest.webmanifest',
 ]
 
-const NETWORK_ONLY_PATHS = [
-  '/admin',
-  '/api',
-  '/compare/chat',
-  '/graphql',
-  '/graphql-playground',
-]
+const NETWORK_ONLY_PATHS = ['/admin', '/api', '/compare/chat', '/graphql', '/graphql-playground']
 
 function isSameOrigin(url) {
   return url.origin === self.location.origin
 }
 
 function isNetworkOnly(url) {
-  return NETWORK_ONLY_PATHS.some((path) => url.pathname === path || url.pathname.startsWith(`${path}/`))
+  return NETWORK_ONLY_PATHS.some(
+    (path) => url.pathname === path || url.pathname.startsWith(`${path}/`),
+  )
 }
 
 function isStaticAsset(url) {

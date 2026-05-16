@@ -15,7 +15,9 @@ export default function OfflinePage() {
             <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-secondary text-primary">
               <WifiOff className="size-7" aria-hidden="true" />
             </div>
-            <CardTitle className="text-3xl font-black tracking-tight">Vous êtes hors ligne</CardTitle>
+            <CardTitle className="text-3xl font-black tracking-tight">
+              Vous êtes hors ligne
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 text-center">
             <p className="text-base leading-7 text-muted-foreground">

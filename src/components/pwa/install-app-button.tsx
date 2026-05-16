@@ -29,7 +29,13 @@ export function InstallAppButton({ className }: InstallAppButtonProps) {
 
   return (
     <div className={className ? `relative ${className}` : 'relative'}>
-      <Button size="sm" variant="outline" onClick={handleClick} type="button">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleClick}
+        type="button"
+        aria-label="Installer"
+      >
         {isIosInstallSupported ? <Share aria-hidden="true" /> : <Download aria-hidden="true" />}
         <span className="hidden sm:inline">Installer</span>
       </Button>
