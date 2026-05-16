@@ -18,5 +18,9 @@ export async function requireChatSession(request: Request) {
     return null
   }
 
+  if (!session.user.emailVerified) {
+    return null
+  }
+
   return session
 }
