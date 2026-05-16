@@ -10,7 +10,7 @@ export const runtime = 'nodejs'
 
 const testUser = {
   email: 'dev@payloadcms.com',
-  password: 'test',
+  password: 'test-password',
 }
 
 const testUserData = {

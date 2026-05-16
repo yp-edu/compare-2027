@@ -2,7 +2,7 @@ import type { ConstructedBetterAuthPluginOptions } from '@/plugins/auth'
 
 export const testUser = {
   email: 'dev@payloadcms.com',
-  password: 'test',
+  password: 'test-password',
 }
 
 const testUserData = {

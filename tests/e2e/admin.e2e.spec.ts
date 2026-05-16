@@ -5,7 +5,9 @@ import { seedTestUser, cleanupTestUser, testUser } from '../helpers/seedUser'
 test.describe('Admin Panel', () => {
   let page: Page
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(60_000)
+
     await seedTestUser()
 
     const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
@@ -22,7 +24,9 @@ test.describe('Admin Panel', () => {
     await login({ page, user: testUser })
   })
 
-  test.afterAll(async () => {
+  test.afterAll(async ({}, testInfo) => {
+    testInfo.setTimeout(60_000)
+
     await cleanupTestUser()
   })
 

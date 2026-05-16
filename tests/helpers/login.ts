@@ -22,9 +22,11 @@ export async function login({
 
   await page.goto(`${normalizedServerURL}/admin/login`)
 
-  await page.fill('#field-email', user.email)
-  await page.fill('#field-password', user.password)
-  await page.click('button[type="submit"]')
+  const fields = page.getByRole('textbox')
+
+  await fields.first().fill(user.email)
+  await fields.nth(1).fill(user.password)
+  await page.getByRole('button', { name: 'Login' }).click()
 
   await page.waitForURL(`${normalizedServerURL}/admin`)
 
