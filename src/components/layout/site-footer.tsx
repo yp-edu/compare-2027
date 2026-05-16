@@ -30,7 +30,11 @@ export function SiteFooter() {
       />
       <div className="mx-auto grid max-w-7xl gap-8 rounded-3xl border border-border bg-card/70 p-6 shadow-2xl shadow-primary/5 backdrop-blur sm:p-8 lg:grid-cols-[1.1fr_1.9fr]">
         <div className="max-w-xl">
-          <Link className="inline-flex items-center gap-3" href="/" aria-label="Accueil Compare 2027">
+          <Link
+            className="inline-flex items-center gap-3"
+            href="/"
+            aria-label="Accueil Compare 2027"
+          >
             <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
               C27
             </span>
