@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
+import { InstallAppButton } from '@/components/pwa/install-app-button'
 
 const navItems = [{ href: '/compare', label: 'Comparer' }]
 
@@ -44,12 +46,13 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
         <Link className="flex items-center gap-3" href="/" aria-label="Accueil Compare 2027">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
-            C27
+          <span className="flex size-10 items-center justify-center overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-border">
+            <Image alt="" aria-hidden="true" height={40} priority src="/c27.png" width={40} />
           </span>
           <span className="text-base font-bold tracking-tight">Compare 2027</span>
         </Link>
         <div className="flex items-center gap-2">
+          <InstallAppButton className="shrink-0" />
           <nav className="hidden items-center gap-1 md:flex" aria-label="Navigation principale">
             {navItems.map((item) => (
               <Button asChild key={item.href} size="sm" variant="ghost">
