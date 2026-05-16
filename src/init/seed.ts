@@ -12,7 +12,7 @@ import {
   getDeclarationURL,
   type DemoCandidateSeed,
   type DemoPartySeed,
-} from '@/data/demo-2022'
+} from './demo-2022'
 
 type SeedUser = Pick<User, 'email' | 'name'> & {
   role: NonNullable<User['role']>
