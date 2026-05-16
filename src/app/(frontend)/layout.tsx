@@ -26,7 +26,7 @@ export const metadata: Metadata = {
       { sizes: '192x192', type: 'image/png', url: '/icons/icon-192.png' },
       { sizes: '512x512', type: 'image/png', url: '/icons/icon-512.png' },
     ],
-    shortcut: '/c27.png',
+    shortcut: [{ type: 'image/webp', url: '/c27.webp' }],
   },
   manifest: '/manifest.webmanifest',
   openGraph: {

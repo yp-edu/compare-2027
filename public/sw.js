@@ -1,11 +1,11 @@
-const CACHE_VERSION = 'compare-2027-v1'
+const CACHE_VERSION = 'compare-2027-v2'
 const STATIC_CACHE = `${CACHE_VERSION}-static`
 const PAGE_CACHE = `${CACHE_VERSION}-pages`
 const OFFLINE_URL = '/offline'
 
 const STATIC_ASSETS = [
   OFFLINE_URL,
-  '/c27.png',
+  '/c27.webp',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/maskable-512.png',
@@ -28,7 +28,7 @@ function isStaticAsset(url) {
   return (
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
-    url.pathname === '/c27.png' ||
+    url.pathname === '/c27.webp' ||
     url.pathname === '/manifest.webmanifest'
   )
 }
