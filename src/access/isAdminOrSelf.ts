@@ -2,7 +2,7 @@ import type { Access } from 'payload'
 
 import { hasRole } from './roles'
 
-export const isAdminOrSelf: Access = ({ id, req }) => {
+export const isAdminOrSelf: Access = ({ req }) => {
   if (hasRole(req, ['admin'])) {
     return true
   }
@@ -13,7 +13,7 @@ export const isAdminOrSelf: Access = ({ id, req }) => {
 
   return {
     id: {
-      equals: id ?? req.user.id,
+      equals: req.user.id,
     },
   }
 }

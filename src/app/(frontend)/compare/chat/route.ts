@@ -33,7 +33,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'AI provider is not configured' }, { status: 503 })
   }
 
-  const body = (await request.json()) as { messages?: unknown }
+  let body: { messages?: unknown }
+
+  try {
+    body = (await request.json()) as { messages?: unknown }
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return Response.json({ error: 'Malformed JSON payload' }, { status: 400 })
+    }
+
+    throw error
+  }
 
   if (!isUIMessageArray(body.messages)) {
     return Response.json({ error: 'Invalid chat payload' }, { status: 400 })

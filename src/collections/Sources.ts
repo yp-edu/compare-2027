@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin, isAdminOrEditor, publishedOrAuthenticated } from '@/access'
+import { hasRole, isAdmin, isAdminOrEditor, publishedOrAuthenticated } from '@/access'
 
 export const Sources: CollectionConfig = {
   slug: 'sources',
@@ -75,6 +75,9 @@ export const Sources: CollectionConfig = {
     {
       name: 'notes',
       type: 'textarea',
+      access: {
+        read: ({ req }) => hasRole(req, ['admin', 'editor']),
+      },
       admin: {
         description: 'Internal notes about verification, context, or caveats.',
       },
