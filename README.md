@@ -20,6 +20,7 @@ Compare 2027 is inspired by, and sits alongside, other civic tech projects that 
 - React
 - Payload CMS
 - Vercel Postgres through `@payloadcms/db-vercel-postgres`
+- Vercel Flags through `flags` and `@flags-sdk/vercel`
 - shadcn-style components in `src/components`
 - Tailwind CSS v4
 - pnpm 10
@@ -75,3 +76,11 @@ After changing collections or Payload config, run `pnpm generate`.
 ## Deployment
 
 This project runs on Vercel with the same variables shown in `.env.example`. Vercel automatically provides `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL`; do not configure them manually.
+
+## Feature Flags
+
+Feature flags are declared in `src/flags.ts` and exposed to the Vercel Flags Explorer through `src/app/.well-known/vercel/flags/route.ts`.
+
+The initial flag is `compare-response-feedback`, which controls the thumbs up/down feedback controls below compare chat responses. The flag defaults to disabled when Vercel Flags are not configured.
+
+After enabling Vercel Flags for the project, pull `FLAGS` and `FLAGS_SECRET` locally with `vercel env pull`.
