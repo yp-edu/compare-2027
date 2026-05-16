@@ -22,6 +22,8 @@
     "migration": "payload migrate:create"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.64",
+    "@ai-sdk/react": "^3.0.185",
     "@payloadcms/db-vercel-postgres": "3.84.1",
     "@payloadcms/next": "3.84.1",
     "@payloadcms/plugin-search": "3.84.1",
@@ -31,6 +33,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "ai": "^6.0.183",
     "better-auth": "^1.6.11",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

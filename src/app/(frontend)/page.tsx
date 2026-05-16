@@ -1,8 +1,8 @@
-import { ComparisonPreview } from '@/components/comparison-preview'
-import { HeroSection } from '@/components/hero-section'
-import { MethodologySection } from '@/components/methodology-section'
-import { SiteFooter } from '@/components/site-footer'
-import { SiteHeader } from '@/components/site-header'
+import { ComparisonPreview } from '@/components/landing/comparison-preview'
+import { HeroSection } from '@/components/landing/hero-section'
+import { MethodologySection } from '@/components/landing/methodology-section'
+import { SiteFooter } from '@/components/layout/site-footer'
+import { SiteHeader } from '@/components/layout/site-header'
 
 export default function HomePage() {
   const comparisonTopics = [
