@@ -8,7 +8,15 @@ import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { isLegalConsentCurrent } from '@/lib/legal'
+import { createPageMetadata } from '@/lib/seo'
 import type { ConstructedBetterAuthPluginOptions } from '@/plugins/auth'
+
+export const metadata = createPageMetadata({
+  description: 'Validation des conditions légales avant utilisation du comparateur Compare 2027.',
+  noIndex: true,
+  path: '/consent',
+  title: 'Consentement légal',
+})
 
 type ConsentPageProps = {
   searchParams: Promise<{

@@ -1,5 +1,13 @@
 import { LegalPage } from '@/components/legal/legal-page'
 import { GITHUB_REPOSITORY_URL } from '@/lib/legal'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description:
+    'Conditions générales d’utilisation de Compare 2027: objet du service, compte utilisateur, usages autorisés et licence.',
+  path: '/cgu',
+  title: 'Conditions générales d’utilisation',
+})
 
 export default function TermsPage() {
   return (

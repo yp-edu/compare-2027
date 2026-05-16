@@ -1,6 +1,14 @@
 import { AuthCard } from '@/components/auth/auth-card'
 import { SiteHeader } from '@/components/layout/site-header'
 import { ResetPasswordForm } from '@/features/email/components'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description: 'Choix d’un nouveau mot de passe pour un compte Compare 2027.',
+  noIndex: true,
+  path: '/reset-password',
+  title: 'Nouveau mot de passe',
+})
 
 type ResetPasswordPageProps = {
   searchParams: Promise<{

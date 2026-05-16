@@ -1,6 +1,14 @@
 import { AuthCard } from '@/components/auth/auth-card'
 import { SiteHeader } from '@/components/layout/site-header'
 import { VerificationEmailForm } from '@/features/email/components'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description: 'Vérification d’adresse e-mail pour un compte Compare 2027.',
+  noIndex: true,
+  path: '/verify-email',
+  title: 'Vérifier mon e-mail',
+})
 
 type VerifyEmailPageProps = {
   searchParams: Promise<{

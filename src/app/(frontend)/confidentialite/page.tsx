@@ -1,4 +1,12 @@
 import { LegalPage } from '@/components/legal/legal-page'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description:
+    'Politique de confidentialité de Compare 2027: données de compte, consentement légal, sécurité, mesure d’audience et droits utilisateur.',
+  path: '/confidentialite',
+  title: 'Politique de confidentialité',
+})
 
 export default function PrivacyPage() {
   return (
