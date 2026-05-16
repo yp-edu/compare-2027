@@ -5,21 +5,34 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
-import { Users } from './collections/Users'
-import { Media } from './collections/Media'
+import { collections } from './collections'
+import { globals } from './globals'
+import { seed } from './init/seed'
+import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const serverURL =
+  process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000'
+const allowedOrigins = [serverURL].filter(Boolean)
 
 export default buildConfig({
   admin: {
-    user: Users.slug,
+    user: 'users',
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  collections,
+  globals,
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
   editor: lexicalEditor(),
+  serverURL,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -29,6 +42,9 @@ export default buildConfig({
       connectionString: process.env.POSTGRES_URL || '',
     },
   }),
+  onInit: async (payload) => {
+    await seed(payload)
+  },
   sharp,
-  plugins: [],
+  plugins,
 })

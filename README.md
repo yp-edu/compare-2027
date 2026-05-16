@@ -1,67 +1,120 @@
-# Payload Blank Template
+# Compare 2027
 
-This template comes configured with the bare minimum to get started on anything you need.
+Compare 2027 is a French public-interest web app for comparing candidates, parties, programs, and public positions for the 2027 French presidential campaign.
 
-## Quick start
+The public-facing content is written in French. Code, repository documentation, and developer-facing naming stay in English.
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+Production URL: <https://compare-2027.vercel.app/>
 
-## Quick Start - local setup
+## Stack
 
-To spin up this template locally, follow these steps:
+- Next.js App Router
+- React
+- Payload CMS
+- Vercel Postgres through `@payloadcms/db-vercel-postgres`
+- shadcn-style components in `src/components`
+- Tailwind CSS v4
+- pnpm
 
-### Clone
+## Project Structure
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+```txt
+src/
+├── app/
+│   ├── (frontend)/        # Public website
+│   └── (payload)/         # Payload admin and API routes
+├── collections/           # Payload collections
+├── components/            # Frontend and shadcn-style UI components
+├── lib/                   # Shared frontend utilities
+├── migrations/            # Payload database migrations
+├── payload-types.ts       # Generated Payload types
+└── payload.config.ts      # Payload configuration
+```
 
-### Development
+## Local Setup
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URL` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+Install dependencies:
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+```bash
+pnpm install
+```
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+Create a local `.env` file with the required variables:
 
-#### Docker (Optional)
+```bash
+PAYLOAD_SECRET=your-local-secret
+POSTGRES_URL=postgres://user:password@host:5432/database
+BETTER_AUTH_SECRET=your-local-auth-secret
+BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+AZURE_OPENAI_API_KEY=your-azure-openai-api-key
+AZURE_OPENAI_RESOURCE_NAME=your-azure-openai-resource-name
+AZURE_OPENAI_DEPLOYMENT=your-azure-openai-deployment-name
+```
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+`BLOB_READ_WRITE_TOKEN`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` are optional locally. Without a Blob token, media uploads fall back to local Payload storage. Without Google credentials, auth still supports email/password. Azure OpenAI powers the compare chat and requires `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_RESOURCE_NAME`, and `AZURE_OPENAI_DEPLOYMENT`. The server URL is derived from Vercel's automatic `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL` variables, with `http://localhost:3000` as the local fallback.
 
-To do so, follow these steps:
+Start the development server:
 
-- Modify the `MONGODB_URL` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URL` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+```bash
+pnpm dev
+```
 
-## How it works
+Open <http://localhost:3000> for the public site and <http://localhost:3000/admin> for Payload admin.
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+## Scripts
 
-### Collections
+- `pnpm dev` starts the Next.js development server.
+- `pnpm build` builds the app for production.
+- `pnpm start` starts the production server after a build.
+- `pnpm lint` runs ESLint.
+- `pnpm generate:types` regenerates Payload TypeScript types.
+- `pnpm generate:importmap` regenerates the Payload admin import map.
+- `pnpm test:int` runs integration tests.
+- `pnpm test:e2e` runs Playwright end-to-end tests.
+- `pnpm test` runs integration and end-to-end tests.
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+## Frontend Guidelines
 
-- #### Users (Authentication)
+- Keep route files in `src/app/(frontend)` small.
+- Put reusable frontend components in `src/components`.
+- Put shadcn-style primitives in `src/components/ui`.
+- Use `src/lib/utils.ts` for shared UI utilities such as `cn`.
+- Keep visible public copy in French.
+- Keep code, component names, commit messages, and docs in English.
 
-  Users are auth-enabled collections that have access to the admin panel.
+## Payload CMS
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/3.x/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+Payload is configured in `src/payload.config.ts` and currently uses Vercel Postgres. The generated types are stored in `src/payload-types.ts`.
 
-- #### Media
+Backend plugins live in `src/plugins`:
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+- `auth.ts` configures Payload Auth / Better Auth with public `user` accounts and `editor` / `admin` admin roles.
+- `search.ts` indexes public content collections through `@payloadcms/plugin-search`.
+- `vercelBlob.ts` stores media in Vercel Blob when `BLOB_READ_WRITE_TOKEN` is configured.
 
-### Docker
+After changing collections or Payload config, run:
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+```bash
+pnpm generate:types
+pnpm generate:importmap
+```
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+## Deployment
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+This project is intended to run on Vercel. Configure the same environment variables in the Vercel project settings:
 
-## Questions
+- `PAYLOAD_SECRET`
+- `POSTGRES_URL`
+- `BETTER_AUTH_SECRET`
+- `BLOB_READ_WRITE_TOKEN`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_RESOURCE_NAME`
+- `AZURE_OPENAI_DEPLOYMENT`
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+Vercel automatically provides `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL`; do not configure them manually.
+
+The repository no longer includes Docker setup because local Docker deployment is not part of the current workflow.
