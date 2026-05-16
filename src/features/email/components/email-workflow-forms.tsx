@@ -35,6 +35,9 @@ const endpointErrorMessages: Record<string, string> = {
   verification_email_not_enabled: 'La vérification par e-mail est indisponible.',
 }
 
+const networkErrorMessage =
+  'Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.'
+
 function normalizeEndpointError(value?: string | null) {
   return value
     ?.trim()
@@ -99,27 +102,31 @@ export function ForgotPasswordForm({ initialEmail = '' }: ForgotPasswordFormProp
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get('email') || '')
 
-    const response = await fetch('/api/auth/request-password-reset', {
-      body: JSON.stringify({
-        email,
-        redirectTo: '/reset-password',
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+    try {
+      const response = await fetch('/api/auth/request-password-reset', {
+        body: JSON.stringify({
+          email,
+          redirectTo: '/reset-password',
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
 
-    setIsSubmitting(false)
+      if (!response.ok) {
+        setError(
+          await getResponseError(response, 'Impossible d’envoyer le lien de réinitialisation.'),
+        )
+        return
+      }
 
-    if (!response.ok) {
-      setError(
-        await getResponseError(response, 'Impossible d’envoyer le lien de réinitialisation.'),
-      )
-      return
+      setSuccess(true)
+    } catch {
+      setError(networkErrorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setSuccess(true)
   }
 
   return (
@@ -178,25 +185,29 @@ export function ResetPasswordForm({ initialError, token }: ResetPasswordFormProp
 
     setIsSubmitting(true)
 
-    const response = await fetch('/api/auth/reset-password', {
-      body: JSON.stringify({
-        newPassword,
-        token,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        body: JSON.stringify({
+          newPassword,
+          token,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
 
-    setIsSubmitting(false)
+      if (!response.ok) {
+        setError(await getResponseError(response, 'Impossible de réinitialiser ce mot de passe.'))
+        return
+      }
 
-    if (!response.ok) {
-      setError(await getResponseError(response, 'Impossible de réinitialiser ce mot de passe.'))
-      return
+      setSuccess(true)
+    } catch {
+      setError(networkErrorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setSuccess(true)
   }
 
   return (
@@ -258,25 +269,29 @@ export function VerificationEmailForm({ initialEmail = '' }: VerificationEmailFo
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get('email') || '')
 
-    const response = await fetch('/api/auth/send-verification-email', {
-      body: JSON.stringify({
-        callbackURL: '/compare',
-        email,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+    try {
+      const response = await fetch('/api/auth/send-verification-email', {
+        body: JSON.stringify({
+          callbackURL: '/compare',
+          email,
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
 
-    setIsSubmitting(false)
+      if (!response.ok) {
+        setError(await getResponseError(response, 'Impossible d’envoyer l’e-mail de vérification.'))
+        return
+      }
 
-    if (!response.ok) {
-      setError(await getResponseError(response, 'Impossible d’envoyer l’e-mail de vérification.'))
-      return
+      setSuccess(true)
+    } catch {
+      setError(networkErrorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setSuccess(true)
   }
 
   return (
