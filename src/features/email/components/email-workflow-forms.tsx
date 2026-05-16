@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useState, type FormEvent } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { OfflineGuard } from '@/components/pwa/offline-guard'
+import { useOnlineStatus } from '@/components/pwa/use-online-status'
 
 type EndpointError = {
   code?: string
@@ -21,6 +23,7 @@ type ResetPasswordFormProps = {
 
 type VerificationEmailFormProps = {
   initialEmail?: string
+  initialSuccessMessage?: string
 }
 
 const endpointErrorMessages: Record<string, string> = {
@@ -89,12 +92,18 @@ function StatusMessage({ children, type }: { children: string; type: 'error' | '
 }
 
 export function ForgotPasswordForm({ initialEmail = '' }: ForgotPasswordFormProps) {
+  const { isOffline } = useOnlineStatus()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (isOffline) {
+      return
+    }
+
     setError(null)
     setSuccess(false)
     setIsSubmitting(true)
@@ -140,16 +149,18 @@ export function ForgotPasswordForm({ initialEmail = '' }: ForgotPasswordFormProp
           type="email"
           autoComplete="email"
           defaultValue={initialEmail}
+          disabled={isOffline}
           placeholder="vous@example.com"
         />
       </label>
+      <OfflineGuard message="L’envoi d’un lien de réinitialisation nécessite une connexion Internet." />
       {success ? (
         <StatusMessage type="success">
           Si un compte existe avec cette adresse, un lien de réinitialisation vient d’être envoyé.
         </StatusMessage>
       ) : null}
       {error ? <StatusMessage type="error">{error}</StatusMessage> : null}
-      <Button className="w-full" disabled={isSubmitting} size="lg" type="submit">
+      <Button className="w-full" disabled={isSubmitting || isOffline} size="lg" type="submit">
         {isSubmitting ? 'Envoi...' : 'Envoyer le lien'}
       </Button>
     </form>
@@ -157,6 +168,7 @@ export function ForgotPasswordForm({ initialEmail = '' }: ForgotPasswordFormProp
 }
 
 export function ResetPasswordForm({ initialError, token }: ResetPasswordFormProps) {
+  const { isOffline } = useOnlineStatus()
   const [error, setError] = useState<string | null>(() =>
     initialError ? getEndpointErrorMessage(initialError) : null,
   )
@@ -165,6 +177,10 @@ export function ResetPasswordForm({ initialError, token }: ResetPasswordFormProp
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (isOffline) {
+      return
+    }
 
     if (!token) {
       setError('Ce lien est invalide ou a expiré. Demandez un nouveau lien.')
@@ -220,6 +236,7 @@ export function ResetPasswordForm({ initialError, token }: ResetPasswordFormProp
           required
           type="password"
           autoComplete="new-password"
+          disabled={isOffline}
           placeholder="••••••••"
         />
       </label>
@@ -231,16 +248,18 @@ export function ResetPasswordForm({ initialError, token }: ResetPasswordFormProp
           required
           type="password"
           autoComplete="new-password"
+          disabled={isOffline}
           placeholder="••••••••"
         />
       </label>
+      <OfflineGuard message="La réinitialisation du mot de passe nécessite une connexion Internet." />
       {success ? (
         <StatusMessage type="success">Votre mot de passe a été réinitialisé.</StatusMessage>
       ) : null}
       {error ? <StatusMessage type="error">{error}</StatusMessage> : null}
       <Button
         className="w-full"
-        disabled={isSubmitting || !token || success}
+        disabled={isSubmitting || isOffline || !token || success}
         size="lg"
         type="submit"
       >
@@ -255,13 +274,26 @@ export function ResetPasswordForm({ initialError, token }: ResetPasswordFormProp
   )
 }
 
-export function VerificationEmailForm({ initialEmail = '' }: VerificationEmailFormProps) {
+const verificationEmailSuccessMessage =
+  'Si un compte non vérifié existe avec cette adresse, un e-mail de vérification vient d’être envoyé.'
+
+export function VerificationEmailForm({
+  initialEmail = '',
+  initialSuccessMessage,
+}: VerificationEmailFormProps) {
+  const { isOffline } = useOnlineStatus()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const successMessage = success ? verificationEmailSuccessMessage : initialSuccessMessage
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (isOffline) {
+      return
+    }
+
     setError(null)
     setSuccess(false)
     setIsSubmitting(true)
@@ -305,17 +337,14 @@ export function VerificationEmailForm({ initialEmail = '' }: VerificationEmailFo
           type="email"
           autoComplete="email"
           defaultValue={initialEmail}
+          disabled={isOffline}
           placeholder="vous@example.com"
         />
       </label>
-      {success ? (
-        <StatusMessage type="success">
-          Si un compte non vérifié existe avec cette adresse, un e-mail de vérification vient d’être
-          envoyé.
-        </StatusMessage>
-      ) : null}
+      <OfflineGuard message="Le renvoi de l’e-mail de vérification nécessite une connexion Internet." />
+      {successMessage ? <StatusMessage type="success">{successMessage}</StatusMessage> : null}
       {error ? <StatusMessage type="error">{error}</StatusMessage> : null}
-      <Button className="w-full" disabled={isSubmitting} size="lg" type="submit">
+      <Button className="w-full" disabled={isSubmitting || isOffline} size="lg" type="submit">
         {isSubmitting ? 'Envoi...' : 'Renvoyer l’e-mail'}
       </Button>
     </form>

@@ -8,6 +8,8 @@ import { LockKeyhole, SendHorizontal, Sparkles } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { OfflineGuard } from '@/components/pwa/offline-guard'
+import { useOnlineStatus } from '@/components/pwa/use-online-status'
 import { authClient } from '@/lib/auth-client'
 
 const chatTransport = new DefaultChatTransport({ api: '/compare/chat' })
@@ -27,11 +29,12 @@ function getMessageText(message: UIMessage) {
 
 export function CompareChat() {
   const { data: session, isPending } = authClient.useSession()
+  const { isOffline } = useOnlineStatus()
   const [input, setInput] = useState('')
   const { error, messages, sendMessage, status } = useChat({ transport: chatTransport })
   const isAuthenticated = Boolean(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
-  const isDisabled = !isAuthenticated || isPending || isWorking
+  const isDisabled = !isAuthenticated || isPending || isWorking || isOffline
 
   async function submitQuestion(question: string) {
     const text = question.trim()
@@ -81,6 +84,10 @@ export function CompareChat() {
                 </div>
               </div>
             ) : null}
+            <OfflineGuard
+              className="max-w-2xl"
+              message="Le chat comparatif nécessite une connexion Internet. Les pages déjà chargées restent lisibles hors ligne."
+            />
             {messages.map((message) => {
               const text = getMessageText(message)
 
@@ -114,9 +121,11 @@ export function CompareChat() {
                 disabled={isDisabled}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder={
-                  isAuthenticated
-                    ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
-                    : 'Connectez-vous pour poser une question.'
+                  isOffline
+                    ? 'Reconnectez-vous pour poser une question.'
+                    : isAuthenticated
+                      ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
+                      : 'Connectez-vous pour poser une question.'
                 }
                 value={input}
               />
