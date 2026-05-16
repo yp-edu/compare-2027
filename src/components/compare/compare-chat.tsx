@@ -8,6 +8,8 @@ import { LockKeyhole, SendHorizontal, Sparkles } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { OfflineGuard } from '@/components/pwa/offline-guard'
+import { useOnlineStatus } from '@/components/pwa/use-online-status'
 import { CompareResponseFeedback } from '@/features/feedback/components/compare-response-feedback'
 import { authClient } from '@/lib/auth-client'
 import { isLegalConsentCurrent } from '@/lib/legal'
@@ -45,12 +47,13 @@ type CompareChatProps = {
 
 export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const { data: session, isPending } = authClient.useSession()
+  const { isOffline } = useOnlineStatus()
   const [input, setInput] = useState('')
   const { error, messages, sendMessage, status } = useChat({ transport: chatTransport })
   const isAuthenticated = Boolean(session?.user)
   const hasLegalConsent = isLegalConsentCurrent(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
-  const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking
+  const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking || isOffline
 
   async function submitQuestion(question: string) {
     const text = question.trim()
@@ -114,6 +117,10 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                 </div>
               </div>
             ) : null}
+            <OfflineGuard
+              className="max-w-2xl"
+              message="Le chat comparatif nécessite une connexion Internet. Les pages déjà chargées restent lisibles hors ligne."
+            />
             {messages.map((message, messageIndex) => {
               const text = getMessageText(message)
               const question = getPreviousUserMessageText(messages, messageIndex)
@@ -161,11 +168,13 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                 disabled={isDisabled}
                 onChange={(event) => setInput(event.target.value)}
                 placeholder={
-                  isAuthenticated
-                    ? hasLegalConsent
-                      ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
-                      : 'Confirmez les conditions pour poser une question.'
-                    : 'Connectez-vous pour poser une question.'
+                  isOffline
+                    ? 'Reconnectez-vous pour poser une question.'
+                    : isAuthenticated
+                      ? hasLegalConsent
+                        ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
+                        : 'Confirmez les conditions pour poser une question.'
+                      : 'Connectez-vous pour poser une question.'
                 }
                 value={input}
               />

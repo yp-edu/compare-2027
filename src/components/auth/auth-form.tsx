@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
+import { OfflineGuard } from '@/components/pwa/offline-guard'
+import { useOnlineStatus } from '@/components/pwa/use-online-status'
 import { authClient } from '@/lib/auth-client'
 
 type AuthFormProps = {
@@ -75,11 +77,16 @@ function getAuthErrorMessage(
 
 export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormProps) {
   const router = useRouter()
+  const { isOffline } = useOnlineStatus()
   const [error, setError] = useState<string | null>(() => getAuthErrorMessage(initialError, ''))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
 
   async function handleGoogleAuth() {
+    if (isOffline) {
+      return
+    }
+
     setError(null)
     setIsGoogleSubmitting(true)
 
@@ -99,6 +106,11 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
+    if (isOffline) {
+      return
+    }
+
     setError(null)
     setIsSubmitting(true)
 
@@ -156,6 +168,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
             required
             type="text"
             autoComplete="name"
+            disabled={isOffline}
             placeholder="Votre nom"
           />
         </label>
@@ -168,6 +181,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           required
           type="email"
           autoComplete="email"
+          disabled={isOffline}
           placeholder="vous@example.com"
         />
       </label>
@@ -189,6 +203,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           required
           type="password"
           autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+          disabled={isOffline}
           placeholder="••••••••"
         />
       </label>
@@ -196,6 +211,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
         <label className="flex items-start gap-3 rounded-xl border border-border bg-background/65 p-3 text-sm leading-6 text-muted-foreground">
           <input
             className="mt-1 size-4 rounded border-input accent-primary"
+            disabled={isOffline}
             name="legalConsentAccepted"
             required
             type="checkbox"
@@ -226,6 +242,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           </span>
         </label>
       ) : null}
+      <OfflineGuard message="La connexion et la création de compte nécessitent une connexion Internet." />
       {error ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
           {error}
@@ -233,7 +250,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
       ) : null}
       <Button
         className="w-full"
-        disabled={isSubmitting || isGoogleSubmitting}
+        disabled={isSubmitting || isGoogleSubmitting || isOffline}
         size="lg"
         type="submit"
       >
@@ -255,7 +272,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           </div>
           <Button
             className="w-full"
-            disabled={isSubmitting || isGoogleSubmitting}
+            disabled={isSubmitting || isGoogleSubmitting || isOffline}
             onClick={handleGoogleAuth}
             size="lg"
             type="button"
