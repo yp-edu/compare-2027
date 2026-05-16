@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: read
+  deployments: read
 
 jobs:
   format:
@@ -123,3 +124,80 @@ jobs:
 
       - name: Run Vitest
         run: pnpm test:int
+
+  playwright:
+    name: Tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chrome
+
+      - name: Wait for Vercel preview deployment
+        id: preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          for attempt in {1..60}; do
+            deployments=$(gh api --method GET "repos/$REPOSITORY/deployments" -f sha="$PR_HEAD_SHA" -f environment=Preview)
+            deployment_id=$(jq -r '.[0].id // empty' <<< "$deployments")
+
+            if [ -n "$deployment_id" ]; then
+              statuses=$(gh api --method GET "repos/$REPOSITORY/deployments/$deployment_id/statuses")
+              preview_url=$(jq -r '[.[] | select(.state == "success")][0] | .target_url // .environment_url // empty' <<< "$statuses")
+              failed_state=$(jq -r '[.[] | select(.state == "failure" or .state == "error")][0].state // empty' <<< "$statuses")
+
+              if [ -n "$preview_url" ]; then
+                echo "url=$preview_url" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+
+              if [ -n "$failed_state" ]; then
+                echo "Vercel preview deployment finished with state: $failed_state" >&2
+                exit 1
+              fi
+            fi
+
+            echo "Waiting for Vercel preview deployment for $PR_HEAD_SHA (attempt $attempt/60)..."
+            sleep 10
+          done
+
+          echo "Timed out waiting for a successful Vercel preview deployment for $PR_HEAD_SHA." >&2
+          exit 1
+
+      - name: Run Playwright
+        env:
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+          PLAYWRIGHT_BASE_URL: ${{ steps.preview.outputs.url }}
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
