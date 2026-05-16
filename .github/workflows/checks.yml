@@ -222,10 +222,8 @@ jobs:
 
       - name: Run Playwright
         env:
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+          E2E_TEST_SECRET: ${{ secrets.E2E_TEST_SECRET }}
           PLAYWRIGHT_BASE_URL: ${{ steps.preview.outputs.url }}
-          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: pnpm test:e2e
 
