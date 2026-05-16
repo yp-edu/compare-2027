@@ -4,7 +4,7 @@ test.describe('Frontend', () => {
   test('can go on homepage', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page).toHaveTitle(/Compare 2027/)
+    await expect(page).toHaveTitle('Comparateur politique impartial pour 2027')
 
     const heading = page.locator('h1').first()
 

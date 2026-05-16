@@ -47,7 +47,15 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
         <Link className="flex items-center gap-3" href="/" aria-label="Accueil Compare 2027">
           <span className="flex size-10 items-center justify-center overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-border">
-            <Image alt="" aria-hidden="true" height={40} priority src="/c27.png" width={40} />
+            <Image
+              alt=""
+              aria-hidden="true"
+              height={40}
+              priority
+              src="/c27.webp"
+              unoptimized
+              width={40}
+            />
           </span>
           <span className="text-base font-bold tracking-tight">Compare 2027</span>
         </Link>

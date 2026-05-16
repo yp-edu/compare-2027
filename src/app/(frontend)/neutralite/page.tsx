@@ -1,4 +1,12 @@
 import { LegalPage } from '@/components/legal/legal-page'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description:
+    'La charte de neutralité de Compare 2027 décrit la méthode de comparaison, le traitement des sources et les limites des réponses politiques.',
+  path: '/neutralite',
+  title: 'Charte de neutralité',
+})
 
 export default function NeutralityPage() {
   return (

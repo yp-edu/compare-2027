@@ -1,6 +1,14 @@
 import { AuthCard } from '@/components/auth/auth-card'
 import { AuthForm } from '@/components/auth/auth-form'
 import { SiteHeader } from '@/components/layout/site-header'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description: 'Connexion à un compte Compare 2027.',
+  noIndex: true,
+  path: '/signin',
+  title: 'Connexion',
+})
 
 type SignInPageProps = {
   searchParams: Promise<{

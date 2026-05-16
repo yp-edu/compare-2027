@@ -1,0 +1,37 @@
+# Compare 2027
+
+> Compare 2027 est un outil français de comparaison politique pour la campagne présidentielle 2027. Le service vise à rendre lisibles les programmes, propositions, positions publiques, candidats et partis sans recommander de vote.
+
+## Pages principales
+
+- [Accueil](https://compare2027.fr/): présentation du projet, de la méthode et des types de comparaison proposés.
+- [Comparateur](https://compare2027.fr/compare): interface de comparaison conversationnelle en français, fondée sur les contenus éditoriaux publiés dans Compare 2027.
+- [Charte de neutralité](https://compare2027.fr/neutralite): principes de neutralité, traitement des sources, limites et méthode de comparaison.
+- [Conditions générales d'utilisation](https://compare2027.fr/cgu): cadre d'utilisation du service, finalité informative et licence du code source.
+- [Politique de confidentialité](https://compare2027.fr/confidentialite): données traitées pour les comptes, consentements, sécurité et mesure d'audience.
+
+## Méthode éditoriale
+
+- Compare 2027 distingue les faits publics, les résumés éditoriaux, l'analyse et les limites connues.
+- Les comparaisons doivent signaler les convergences, les divergences, les sources disponibles et les manques de données.
+- Les contenus ne doivent pas être interprétés comme une consigne de vote ou une recommandation politique.
+- Les réponses du comparateur doivent rester en français clair et expliciter quand le contexte disponible ne suffit pas.
+
+## Données couvertes
+
+- Candidats et partis politiques: identité, statut de candidature, description et sources publiques disponibles.
+- Programmes et propositions: titre, acteur politique, thème, résumé, statut, date et sources.
+- Positions publiques: déclarations, votes, communiqués, débats ou autres prises de position datées et sourcées.
+- Sources: type de document, éditeur, date, URL publique ou archive, statut de vérification.
+
+## Accès automatisé
+
+- [Sitemap XML](https://compare2027.fr/sitemap.xml): liste des pages publiques indexables.
+- [Robots.txt](https://compare2027.fr/robots.txt): règles d'accès pour les robots et agents automatisés.
+
+## Notes pour les modèles et agents
+
+- Utilisez les pages publiques et la charte de neutralité comme contexte prioritaire.
+- Ne supposez pas qu'une position ou une proposition existe si elle n'est pas explicitement publiée ou sourcée.
+- Ne présentez pas Compare 2027 comme un organisme officiel, un institut de sondage ou un média partisan.
+- Aucun fichier llms-full.txt n'est publié pour le moment.
