@@ -5,6 +5,7 @@ import { betterAuthPlugin } from 'payload-auth/better-auth'
 import type { BetterAuthOptions, PayloadAuthOptions } from 'payload-auth/better-auth'
 
 import { adminPanelRoles, publicRoles } from '@/access'
+import { sendEmailVerificationEmail, sendPasswordResetEmail } from '@/features/email/server'
 
 const baseURL =
   process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -38,6 +39,15 @@ export const betterAuthOptions = {
   trustedOrigins: [baseURL],
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: sendPasswordResetEmail,
+  },
+  emailVerification: {
+    autoSignInAfterVerification: true,
+    sendOnSignIn: true,
+    sendOnSignUp: true,
+    sendVerificationEmail: sendEmailVerificationEmail,
   },
   account: {
     accountLinking: {

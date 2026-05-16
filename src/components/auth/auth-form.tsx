@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
@@ -24,7 +25,8 @@ const authErrorMessages: Record<string, string> = {
     'Un compte existe déjà avec cette adresse e-mail, mais il n’est pas encore associé à Google. Connectez-vous avec votre e-mail et votre mot de passe.',
   email_doesnt_match: 'L’adresse e-mail Google ne correspond pas à celle de votre compte.',
   email_not_found: 'Google n’a pas fourni d’adresse e-mail pour ce compte.',
-  email_not_verified: 'Votre adresse e-mail doit être vérifiée avant de continuer.',
+  email_not_verified:
+    'Votre adresse e-mail doit être vérifiée avant de continuer. Un nouvel e-mail de vérification vient d’être envoyé si ce compte existe.',
   invalid_code: 'La connexion Google a expiré. Veuillez réessayer.',
   invalid_email: 'Veuillez saisir une adresse e-mail valide.',
   invalid_email_or_password: 'Adresse e-mail ou mot de passe incorrect.',
@@ -73,6 +75,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
   const [error, setError] = useState<string | null>(() => getAuthErrorMessage(initialError, ''))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
+  const [signupSuccess, setSignupSuccess] = useState(false)
 
   async function handleGoogleAuth() {
     setError(null)
@@ -95,6 +98,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
+    setSignupSuccess(false)
     setIsSubmitting(true)
 
     const formData = new FormData(event.currentTarget)
@@ -104,13 +108,18 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
 
     const result =
       mode === 'signup'
-        ? await authClient.signUp.email({ email, name, password })
-        : await authClient.signIn.email({ email, password })
+        ? await authClient.signUp.email({ callbackURL: '/compare', email, name, password })
+        : await authClient.signIn.email({ callbackURL: '/compare', email, password })
 
     setIsSubmitting(false)
 
     if (result.error) {
       setError(getAuthErrorMessage(result.error))
+      return
+    }
+
+    if (mode === 'signup') {
+      setSignupSuccess(true)
       return
     }
 
@@ -145,7 +154,17 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
         />
       </label>
       <label className="block space-y-2 text-sm font-semibold">
-        <span>Mot de passe</span>
+        <span className="flex items-center justify-between gap-3">
+          <span>Mot de passe</span>
+          {mode === 'signin' ? (
+            <Link
+              className="text-xs font-bold text-primary underline-offset-4 hover:underline"
+              href="/forgot-password"
+            >
+              Mot de passe oublié ?
+            </Link>
+          ) : null}
+        </span>
         <input
           className="h-11 w-full rounded-lg border border-input bg-background/80 px-3 text-base outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/25"
           name="password"
@@ -155,6 +174,11 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           placeholder="••••••••"
         />
       </label>
+      {signupSuccess ? (
+        <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+          Votre compte a été créé. Vérifiez votre boîte e-mail pour activer l’accès au comparateur.
+        </p>
+      ) : null}
       {error ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
           {error}
@@ -162,7 +186,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
       ) : null}
       <Button
         className="w-full"
-        disabled={isSubmitting || isGoogleSubmitting}
+        disabled={isSubmitting || isGoogleSubmitting || signupSuccess}
         size="lg"
         type="submit"
       >
@@ -194,6 +218,15 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           </Button>
         </>
       ) : null}
+      <p className="text-center text-sm text-muted-foreground">
+        E-mail non vérifié ?{' '}
+        <Link
+          className="font-semibold text-primary underline-offset-4 hover:underline"
+          href="/verify-email"
+        >
+          Renvoyer le lien
+        </Link>
+      </p>
     </form>
   )
 }
