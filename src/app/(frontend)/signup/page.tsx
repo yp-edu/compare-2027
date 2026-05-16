@@ -3,6 +3,8 @@ import { AuthForm } from '@/components/auth/auth-form'
 import { SiteHeader } from '@/components/layout/site-header'
 
 export default function SignUpPage() {
+  const enableGoogle = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
@@ -13,7 +15,7 @@ export default function SignUpPage() {
         footerText="Déjà inscrit ?"
         title="Créer un compte"
       >
-        <AuthForm mode="signup" />
+        <AuthForm enableGoogle={enableGoogle} mode="signup" />
       </AuthCard>
     </div>
   )

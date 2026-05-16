@@ -7,13 +7,32 @@ import { Button } from '@/components/ui/button'
 import { authClient } from '@/lib/auth-client'
 
 type AuthFormProps = {
+  enableGoogle?: boolean
   mode: 'signin' | 'signup'
 }
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ enableGoogle = false, mode }: AuthFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
+
+  async function handleGoogleAuth() {
+    setError(null)
+    setIsGoogleSubmitting(true)
+
+    const result = await authClient.signIn.social({
+      callbackURL: '/compare',
+      provider: 'google',
+      requestSignUp: mode === 'signup',
+    })
+
+    setIsGoogleSubmitting(false)
+
+    if (result.error) {
+      setError(result.error.message || 'Impossible de continuer avec Google.')
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -83,13 +102,35 @@ export function AuthForm({ mode }: AuthFormProps) {
           {error}
         </p>
       ) : null}
-      <Button className="w-full" disabled={isSubmitting} size="lg" type="submit">
+      <Button className="w-full" disabled={isSubmitting || isGoogleSubmitting} size="lg" type="submit">
         {isSubmitting
           ? 'Veuillez patienter...'
           : mode === 'signup'
             ? 'Créer mon compte'
             : 'Se connecter'}
       </Button>
+      {enableGoogle ? (
+        <>
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="bg-card px-3">ou</span>
+            </div>
+          </div>
+          <Button
+            className="w-full"
+            disabled={isSubmitting || isGoogleSubmitting}
+            onClick={handleGoogleAuth}
+            size="lg"
+            type="button"
+            variant="outline"
+          >
+            {isGoogleSubmitting ? 'Redirection...' : 'Continuer avec Google'}
+          </Button>
+        </>
+      ) : null}
     </form>
   )
 }

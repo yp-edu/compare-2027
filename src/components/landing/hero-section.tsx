@@ -32,9 +32,6 @@ export function HeroSection({ topics }: HeroSectionProps) {
                 <ArrowRight aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="#methode">Comprendre la méthode</Link>
-            </Button>
           </div>
           <div className="mt-8 flex flex-wrap gap-2">
             {topics.map((topic) => (
