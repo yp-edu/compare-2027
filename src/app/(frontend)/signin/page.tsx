@@ -2,8 +2,16 @@ import { AuthCard } from '@/components/auth/auth-card'
 import { AuthForm } from '@/components/auth/auth-form'
 import { SiteHeader } from '@/components/layout/site-header'
 
-export default function SignInPage() {
+type SignInPageProps = {
+  searchParams: Promise<{
+    error?: string | string[]
+  }>
+}
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
+  const { error } = await searchParams
   const enableGoogle = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+  const authError = Array.isArray(error) ? error[0] : error
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -15,7 +23,7 @@ export default function SignInPage() {
         footerText="Pas encore inscrit ?"
         title="Connexion"
       >
-        <AuthForm enableGoogle={enableGoogle} mode="signin" />
+        <AuthForm enableGoogle={enableGoogle} initialError={authError} mode="signin" />
       </AuthCard>
     </div>
   )
