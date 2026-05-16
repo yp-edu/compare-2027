@@ -25,6 +25,7 @@ const authErrorMessages: Record<string, string> = {
     'Ce compte Google est déjà associé à un autre utilisateur.',
   account_not_linked:
     'Un compte existe déjà avec cette adresse e-mail, mais il n’est pas encore associé à Google. Connectez-vous avec votre e-mail et votre mot de passe.',
+  authentication_required: 'Connectez-vous pour continuer.',
   email_doesnt_match: 'L’adresse e-mail Google ne correspond pas à celle de votre compte.',
   email_not_found: 'Google n’a pas fourni d’adresse e-mail pour ce compte.',
   email_not_verified:
@@ -32,6 +33,8 @@ const authErrorMessages: Record<string, string> = {
   invalid_code: 'La connexion Google a expiré. Veuillez réessayer.',
   invalid_email: 'Veuillez saisir une adresse e-mail valide.',
   invalid_email_or_password: 'Adresse e-mail ou mot de passe incorrect.',
+  legal_consent_required:
+    'Vous devez accepter les CGU, la politique de confidentialite et la charte de neutralite.',
   no_code: 'La connexion Google n’a pas pu être finalisée. Veuillez réessayer.',
   oauth_provider_not_found: 'La connexion Google est indisponible pour le moment.',
   please_restart_the_process: 'La connexion a expiré. Veuillez recommencer.',
@@ -88,7 +91,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
     setIsGoogleSubmitting(true)
 
     const result = await authClient.signIn.social({
-      callbackURL: '/compare',
+      callbackURL: '/consent?next=/compare',
       errorCallbackURL: mode === 'signup' ? '/signup' : '/signin',
       provider: 'google',
       requestSignUp: mode === 'signup',
@@ -115,10 +118,25 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
     const email = String(formData.get('email') || '')
     const password = String(formData.get('password') || '')
     const name = String(formData.get('name') || '')
+    const legalConsentAccepted = formData.get('legalConsentAccepted') === 'on'
+
+    if (mode === 'signup' && !legalConsentAccepted) {
+      setIsSubmitting(false)
+      setError(authErrorMessages.legal_consent_required)
+      return
+    }
+
+    const signUpData = {
+      callbackURL: '/compare',
+      email,
+      legalConsentAccepted,
+      name,
+      password,
+    }
 
     const result =
       mode === 'signup'
-        ? await authClient.signUp.email({ callbackURL: '/compare', email, name, password })
+        ? await authClient.signUp.email(signUpData)
         : await authClient.signIn.email({ callbackURL: '/compare', email, password })
 
     setIsSubmitting(false)
@@ -189,6 +207,41 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           placeholder="••••••••"
         />
       </label>
+      {mode === 'signup' ? (
+        <label className="flex items-start gap-3 rounded-xl border border-border bg-background/65 p-3 text-sm leading-6 text-muted-foreground">
+          <input
+            className="mt-1 size-4 rounded border-input accent-primary"
+            disabled={isOffline}
+            name="legalConsentAccepted"
+            required
+            type="checkbox"
+          />
+          <span>
+            J’accepte les{' '}
+            <Link
+              className="font-semibold text-primary underline-offset-4 hover:underline"
+              href="/cgu"
+            >
+              CGU
+            </Link>
+            , la{' '}
+            <Link
+              className="font-semibold text-primary underline-offset-4 hover:underline"
+              href="/confidentialite"
+            >
+              politique de confidentialité
+            </Link>{' '}
+            et la{' '}
+            <Link
+              className="font-semibold text-primary underline-offset-4 hover:underline"
+              href="/neutralite"
+            >
+              charte de neutralité
+            </Link>
+            .
+          </span>
+        </label>
+      ) : null}
       <OfflineGuard message="La connexion et la création de compte nécessitent une connexion Internet." />
       {error ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">

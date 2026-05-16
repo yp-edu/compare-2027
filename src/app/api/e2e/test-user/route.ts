@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     new Request(new URL('/api/auth/sign-up/email', request.url), {
       body: JSON.stringify({
         email: testUser.email,
+        legalConsentAccepted: true,
         name: testUserData.name,
         password: testUser.password,
       }),

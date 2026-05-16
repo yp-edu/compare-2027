@@ -13,6 +13,8 @@ Compare 2027 is inspired by, and sits alongside, other civic tech projects that 
 - [Elyze](https://github.com/francoismari/elyze), a 2022 French presidential election comparison app.
 - [VoteFinder](https://github.com/arnaudsm/votefinder.eu) / [votefinder.fr](https://votefinder.fr/), a voter matching project for elections.
 - [Datan](https://github.com/datanfr/datan) / [datan.fr](https://datan.fr/), a platform for tracking and understanding the work of elected representatives.
+- [#POURQUITUVOTES](https://pourquituvotes.fr/), a program comparison and voter quiz project for French elections; it does not appear to be open source.
+- [Match République](https://matchrepublique.fr/), a French political AI for understanding, comparing, and participating; it does not appear to be open source.
 
 ## Stack
 

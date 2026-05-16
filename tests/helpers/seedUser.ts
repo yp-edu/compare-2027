@@ -91,6 +91,7 @@ export async function seedTestUser(): Promise<void> {
     new Request(`${getServerURL()}/api/auth/sign-up/email`, {
       body: JSON.stringify({
         email: testUser.email,
+        legalConsentAccepted: true,
         name: testUserData.name,
         password: testUser.password,
       }),

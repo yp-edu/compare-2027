@@ -12,6 +12,7 @@ import { OfflineGuard } from '@/components/pwa/offline-guard'
 import { useOnlineStatus } from '@/components/pwa/use-online-status'
 import { CompareResponseFeedback } from '@/features/feedback/components/compare-response-feedback'
 import { authClient } from '@/lib/auth-client'
+import { isLegalConsentCurrent } from '@/lib/legal'
 
 const chatTransport = new DefaultChatTransport({ api: '/compare/chat' })
 
@@ -50,8 +51,9 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const [input, setInput] = useState('')
   const { error, messages, sendMessage, status } = useChat({ transport: chatTransport })
   const isAuthenticated = Boolean(session?.user)
+  const hasLegalConsent = isLegalConsentCurrent(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
-  const isDisabled = !isAuthenticated || isPending || isWorking || isOffline
+  const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking || isOffline
 
   async function submitQuestion(question: string) {
     const text = question.trim()
@@ -97,6 +99,20 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                   </p>
                   <Button asChild className="mt-3" size="sm">
                     <Link href="/signin">Se connecter pour comparer</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+            {isAuthenticated && !hasLegalConsent && !isPending ? (
+              <div className="flex max-w-2xl items-start gap-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
+                <LockKeyhole className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" />
+                <div>
+                  <p className="font-semibold">Consentement requis</p>
+                  <p className="mt-1 leading-7 text-muted-foreground">
+                    Confirmez les CGU, la confidentialité et la neutralité avant d’utiliser le chat.
+                  </p>
+                  <Button asChild className="mt-3" size="sm">
+                    <Link href="/consent?next=/compare">Confirmer et comparer</Link>
                   </Button>
                 </div>
               </div>
@@ -155,7 +171,9 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                   isOffline
                     ? 'Reconnectez-vous pour poser une question.'
                     : isAuthenticated
-                      ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
+                      ? hasLegalConsent
+                        ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
+                        : 'Confirmez les conditions pour poser une question.'
                       : 'Connectez-vous pour poser une question.'
                 }
                 value={input}
