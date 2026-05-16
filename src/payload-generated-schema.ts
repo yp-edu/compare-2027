@@ -1638,6 +1638,13 @@ export const payload_migrations = pgTable(
   ],
 )
 
+export const database = pgTable('database', {
+  id: serial('id').primaryKey(),
+  seeded: boolean('seeded').notNull().default(false),
+  updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 }),
+  createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 }),
+})
+
 export const relations_users_role = relations(users_role, ({ one }) => ({
   parent: one(users, {
     fields: [users_role.parent],
@@ -2192,6 +2199,7 @@ export const relations_payload_preferences = relations(payload_preferences, ({ m
   }),
 }))
 export const relations_payload_migrations = relations(payload_migrations, () => ({}))
+export const relations_database = relations(database, () => ({}))
 
 type DatabaseSchema = {
   enum_users_role: typeof enum_users_role
@@ -2262,6 +2270,7 @@ type DatabaseSchema = {
   payload_preferences: typeof payload_preferences
   payload_preferences_rels: typeof payload_preferences_rels
   payload_migrations: typeof payload_migrations
+  database: typeof database
   relations_users_role: typeof relations_users_role
   relations_users: typeof relations_users
   relations_sessions: typeof relations_sessions
@@ -2302,6 +2311,7 @@ type DatabaseSchema = {
   relations_payload_preferences_rels: typeof relations_payload_preferences_rels
   relations_payload_preferences: typeof relations_payload_preferences
   relations_payload_migrations: typeof relations_payload_migrations
+  relations_database: typeof relations_database
 }
 
 declare module '@payloadcms/db-vercel-postgres' {

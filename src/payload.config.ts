@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
 import { collections } from './collections'
+import { globals } from './globals'
+import { seed } from './init/seed'
 import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
@@ -26,6 +28,7 @@ export default buildConfig({
     },
   },
   collections,
+  globals,
   cors: allowedOrigins,
   csrf: allowedOrigins,
   editor: lexicalEditor(),
@@ -39,6 +42,9 @@ export default buildConfig({
       connectionString: process.env.POSTGRES_URL || '',
     },
   }),
+  onInit: async (payload) => {
+    await seed(payload)
+  },
   sharp,
   plugins,
 })
