@@ -198,6 +198,11 @@ export interface User {
    * Whether the user has two factor authentication enabled
    */
   twoFactorEnabled?: boolean | null
+  legalConsentAcceptedAt?: string | null
+  legalConsentVersion?: string | null
+  legalConsentIpHash?: string | null
+  legalConsentUserAgent?: string | null
+  legalConsentProviderIds?: string | null
   account?: {
     docs?: (number | Account)[]
     hasNextPage?: boolean
@@ -735,6 +740,11 @@ export interface UsersSelect<T extends boolean = true> {
   banReason?: T
   banExpires?: T
   twoFactorEnabled?: T
+  legalConsentAcceptedAt?: T
+  legalConsentVersion?: T
+  legalConsentIpHash?: T
+  legalConsentUserAgent?: T
+  legalConsentProviderIds?: T
   account?: T
   session?: T
 }

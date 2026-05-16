@@ -1,4 +1,5 @@
 import { admin, twoFactor } from 'better-auth/plugins'
+import { APIError } from 'better-auth/api'
 import { defaultRoles } from 'better-auth/plugins/admin/access'
 import { nextCookies } from 'better-auth/next-js'
 import { betterAuthPlugin } from 'payload-auth/better-auth'
@@ -6,6 +7,7 @@ import type { BetterAuthOptions, PayloadAuthOptions } from 'payload-auth/better-
 
 import { adminPanelRoles, publicRoles } from '@/access'
 import { sendEmailVerificationEmail, sendPasswordResetEmail } from '@/features/email/server'
+import { createLegalConsentAudit } from '@/features/legal/server'
 
 const baseURL =
   process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -32,6 +34,31 @@ const betterAuthPlugins = [
   nextCookies(),
 ]
 
+type AuthHookContext = {
+  body?: Record<string, unknown>
+  headers?: Headers
+  path?: string
+  request?: Request
+  context?: {
+    headers?: Headers
+    request?: Request
+  }
+}
+
+function getAuthHookHeaders(ctx: AuthHookContext | undefined) {
+  return (
+    ctx?.headers || ctx?.request?.headers || ctx?.context?.headers || ctx?.context?.request?.headers
+  )
+}
+
+function isEmailPasswordSignup(ctx: AuthHookContext | undefined) {
+  return ctx?.path?.startsWith('/sign-up/email') || typeof ctx?.body?.password === 'string'
+}
+
+function hasAcceptedLegalConsent(ctx: AuthHookContext | undefined) {
+  return ctx?.body?.legalConsentAccepted === true || ctx?.body?.legalConsentAccepted === 'true'
+}
+
 export const betterAuthOptions = {
   appName: 'Compare 2027',
   baseURL,
@@ -48,6 +75,66 @@ export const betterAuthOptions = {
     sendOnSignIn: true,
     sendOnSignUp: true,
     sendVerificationEmail: sendEmailVerificationEmail,
+  },
+  user: {
+    additionalFields: {
+      legalConsentAcceptedAt: {
+        type: 'string',
+        required: false,
+        returned: true,
+        input: false,
+      },
+      legalConsentVersion: {
+        type: 'string',
+        required: false,
+        returned: true,
+        input: false,
+      },
+      legalConsentIpHash: {
+        type: 'string',
+        required: false,
+        returned: false,
+        input: false,
+      },
+      legalConsentUserAgent: {
+        type: 'string',
+        required: false,
+        returned: false,
+        input: false,
+      },
+      legalConsentProviderIds: {
+        type: 'string',
+        required: false,
+        returned: false,
+        input: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user, ctx) => {
+          const hookContext = ctx as AuthHookContext | undefined
+
+          if (!isEmailPasswordSignup(hookContext)) {
+            return { data: user }
+          }
+
+          if (!hasAcceptedLegalConsent(hookContext)) {
+            throw new APIError('BAD_REQUEST', {
+              message: 'legal_consent_required',
+            })
+          }
+
+          return {
+            data: {
+              ...user,
+              ...createLegalConsentAudit(getAuthHookHeaders(hookContext), ['email-password']),
+            },
+          }
+        },
+      },
+    },
   },
   account: {
     accountLinking: {
@@ -90,6 +177,26 @@ export const betterAuthPluginOptions = {
           return {
             ...field,
             saveToJWT: true,
+          }
+        }
+
+        if (
+          'name' in field &&
+          field.type === 'text' &&
+          [
+            'legalConsentAcceptedAt',
+            'legalConsentVersion',
+            'legalConsentIpHash',
+            'legalConsentUserAgent',
+            'legalConsentProviderIds',
+          ].includes(field.name)
+        ) {
+          return {
+            ...field,
+            admin: {
+              ...field.admin,
+              readOnly: true,
+            },
           }
         }
 

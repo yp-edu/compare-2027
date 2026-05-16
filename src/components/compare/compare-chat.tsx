@@ -9,6 +9,7 @@ import { LockKeyhole, SendHorizontal, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { authClient } from '@/lib/auth-client'
+import { isLegalConsentCurrent } from '@/lib/legal'
 
 const chatTransport = new DefaultChatTransport({ api: '/compare/chat' })
 
@@ -30,8 +31,9 @@ export function CompareChat() {
   const [input, setInput] = useState('')
   const { error, messages, sendMessage, status } = useChat({ transport: chatTransport })
   const isAuthenticated = Boolean(session?.user)
+  const hasLegalConsent = isLegalConsentCurrent(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
-  const isDisabled = !isAuthenticated || isPending || isWorking
+  const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking
 
   async function submitQuestion(question: string) {
     const text = question.trim()
@@ -81,6 +83,20 @@ export function CompareChat() {
                 </div>
               </div>
             ) : null}
+            {isAuthenticated && !hasLegalConsent && !isPending ? (
+              <div className="flex max-w-2xl items-start gap-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
+                <LockKeyhole className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" />
+                <div>
+                  <p className="font-semibold">Consentement requis</p>
+                  <p className="mt-1 leading-7 text-muted-foreground">
+                    Confirmez les CGU, la confidentialité et la neutralité avant d’utiliser le chat.
+                  </p>
+                  <Button asChild className="mt-3" size="sm">
+                    <Link href="/consent?next=/compare">Confirmer et comparer</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             {messages.map((message) => {
               const text = getMessageText(message)
 
@@ -115,7 +131,9 @@ export function CompareChat() {
                 onChange={(event) => setInput(event.target.value)}
                 placeholder={
                   isAuthenticated
-                    ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
+                    ? hasLegalConsent
+                      ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
+                      : 'Confirmez les conditions pour poser une question.'
                     : 'Connectez-vous pour poser une question.'
                 }
                 value={input}

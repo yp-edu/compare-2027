@@ -181,6 +181,11 @@ export const users = pgTable(
     banReason: varchar('ban_reason'),
     banExpires: timestamp('ban_expires', { mode: 'string', withTimezone: true, precision: 3 }),
     twoFactorEnabled: boolean('two_factor_enabled').default(false),
+    legalConsentAcceptedAt: varchar('legal_consent_accepted_at'),
+    legalConsentVersion: varchar('legal_consent_version'),
+    legalConsentIpHash: varchar('legal_consent_ip_hash'),
+    legalConsentUserAgent: varchar('legal_consent_user_agent'),
+    legalConsentProviderIds: varchar('legal_consent_provider_ids'),
   },
   (columns) => [
     uniqueIndex('users_email_idx').on(columns.email),
