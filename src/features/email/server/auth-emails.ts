@@ -93,7 +93,7 @@ async function sendAuthEmail({ html, subject, text, to }: AuthEmail) {
       throw new Error('RESEND_API_KEY is required to send auth emails')
     }
 
-    console.info('[auth-email]', { subject, text, to })
+    console.info('[auth-email]', { reason: 'delivery skipped', subject })
     return
   }
 
