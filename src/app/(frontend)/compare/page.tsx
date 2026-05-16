@@ -2,6 +2,14 @@ import { CompareChat } from '@/components/compare/compare-chat'
 import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
 import { compareResponseFeedback } from '@/flags'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description:
+    'Posez une question politique en français et obtenez une comparaison structurée entre programmes, candidats, partis, propositions et positions publiques.',
+  path: '/compare',
+  title: 'Comparateur conversationnel politique',
+})
 
 export default async function ComparePage() {
   const feedbackEnabled = await compareResponseFeedback()

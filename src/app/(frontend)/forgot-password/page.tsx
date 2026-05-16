@@ -1,6 +1,14 @@
 import { AuthCard } from '@/components/auth/auth-card'
 import { SiteHeader } from '@/components/layout/site-header'
 import { ForgotPasswordForm } from '@/features/email/components'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description: 'Demande de lien sécurisé pour réinitialiser un mot de passe Compare 2027.',
+  noIndex: true,
+  path: '/forgot-password',
+  title: 'Mot de passe oublié',
+})
 
 type ForgotPasswordPageProps = {
   searchParams: Promise<{

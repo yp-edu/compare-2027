@@ -4,6 +4,14 @@ import { WifiOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SiteHeader } from '@/components/layout/site-header'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata = createPageMetadata({
+  description: 'Page hors ligne de Compare 2027.',
+  noIndex: true,
+  path: '/offline',
+  title: 'Hors ligne',
+})
 
 export default function OfflinePage() {
   return (

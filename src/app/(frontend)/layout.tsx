@@ -4,18 +4,22 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 
 import { PwaProvider } from '@/components/pwa/pwa-provider'
+import { defaultOpenGraphImage, siteDescription, siteMetadataBase, siteName } from '@/lib/seo'
 
 import './styles.css'
 
 export const metadata: Metadata = {
-  applicationName: 'Compare 2027',
-  metadataBase: new URL('https://compare2027.fr'),
-  description:
-    'Compare 2027 aide à comparer les programmes, positions et partis politiques pour la prochaine élection présidentielle.',
+  alternates: {
+    canonical: '/',
+  },
+  applicationName: siteName,
+  category: 'politics',
+  description: siteDescription,
+  metadataBase: siteMetadataBase,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Compare 2027',
+    title: siteName,
   },
   formatDetection: {
     telephone: false,
@@ -26,26 +30,39 @@ export const metadata: Metadata = {
       { sizes: '192x192', type: 'image/png', url: '/icons/icon-192.png' },
       { sizes: '512x512', type: 'image/png', url: '/icons/icon-512.png' },
     ],
-    shortcut: '/c27.png',
+    shortcut: [{ type: 'image/webp', url: '/c27.webp' }],
   },
   manifest: '/manifest.webmanifest',
   openGraph: {
-    description:
-      'Un outil impartial pour comparer les programmes, positions publiques et partis politiques en vue de 2027.',
-    images: [
-      {
-        alt: 'Logo Compare 2027',
-        height: 512,
-        url: '/icons/icon-512.png',
-        width: 512,
-      },
-    ],
-    siteName: 'Compare 2027',
-    title: 'Compare 2027',
+    description: siteDescription,
+    images: defaultOpenGraphImage,
+    locale: 'fr_FR',
+    siteName,
+    title: siteName,
     type: 'website',
     url: '/',
   },
-  title: 'Compare 2027',
+  robots: {
+    follow: true,
+    googleBot: {
+      follow: true,
+      index: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+    index: true,
+  },
+  title: {
+    default: siteName,
+    template: `%s | ${siteName}`,
+  },
+  twitter: {
+    card: 'summary',
+    description: siteDescription,
+    images: ['/icons/icon-512.png'],
+    title: siteName,
+  },
 }
 
 export const viewport: Viewport = {
