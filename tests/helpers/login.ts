@@ -1,7 +1,13 @@
 import type { Page } from '@playwright/test'
 import { expect } from '@playwright/test'
 
-import { getPageSummary, getResponseSummary, isSignInRequestURL } from './authDiagnostics'
+import {
+  getLoginFormSummary,
+  getPageSummary,
+  getRequestSummary,
+  getResponseSummary,
+  isSignInRequestURL,
+} from './authDiagnostics'
 
 export interface LoginOptions {
   page: Page
@@ -24,6 +30,11 @@ export async function login({
 
   await page.goto(`${normalizedServerURL}/admin/login`)
 
+  const signInRequestPromise = page
+    .waitForRequest((request) => request.method() === 'POST' && isSignInRequestURL(request.url()), {
+      timeout: 15_000,
+    })
+    .catch(() => undefined)
   const signInResponsePromise = page
     .waitForResponse(
       (response) => response.request().method() === 'POST' && isSignInRequestURL(response.url()),
@@ -41,8 +52,11 @@ export async function login({
       { timeout: 15_000, waitUntil: 'domcontentloaded' },
     )
   } catch (error) {
+    const signInRequest = await signInRequestPromise
     const signInResponse = await signInResponsePromise
+    const requestSummary = getRequestSummary(signInRequest)
     const pageSummary = await getPageSummary(page)
+    const formSummary = await getLoginFormSummary(page)
     const responseSummary = await getResponseSummary(signInResponse)
     const message = error instanceof Error ? error.message : String(error)
 
@@ -50,7 +64,9 @@ export async function login({
       [
         `Admin login did not reach ${normalizedServerURL}/admin.`,
         message,
+        requestSummary,
         responseSummary,
+        formSummary,
         pageSummary,
       ].join('\n\n'),
     )

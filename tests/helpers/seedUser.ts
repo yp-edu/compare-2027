@@ -15,6 +15,12 @@ function getServerURL() {
   return (process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 }
 
+function isLocalServerURL(value: string) {
+  const hostname = new URL(value).hostname
+
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+}
+
 function getTestEndpointHeaders() {
   const headers: Record<string, string> = {}
   const e2eTestSecret = process.env.E2E_TEST_SECRET
@@ -65,7 +71,7 @@ export async function seedTestUser(): Promise<void> {
     return
   }
 
-  if (process.env.PLAYWRIGHT_BASE_URL) {
+  if (!isLocalServerURL(getServerURL())) {
     throw new Error('E2E_TEST_SECRET must be configured when testing a deployed preview URL')
   }
 
@@ -120,7 +126,7 @@ export async function cleanupTestUser(): Promise<void> {
     return
   }
 
-  if (process.env.PLAYWRIGHT_BASE_URL) {
+  if (!isLocalServerURL(getServerURL())) {
     throw new Error('E2E_TEST_SECRET must be configured when testing a deployed preview URL')
   }
 

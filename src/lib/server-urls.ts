@@ -14,6 +14,10 @@ function uniqueOrigins(origins: Array<string | undefined>) {
   return Array.from(new Set(origins.filter((origin): origin is string => Boolean(origin))))
 }
 
+function getOriginHost(origin: string) {
+  return new URL(origin).host
+}
+
 export function getServerURL() {
   const deploymentURL = getVercelOrigin(process.env.VERCEL_URL)
   const branchURL = getVercelOrigin(process.env.VERCEL_BRANCH_URL)
@@ -34,4 +38,8 @@ export function getAllowedOrigins() {
       : getVercelOrigin(process.env.VERCEL_BRANCH_URL)
 
   return uniqueOrigins([getServerURL(), deploymentURL, branchURL])
+}
+
+export function getAllowedHosts() {
+  return getAllowedOrigins().map(getOriginHost)
 }

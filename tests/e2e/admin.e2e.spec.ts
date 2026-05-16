@@ -2,7 +2,13 @@ import { expect, test } from '@playwright/test'
 
 import type { Page } from '@playwright/test'
 
-import { getResponseSummary, isSignInRequestURL } from '../helpers/authDiagnostics'
+import {
+  getLoginFormSummary,
+  getPageSummary,
+  getRequestSummary,
+  getResponseSummary,
+  isSignInRequestURL,
+} from '../helpers/authDiagnostics'
 import { login } from '../helpers/login'
 import { seedTestUser, cleanupTestUser, testUser } from '../helpers/seedUser'
 
@@ -67,7 +73,6 @@ test.describe('Admin auth diagnostics', () => {
     await page.getByRole('button', { name: 'Login' }).click()
 
     const signInRequest = await signInRequestPromise
-    const signInResponse = await signInResponsePromise
     const signInOrigin = new URL(signInRequest.url()).origin
 
     expect(
@@ -77,6 +82,18 @@ test.describe('Admin auth diagnostics', () => {
         'If these differ on Vercel previews, auth cookies are written for a different host than the tested page.',
       ].join('\n'),
     ).toBe(pageOrigin)
+
+    const signInResponse = await signInResponsePromise.catch(async () => {
+      throw new Error(
+        [
+          'Admin login posted a sign-in request but did not receive a response.',
+          getRequestSummary(signInRequest),
+          await getLoginFormSummary(page),
+          await getPageSummary(page),
+        ].join('\n\n'),
+      )
+    })
+
     expect(signInResponse.ok(), await getResponseSummary(signInResponse)).toBe(true)
   })
 })

@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { getAllowedOrigins, getServerURL } from '@/lib/server-urls'
+import { getAllowedHosts, getAllowedOrigins, getServerURL } from '@/lib/server-urls'
+
+function testHost(label: string) {
+  return `${label}.example.test`
+}
 
 describe('server URL configuration', () => {
   afterEach(() => {
@@ -8,27 +12,30 @@ describe('server URL configuration', () => {
   })
 
   it('uses and trusts the Vercel branch URL for preview deployments', () => {
-    vi.stubEnv('VERCEL_ENV', 'preview')
-    vi.stubEnv('VERCEL_BRANCH_URL', 'compare-2027-git-bugs-xmaster6ys-projects.vercel.app')
-    vi.stubEnv('VERCEL_URL', 'compare-2027-abc123-xmaster6ys-projects.vercel.app')
+    const branchURL = testHost('preview-branch')
+    const deploymentURL = testHost('preview-deployment')
 
-    expect(getServerURL()).toBe('https://compare-2027-git-bugs-xmaster6ys-projects.vercel.app')
-    expect(getAllowedOrigins()).toEqual([
-      'https://compare-2027-git-bugs-xmaster6ys-projects.vercel.app',
-      'https://compare-2027-abc123-xmaster6ys-projects.vercel.app',
-    ])
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    vi.stubEnv('VERCEL_BRANCH_URL', branchURL)
+    vi.stubEnv('VERCEL_URL', deploymentURL)
+
+    expect(getServerURL()).toBe(`https://${branchURL}`)
+    expect(getAllowedOrigins()).toEqual([`https://${branchURL}`, `https://${deploymentURL}`])
+    expect(getAllowedHosts()).toEqual([branchURL, deploymentURL])
   })
 
   it('uses the production project URL for production deployments', () => {
-    vi.stubEnv('VERCEL_ENV', 'production')
-    vi.stubEnv('VERCEL_BRANCH_URL', 'compare-2027-git-main-xmaster6ys-projects.vercel.app')
-    vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', 'compare2027.fr')
-    vi.stubEnv('VERCEL_URL', 'compare-2027-prod123-xmaster6ys-projects.vercel.app')
+    const branchURL = testHost('production-branch')
+    const deploymentURL = testHost('production-deployment')
+    const productionURL = testHost('production')
 
-    expect(getServerURL()).toBe('https://compare2027.fr')
-    expect(getAllowedOrigins()).toEqual([
-      'https://compare2027.fr',
-      'https://compare-2027-prod123-xmaster6ys-projects.vercel.app',
-    ])
+    vi.stubEnv('VERCEL_ENV', 'production')
+    vi.stubEnv('VERCEL_BRANCH_URL', branchURL)
+    vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', productionURL)
+    vi.stubEnv('VERCEL_URL', deploymentURL)
+
+    expect(getServerURL()).toBe(`https://${productionURL}`)
+    expect(getAllowedOrigins()).toEqual([`https://${productionURL}`, `https://${deploymentURL}`])
+    expect(getAllowedHosts()).toEqual([productionURL, deploymentURL])
   })
 })
