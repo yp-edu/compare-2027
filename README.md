@@ -6,6 +6,14 @@ The public-facing content is written in French. Code, repository documentation, 
 
 Production URL: <https://compare-2027.vercel.app/>
 
+## Inspirations And Alternatives
+
+Compare 2027 is inspired by, and sits alongside, other civic tech projects that help voters understand political candidates, parties, programs, and representatives:
+
+- [Elyze](https://github.com/francoismari/elyze), a 2022 French presidential election comparison app.
+- [VoteFinder](https://github.com/arnaudsm/votefinder.eu) / [votefinder.fr](https://votefinder.fr/), a voter matching project for elections.
+- [Datan](https://github.com/datanfr/datan) / [datan.fr](https://datan.fr/), a platform for tracking and understanding the work of elected representatives.
+
 ## Stack
 
 - Next.js App Router
