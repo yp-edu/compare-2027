@@ -4,8 +4,10 @@ on:
   pull_request:
 
 permissions:
+  actions: read
   contents: read
   deployments: read
+  statuses: write
 
 jobs:
   format:
@@ -14,6 +16,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Notify Vercel
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: 'Vercel - compare-2027: format'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -38,6 +47,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Notify Vercel
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: 'Vercel - compare-2027: lint'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -62,6 +78,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Notify Vercel
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: 'Vercel - compare-2027: typecheck'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -104,6 +127,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Notify Vercel
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: 'Vercel - compare-2027: vitest'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -133,6 +163,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Notify Vercel
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          name: 'Vercel - compare-2027: playwright'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
