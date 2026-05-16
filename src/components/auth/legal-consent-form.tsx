@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
+import { authClient } from '@/lib/auth-client'
 
 type LegalConsentFormProps = {
   nextPath: string
@@ -12,6 +13,7 @@ type LegalConsentFormProps = {
 
 export function LegalConsentForm({ nextPath }: LegalConsentFormProps) {
   const router = useRouter()
+  const { refetch } = authClient.useSession()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -40,6 +42,7 @@ export function LegalConsentForm({ nextPath }: LegalConsentFormProps) {
         return
       }
 
+      await refetch({ query: { disableCookieCache: true } })
       router.push(nextPath)
       router.refresh()
     } catch {
