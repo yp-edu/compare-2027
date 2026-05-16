@@ -6,6 +6,10 @@ import { defineConfig, devices } from '@playwright/test'
  */
 import 'dotenv/config'
 
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
+const shouldStartWebServer = !process.env.PLAYWRIGHT_BASE_URL
+const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -22,7 +26,12 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
+    baseURL,
+    extraHTTPHeaders: vercelProtectionBypass
+      ? {
+          'x-vercel-protection-bypass': vercelProtectionBypass,
+        }
+      : undefined,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -33,9 +42,11 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
   ],
-  webServer: {
-    command: 'pnpm dev',
-    reuseExistingServer: true,
-    url: 'http://localhost:3000',
-  },
+  webServer: shouldStartWebServer
+    ? {
+        command: 'pnpm dev',
+        reuseExistingServer: !process.env.CI,
+        url: baseURL,
+      }
+    : undefined,
 })
