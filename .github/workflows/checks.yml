@@ -199,7 +199,7 @@ jobs:
 
             if [ -n "$deployment_id" ]; then
               statuses=$(gh api --method GET "repos/$REPOSITORY/deployments/$deployment_id/statuses")
-              preview_url=$(jq -r '[.[] | select(.state == "success")][0] | .target_url // .environment_url // empty' <<< "$statuses")
+              preview_url=$(jq -r '[.[] | select(.state == "success")][0] | .environment_url // .target_url // empty' <<< "$statuses")
               failed_state=$(jq -r '[.[] | select(.state == "failure" or .state == "error")][0].state // empty' <<< "$statuses")
 
               if [ -n "$preview_url" ]; then

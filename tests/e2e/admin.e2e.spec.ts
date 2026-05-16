@@ -8,7 +8,15 @@ test.describe('Admin Panel', () => {
   test.beforeAll(async ({ browser }) => {
     await seedTestUser()
 
-    const context = await browser.newContext()
+    const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+    const context = await browser.newContext({
+      baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
+      extraHTTPHeaders: vercelProtectionBypass
+        ? {
+            'x-vercel-protection-bypass': vercelProtectionBypass,
+          }
+        : undefined,
+    })
     page = await context.newPage()
 
     await login({ page, user: testUser })
