@@ -14,11 +14,13 @@
     "generate": "pnpm generate:db-schema && pnpm generate:importmap && pnpm generate:types && pnpm format",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "format": "cross-env NODE_OPTIONS=--no-deprecation prettier --write .",
+    "format:check": "cross-env NODE_OPTIONS=--no-deprecation prettier --check .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "typecheck": "tsc --noEmit",
     "migration": "payload migrate:create"
   },
   "dependencies": {
