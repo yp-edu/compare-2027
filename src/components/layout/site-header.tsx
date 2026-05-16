@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 
 const navItems = [
   { href: '/compare', label: 'Comparer' },
-  { href: '/#methode', label: 'Méthode' },
 ]
 
 function hasAdminAccess(role: unknown) {

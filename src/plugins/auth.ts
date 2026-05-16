@@ -39,6 +39,12 @@ export const betterAuthOptions = {
   emailAndPassword: {
     enabled: true,
   },
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ['google', 'email-password'],
+    },
+  },
   ...(googleClientId && googleClientSecret
     ? {
         socialProviders: {
