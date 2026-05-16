@@ -1,3 +1,4 @@
+import { CandidateCorpusPreview } from '@/components/landing/candidate-corpus-preview'
 import { ComparisonPreview } from '@/components/landing/comparison-preview'
 import { HeroSection } from '@/components/landing/hero-section'
 import { MethodologySection } from '@/components/landing/methodology-section'
@@ -19,6 +20,7 @@ export default function HomePage() {
       <SiteHeader />
       <main>
         <HeroSection topics={comparisonTopics} />
+        <CandidateCorpusPreview />
         <ComparisonPreview />
         <MethodologySection />
       </main>
