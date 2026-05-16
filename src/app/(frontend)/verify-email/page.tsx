@@ -4,25 +4,36 @@ import { VerificationEmailForm } from '@/features/email/components'
 
 type VerifyEmailPageProps = {
   searchParams: Promise<{
+    created?: string | string[]
     email?: string | string[]
   }>
 }
 
 export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageProps) {
-  const { email } = await searchParams
+  const { created, email } = await searchParams
+  const wasCreated = (Array.isArray(created) ? created[0] : created) === '1'
   const initialEmail = Array.isArray(email) ? email[0] : email
+  const createdMessage =
+    'Votre compte a été créé. Vérifiez votre boîte e-mail pour activer l’accès au comparateur.'
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
       <AuthCard
-        description="Renvoyez un lien de vérification si votre compte e-mail et mot de passe n’est pas encore activé. Les comptes Google vérifiés n’ont pas besoin de cette étape."
+        description={
+          wasCreated
+            ? 'Un e-mail de vérification vient d’être envoyé à l’adresse utilisée lors de l’inscription.'
+            : 'Renvoyez un lien de vérification si votre compte e-mail et mot de passe n’est pas encore activé. Les comptes Google vérifiés n’ont pas besoin de cette étape.'
+        }
         footerHref="/signin"
         footerLabel="Se connecter"
         footerText="Adresse déjà vérifiée ?"
-        title="Vérifier mon e-mail"
+        title={wasCreated ? 'Vérifiez votre boîte e-mail' : 'Vérifier mon e-mail'}
       >
-        <VerificationEmailForm initialEmail={initialEmail} />
+        <VerificationEmailForm
+          initialEmail={initialEmail}
+          initialSuccessMessage={wasCreated ? createdMessage : undefined}
+        />
       </AuthCard>
     </div>
   )

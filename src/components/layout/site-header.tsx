@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
@@ -19,13 +20,24 @@ function hasAdminAccess(role: unknown) {
 export function SiteHeader() {
   const router = useRouter()
   const { data: session, isPending } = authClient.useSession()
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const user = session?.user
   const role = (user as { role?: unknown } | undefined)?.role
 
   async function handleSignOut() {
-    await authClient.signOut()
-    router.refresh()
-    router.push('/')
+    if (isSigningOut) {
+      return
+    }
+
+    setIsSigningOut(true)
+
+    try {
+      await authClient.signOut()
+      router.refresh()
+      router.push('/')
+    } catch {
+      setIsSigningOut(false)
+    }
   }
 
   return (
@@ -57,8 +69,14 @@ export function SiteHeader() {
               <span className="hidden max-w-36 truncate text-sm font-semibold text-muted-foreground sm:inline">
                 {user.name || user.email}
               </span>
-              <Button size="sm" variant="outline" onClick={handleSignOut}>
-                Déconnexion
+              <Button
+                aria-busy={isSigningOut}
+                disabled={isSigningOut}
+                size="sm"
+                variant="outline"
+                onClick={handleSignOut}
+              >
+                {isSigningOut ? 'Déconnexion...' : 'Déconnexion'}
               </Button>
             </div>
           ) : (
