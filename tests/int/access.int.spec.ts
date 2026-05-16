@@ -12,7 +12,7 @@ describe('isAdminOrSelf', () => {
           role: 'user',
         },
       },
-    } as Parameters<typeof isAdminOrSelf>[0])
+    } as unknown as Parameters<typeof isAdminOrSelf>[0])
 
     expect(access).toEqual({
       id: {

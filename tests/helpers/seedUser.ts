@@ -1,12 +1,8 @@
-import { getPayloadAuth } from 'payload-auth/better-auth'
-
 import type { ConstructedBetterAuthPluginOptions } from '@/plugins/auth'
-
-import config from '../../src/payload.config.js'
 
 export const testUser = {
   email: 'dev@payloadcms.com',
-  password: 'test',
+  password: 'test-password',
 }
 
 const testUserData = {
@@ -15,11 +11,65 @@ const testUserData = {
   role: ['admin'] as ('admin' | 'editor' | 'user')[],
 }
 
+function getServerURL() {
+  return (process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
+}
+
+function getTestEndpointHeaders() {
+  const headers: Record<string, string> = {}
+  const e2eTestSecret = process.env.E2E_TEST_SECRET
+  const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+
+  if (e2eTestSecret) {
+    headers['x-e2e-test-secret'] = e2eTestSecret
+  }
+
+  if (vercelProtectionBypass) {
+    headers['x-vercel-protection-bypass'] = vercelProtectionBypass
+  }
+
+  return headers
+}
+
+async function requestTestUserEndpoint(method: 'DELETE' | 'POST') {
+  const e2eTestSecret = process.env.E2E_TEST_SECRET
+
+  if (!e2eTestSecret) {
+    return false
+  }
+
+  const response = await fetch(`${getServerURL()}/api/e2e/test-user`, {
+    headers: getTestEndpointHeaders(),
+    method,
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to ${method} test user: ${response.status} ${await response.text()}`)
+  }
+
+  return true
+}
+
+async function getLocalPayload() {
+  const { getPayloadAuth } = await import('payload-auth/better-auth')
+  const { default: config } = await import('../../src/payload.config.js')
+
+  return getPayloadAuth<ConstructedBetterAuthPluginOptions>(config)
+}
+
 /**
  * Seeds a test user for e2e admin tests.
  */
 export async function seedTestUser(): Promise<void> {
-  const payload = await getPayloadAuth<ConstructedBetterAuthPluginOptions>(config)
+  if (await requestTestUserEndpoint('POST')) {
+    return
+  }
+
+  if (process.env.PLAYWRIGHT_BASE_URL) {
+    throw new Error('E2E_TEST_SECRET must be configured when testing a deployed preview URL')
+  }
+
+  const payload = await getLocalPayload()
 
   // Delete existing test user if any
   await payload.delete({
@@ -32,7 +82,7 @@ export async function seedTestUser(): Promise<void> {
   })
 
   const response = await payload.betterAuth.handler(
-    new Request('http://localhost:3000/api/auth/sign-up/email', {
+    new Request(`${getServerURL()}/api/auth/sign-up/email`, {
       body: JSON.stringify({
         email: testUser.email,
         name: testUserData.name,
@@ -66,7 +116,15 @@ export async function seedTestUser(): Promise<void> {
  * Cleans up test user after tests
  */
 export async function cleanupTestUser(): Promise<void> {
-  const payload = await getPayloadAuth<ConstructedBetterAuthPluginOptions>(config)
+  if (await requestTestUserEndpoint('DELETE')) {
+    return
+  }
+
+  if (process.env.PLAYWRIGHT_BASE_URL) {
+    throw new Error('E2E_TEST_SECRET must be configured when testing a deployed preview URL')
+  }
+
+  const payload = await getLocalPayload()
 
   await payload.delete({
     collection: 'users',

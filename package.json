@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A neutral French comparison app for the 2027 presidential campaign.",
   "license": "MIT",
+  "packageManager": "pnpm@10.17.0",
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
@@ -14,11 +15,13 @@
     "generate": "pnpm generate:db-schema && pnpm generate:importmap && pnpm generate:types && pnpm format",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation eslint .",
     "format": "cross-env NODE_OPTIONS=--no-deprecation prettier --write .",
+    "format:check": "cross-env NODE_OPTIONS=--no-deprecation prettier --check .",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "typecheck": "tsc --noEmit",
     "migration": "payload migrate:create"
   },
   "dependencies": {
@@ -69,7 +72,7 @@
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0",
-    "pnpm": "^9 || ^10"
+    "pnpm": "^10"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
