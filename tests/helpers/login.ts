@@ -22,10 +22,8 @@ export async function login({
 
   await page.goto(`${normalizedServerURL}/admin/login`)
 
-  const fields = page.getByRole('textbox')
-
-  await fields.first().fill(user.email)
-  await fields.nth(1).fill(user.password)
+  await page.locator('input[name="login"]').fill(user.email)
+  await page.locator('input[name="password"]').fill(user.password)
   await page.getByRole('button', { name: 'Login' }).click()
 
   await page.waitForURL(`${normalizedServerURL}/admin`)

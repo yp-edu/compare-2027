@@ -6,7 +6,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import './styles.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://compare-2027.vercel.app'),
+  metadataBase: new URL('https://compare2027.fr'),
   description:
     'Compare 2027 aide à comparer les programmes, positions et partis politiques pour la prochaine élection présidentielle.',
   openGraph: {
