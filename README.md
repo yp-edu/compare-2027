@@ -48,9 +48,12 @@ BETTER_AUTH_SECRET=your-local-auth-secret
 BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+AZURE_OPENAI_API_KEY=your-azure-openai-api-key
+AZURE_OPENAI_RESOURCE_NAME=your-azure-openai-resource-name
+AZURE_OPENAI_DEPLOYMENT=your-azure-openai-deployment-name
 ```
 
-`BLOB_READ_WRITE_TOKEN`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` are optional locally. Without a Blob token, media uploads fall back to local Payload storage. Without Google credentials, auth still supports email/password. The server URL is derived from Vercel's automatic `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL` variables, with `http://localhost:3000` as the local fallback.
+`BLOB_READ_WRITE_TOKEN`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` are optional locally. Without a Blob token, media uploads fall back to local Payload storage. Without Google credentials, auth still supports email/password. Azure OpenAI powers the compare chat and requires `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_RESOURCE_NAME`, and `AZURE_OPENAI_DEPLOYMENT`. The server URL is derived from Vercel's automatic `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL` variables, with `http://localhost:3000` as the local fallback.
 
 Start the development server:
 
@@ -108,6 +111,9 @@ This project is intended to run on Vercel. Configure the same environment variab
 - `BLOB_READ_WRITE_TOKEN`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_RESOURCE_NAME`
+- `AZURE_OPENAI_DEPLOYMENT`
 
 Vercel automatically provides `VERCEL_ENV`, `VERCEL_PROJECT_PRODUCTION_URL`, and `VERCEL_URL`; do not configure them manually.
 

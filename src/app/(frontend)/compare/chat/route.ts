@@ -25,7 +25,11 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Authentication required' }, { status: 401 })
   }
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (
+    !process.env.AZURE_OPENAI_API_KEY ||
+    !process.env.AZURE_OPENAI_RESOURCE_NAME ||
+    !process.env.AZURE_OPENAI_DEPLOYMENT
+  ) {
     return Response.json({ error: 'AI provider is not configured' }, { status: 503 })
   }
 
