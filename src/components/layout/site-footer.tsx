@@ -41,13 +41,13 @@ export function SiteFooter() {
             <span className="text-lg font-black tracking-tight">Compare 2027</span>
           </Link>
           <p className="mt-4 max-w-lg text-sm leading-7 text-muted-foreground">
-            Un outil impartial pour comparer les programmes, positions publiques et partis
-            politiques en vue de 2027, avec une méthode lisible et des limites explicites.
+            Compare 2027 prépare une lecture claire et documentée de la campagne présidentielle,
+            avec une méthode lisible et des limites explicites.
           </p>
           <div className="mt-5 rounded-2xl border border-border bg-background/65 p-4 text-sm leading-6 text-muted-foreground">
             <p className="font-semibold text-foreground">Sources, neutralité, transparence.</p>
             <p className="mt-1">
-              Les réponses doivent distinguer faits publics, synthèses et analyses, sans conseil de
+              Des comparaisons sourcées, pensées pour lire la campagne sans jargon ni conseil de
               vote.
             </p>
           </div>

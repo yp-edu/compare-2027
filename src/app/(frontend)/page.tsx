@@ -3,6 +3,7 @@ import { HeroSection } from '@/components/landing/hero-section'
 import { MethodologySection } from '@/components/landing/methodology-section'
 import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
+import { CandidateCorpusPreview } from '@/features/candidates/components/candidate-corpus-preview'
 import { absoluteUrl, createPageMetadata, siteDescription, siteName, siteUrl } from '@/lib/seo'
 
 export const metadata = createPageMetadata({
@@ -61,6 +62,7 @@ export default function HomePage() {
       <SiteHeader />
       <main>
         <HeroSection topics={comparisonTopics} />
+        <CandidateCorpusPreview />
         <ComparisonPreview />
         <MethodologySection />
       </main>

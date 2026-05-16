@@ -216,8 +216,8 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
               Garde-fou
             </p>
             <p className="mt-3 leading-7 text-primary-foreground/90">
-              Les réponses doivent rester comparatives et indiquer quand les données du CMS sont
-              insuffisantes.
+              Les réponses doivent rester comparatives et indiquer quand les données disponibles
+              sont insuffisantes.
             </p>
           </CardContent>
         </Card>

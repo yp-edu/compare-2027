@@ -1,0 +1,98 @@
+name: Cleanup Vercel Preview
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Git branch whose preview deployments should be deleted
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  delete-preview-deployments:
+    name: Delete Preview Deployments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Vercel preview deployments for PR branch
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          BRANCH: ${{ github.event_name == 'workflow_dispatch' && inputs.branch || github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${VERCEL_TOKEN}" ]; then
+            echo "Missing VERCEL_TOKEN secret." >&2
+            exit 1
+          fi
+
+          if [ -z "${VERCEL_PROJECT_ID}" ]; then
+            echo "Missing VERCEL_PROJECT_ID repository variable." >&2
+            exit 1
+          fi
+
+          deployments_url="https://api.vercel.com/v6/deployments"
+          delete_query=""
+
+          if [ -n "${VERCEL_TEAM_ID}" ]; then
+            delete_query="?teamId=${VERCEL_TEAM_ID}"
+          fi
+
+          deleted_count=0
+          next_until=""
+
+          while true; do
+            curl_args=(
+              --fail
+              --silent
+              --show-error
+              --get "$deployments_url"
+              --header "Authorization: Bearer ${VERCEL_TOKEN}"
+              --data-urlencode "projectId=${VERCEL_PROJECT_ID}"
+              --data-urlencode "branch=${BRANCH}"
+              --data-urlencode "limit=100"
+            )
+
+            if [ -n "${VERCEL_TEAM_ID}" ]; then
+              curl_args+=(--data-urlencode "teamId=${VERCEL_TEAM_ID}")
+            fi
+
+            if [ -n "${next_until}" ]; then
+              curl_args+=(--data-urlencode "until=${next_until}")
+            fi
+
+            response=$(curl "${curl_args[@]}")
+            deployment_ids=$(jq -r '
+              .deployments[]
+              | select(.target == null and .state != "DELETED" and .readyState != "DELETED")
+              | .uid
+            ' <<< "$response")
+
+            if [ -n "${deployment_ids}" ]; then
+              while IFS= read -r deployment_id; do
+                echo "Deleting Vercel deployment ${deployment_id} for branch '${BRANCH}'..."
+                curl --fail --silent --show-error --request DELETE \
+                  "https://api.vercel.com/v13/deployments/${deployment_id}${delete_query}" \
+                  --header "Authorization: Bearer ${VERCEL_TOKEN}" > /dev/null
+                deleted_count=$((deleted_count + 1))
+              done <<< "$deployment_ids"
+            fi
+
+            next_until=$(jq -r '.pagination.next // empty' <<< "$response")
+
+            if [ -z "${next_until}" ]; then
+              break
+            fi
+          done
+
+          if [ "${deleted_count}" -eq 0 ]; then
+            echo "No Vercel preview deployments found for branch '${BRANCH}'."
+          else
+            echo "Deleted ${deleted_count} Vercel preview deployment(s) for branch '${BRANCH}'."
+          fi
