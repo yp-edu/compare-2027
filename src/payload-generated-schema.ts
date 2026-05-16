@@ -143,6 +143,10 @@ export const enum__public_positions_v_version_status = pgEnum(
   'enum__public_positions_v_version_status',
   ['draft', 'published'],
 )
+export const enum_response_feedback_rating = pgEnum('enum_response_feedback_rating', [
+  'helpful',
+  'not_helpful',
+])
 
 export const users_role = pgTable(
   'users_role',
@@ -1330,6 +1334,35 @@ export const _public_positions_v_rels = pgTable(
   ],
 )
 
+export const response_feedback = pgTable(
+  'response_feedback',
+  {
+    id: serial('id').primaryKey(),
+    rating: enum_response_feedback_rating('rating').notNull(),
+    user: integer('user_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'set null',
+      }),
+    messageId: varchar('message_id'),
+    question: varchar('question').notNull(),
+    answer: varchar('answer').notNull(),
+    comment: varchar('comment'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('response_feedback_user_idx').on(columns.user),
+    index('response_feedback_message_id_idx').on(columns.messageId),
+    index('response_feedback_updated_at_idx').on(columns.updatedAt),
+    index('response_feedback_created_at_idx').on(columns.createdAt),
+  ],
+)
+
 export const search = pgTable(
   'search',
   {
@@ -1464,6 +1497,7 @@ export const payload_locked_documents_rels = pgTable(
     programsID: integer('programs_id'),
     proposalsID: integer('proposals_id'),
     'public-positionsID': integer('public_positions_id'),
+    'response-feedbackID': integer('response_feedback_id'),
     searchID: integer('search_id'),
   },
   (columns) => [
@@ -1487,6 +1521,9 @@ export const payload_locked_documents_rels = pgTable(
     index('payload_locked_documents_rels_proposals_id_idx').on(columns.proposalsID),
     index('payload_locked_documents_rels_public_positions_id_idx').on(
       columns['public-positionsID'],
+    ),
+    index('payload_locked_documents_rels_response_feedback_id_idx').on(
+      columns['response-feedbackID'],
     ),
     index('payload_locked_documents_rels_search_id_idx').on(columns.searchID),
     foreignKey({
@@ -1563,6 +1600,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['public-positionsID']],
       foreignColumns: [public_positions.id],
       name: 'payload_locked_documents_rels_public_positions_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['response-feedbackID']],
+      foreignColumns: [response_feedback.id],
+      name: 'payload_locked_documents_rels_response_feedback_fk',
     }).onDelete('cascade'),
     foreignKey({
       columns: [columns['searchID']],
@@ -2042,6 +2084,13 @@ export const relations__public_positions_v = relations(_public_positions_v, ({ o
     relationName: '_rels',
   }),
 }))
+export const relations_response_feedback = relations(response_feedback, ({ one }) => ({
+  user: one(users, {
+    fields: [response_feedback.user],
+    references: [users.id],
+    relationName: 'user',
+  }),
+}))
 export const relations_search_rels = relations(search_rels, ({ one }) => ({
   parent: one(search, {
     fields: [search_rels.parent],
@@ -2163,6 +2212,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [public_positions.id],
       relationName: 'public-positions',
     }),
+    'response-feedbackID': one(response_feedback, {
+      fields: [payload_locked_documents_rels['response-feedbackID']],
+      references: [response_feedback.id],
+      relationName: 'response-feedback',
+    }),
     searchID: one(search, {
       fields: [payload_locked_documents_rels.searchID],
       references: [search.id],
@@ -2230,6 +2284,7 @@ type DatabaseSchema = {
   enum__public_positions_v_version_position_type: typeof enum__public_positions_v_version_position_type
   enum__public_positions_v_version_stance: typeof enum__public_positions_v_version_stance
   enum__public_positions_v_version_status: typeof enum__public_positions_v_version_status
+  enum_response_feedback_rating: typeof enum_response_feedback_rating
   users_role: typeof users_role
   users: typeof users
   sessions: typeof sessions
@@ -2262,6 +2317,7 @@ type DatabaseSchema = {
   public_positions_rels: typeof public_positions_rels
   _public_positions_v: typeof _public_positions_v
   _public_positions_v_rels: typeof _public_positions_v_rels
+  response_feedback: typeof response_feedback
   search: typeof search
   search_rels: typeof search_rels
   payload_kv: typeof payload_kv
@@ -2303,6 +2359,7 @@ type DatabaseSchema = {
   relations_public_positions: typeof relations_public_positions
   relations__public_positions_v_rels: typeof relations__public_positions_v_rels
   relations__public_positions_v: typeof relations__public_positions_v
+  relations_response_feedback: typeof relations_response_feedback
   relations_search_rels: typeof relations_search_rels
   relations_search: typeof relations_search
   relations_payload_kv: typeof relations_payload_kv

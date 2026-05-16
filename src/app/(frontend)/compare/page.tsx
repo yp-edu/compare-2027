@@ -1,8 +1,11 @@
 import { CompareChat } from '@/components/compare/compare-chat'
 import { SiteFooter } from '@/components/layout/site-footer'
 import { SiteHeader } from '@/components/layout/site-header'
+import { compareResponseFeedback } from '@/flags'
 
-export default function ComparePage() {
+export default async function ComparePage() {
+  const feedbackEnabled = await compareResponseFeedback()
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
@@ -20,7 +23,7 @@ export default function ComparePage() {
               sources, les divergences et les manques de données.
             </p>
           </div>
-          <CompareChat />
+          <CompareChat feedbackEnabled={feedbackEnabled} />
         </div>
       </main>
       <SiteFooter />

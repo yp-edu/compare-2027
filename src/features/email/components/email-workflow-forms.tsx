@@ -284,8 +284,7 @@ export function VerificationEmailForm({
   const { isOffline } = useOnlineStatus()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const successMessage = success ? verificationEmailSuccessMessage : initialSuccessMessage
+  const [successMessage, setSuccessMessage] = useState<string | null>(initialSuccessMessage ?? null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -295,7 +294,7 @@ export function VerificationEmailForm({
     }
 
     setError(null)
-    setSuccess(false)
+    setSuccessMessage(null)
     setIsSubmitting(true)
 
     const formData = new FormData(event.currentTarget)
@@ -318,7 +317,7 @@ export function VerificationEmailForm({
         return
       }
 
-      setSuccess(true)
+      setSuccessMessage(verificationEmailSuccessMessage)
     } catch {
       setError(networkErrorMessage)
     } finally {

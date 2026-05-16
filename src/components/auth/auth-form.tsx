@@ -78,7 +78,6 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
   const [error, setError] = useState<string | null>(() => getAuthErrorMessage(initialError, ''))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
-  const [signupSuccess, setSignupSuccess] = useState(false)
 
   async function handleGoogleAuth() {
     if (isOffline) {
@@ -110,7 +109,6 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
     }
 
     setError(null)
-    setSignupSuccess(false)
     setIsSubmitting(true)
 
     const formData = new FormData(event.currentTarget)
@@ -131,7 +129,9 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
     }
 
     if (mode === 'signup') {
-      setSignupSuccess(true)
+      const params = new URLSearchParams({ created: '1', email })
+
+      router.push(`/verify-email?${params.toString()}`)
       return
     }
 
@@ -189,11 +189,6 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
           placeholder="••••••••"
         />
       </label>
-      {signupSuccess ? (
-        <p className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
-          Votre compte a été créé. Vérifiez votre boîte e-mail pour activer l’accès au comparateur.
-        </p>
-      ) : null}
       <OfflineGuard message="La connexion et la création de compte nécessitent une connexion Internet." />
       {error ? (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive">
@@ -202,7 +197,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
       ) : null}
       <Button
         className="w-full"
-        disabled={isSubmitting || isGoogleSubmitting || signupSuccess || isOffline}
+        disabled={isSubmitting || isGoogleSubmitting || isOffline}
         size="lg"
         type="submit"
       >

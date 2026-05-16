@@ -9,17 +9,13 @@ import sharp from 'sharp'
 import { collections } from './collections'
 import { globals } from './globals'
 import { seed } from './init/seed'
+import { getAllowedOrigins, getServerURL } from './lib/server-urls'
 import { plugins } from './plugins'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-const serverURL =
-  process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000'
-const allowedOrigins = [serverURL].filter(Boolean)
+const serverURL = getServerURL()
+const allowedOrigins = getAllowedOrigins()
 
 export default buildConfig({
   admin: {

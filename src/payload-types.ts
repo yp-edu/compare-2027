@@ -81,6 +81,7 @@ export interface Config {
     programs: Program
     proposals: Proposal
     'public-positions': PublicPosition
+    'response-feedback': ResponseFeedback
     search: Search
     'payload-kv': PayloadKv
     'payload-locked-documents': PayloadLockedDocument
@@ -108,6 +109,7 @@ export interface Config {
     programs: ProgramsSelect<false> | ProgramsSelect<true>
     proposals: ProposalsSelect<false> | ProposalsSelect<true>
     'public-positions': PublicPositionsSelect<false> | PublicPositionsSelect<true>
+    'response-feedback': ResponseFeedbackSelect<false> | ResponseFeedbackSelect<true>
     search: SearchSelect<false> | SearchSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
     'payload-locked-documents':
@@ -554,6 +556,24 @@ export interface PublicPosition {
   _status?: ('draft' | 'published') | null
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "response-feedback".
+ */
+export interface ResponseFeedback {
+  id: number
+  rating: 'helpful' | 'not_helpful'
+  user: number | User
+  messageId?: string | null
+  question: string
+  answer: string
+  /**
+   * Optional free-text feedback for later UI iterations.
+   */
+  comment?: string | null
+  updatedAt: string
+  createdAt: string
+}
+/**
  * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -672,6 +692,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'public-positions'
         value: number | PublicPosition
+      } | null)
+    | ({
+        relationTo: 'response-feedback'
+        value: number | ResponseFeedback
       } | null)
     | ({
         relationTo: 'search'
@@ -948,6 +972,20 @@ export interface PublicPositionsSelect<T extends boolean = true> {
   updatedAt?: T
   createdAt?: T
   _status?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "response-feedback_select".
+ */
+export interface ResponseFeedbackSelect<T extends boolean = true> {
+  rating?: T
+  user?: T
+  messageId?: T
+  question?: T
+  answer?: T
+  comment?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
