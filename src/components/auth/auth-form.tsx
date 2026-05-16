@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
+import { LegalConsentText } from '@/components/legal/legal-consent-text'
 import { OfflineGuard } from '@/components/pwa/offline-guard'
 import { useOnlineStatus } from '@/components/pwa/use-online-status'
 import { authClient } from '@/lib/auth-client'
@@ -217,28 +218,7 @@ export function AuthForm({ enableGoogle = false, initialError, mode }: AuthFormP
             type="checkbox"
           />
           <span>
-            J’accepte les{' '}
-            <Link
-              className="font-semibold text-primary underline-offset-4 hover:underline"
-              href="/cgu"
-            >
-              CGU
-            </Link>
-            , la{' '}
-            <Link
-              className="font-semibold text-primary underline-offset-4 hover:underline"
-              href="/confidentialite"
-            >
-              politique de confidentialité
-            </Link>{' '}
-            et la{' '}
-            <Link
-              className="font-semibold text-primary underline-offset-4 hover:underline"
-              href="/neutralite"
-            >
-              charte de neutralité
-            </Link>
-            .
+            <LegalConsentText />
           </span>
         </label>
       ) : null}

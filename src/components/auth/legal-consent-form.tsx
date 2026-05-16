@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, type FormEvent } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { LegalConsentText } from '@/components/legal/legal-consent-text'
 import { Button } from '@/components/ui/button'
 
 type LegalConsentFormProps = {
@@ -59,28 +59,7 @@ export function LegalConsentForm({ nextPath }: LegalConsentFormProps) {
           type="checkbox"
         />
         <span>
-          J’accepte les{' '}
-          <Link
-            className="font-semibold text-primary underline-offset-4 hover:underline"
-            href="/cgu"
-          >
-            CGU
-          </Link>
-          , la{' '}
-          <Link
-            className="font-semibold text-primary underline-offset-4 hover:underline"
-            href="/confidentialite"
-          >
-            politique de confidentialité
-          </Link>{' '}
-          et la{' '}
-          <Link
-            className="font-semibold text-primary underline-offset-4 hover:underline"
-            href="/neutralite"
-          >
-            charte de neutralité
-          </Link>
-          .
+          <LegalConsentText />
         </span>
       </label>
       {error ? (
