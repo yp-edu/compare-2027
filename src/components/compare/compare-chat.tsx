@@ -8,6 +8,7 @@ import { LockKeyhole, SendHorizontal, Sparkles } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CompareResponseFeedback } from '@/features/feedback/components/compare-response-feedback'
 import { authClient } from '@/lib/auth-client'
 
 const chatTransport = new DefaultChatTransport({ api: '/compare/chat' })
@@ -25,7 +26,23 @@ function getMessageText(message: UIMessage) {
     .join('')
 }
 
-export function CompareChat() {
+function getPreviousUserMessageText(messages: UIMessage[], messageIndex: number) {
+  for (let index = messageIndex - 1; index >= 0; index -= 1) {
+    const message = messages[index]
+
+    if (message?.role === 'user') {
+      return getMessageText(message)
+    }
+  }
+
+  return ''
+}
+
+type CompareChatProps = {
+  feedbackEnabled?: boolean
+}
+
+export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const { data: session, isPending } = authClient.useSession()
   const [input, setInput] = useState('')
   const { error, messages, sendMessage, status } = useChat({ transport: chatTransport })
@@ -81,8 +98,15 @@ export function CompareChat() {
                 </div>
               </div>
             ) : null}
-            {messages.map((message) => {
+            {messages.map((message, messageIndex) => {
               const text = getMessageText(message)
+              const question = getPreviousUserMessageText(messages, messageIndex)
+              const showFeedback =
+                feedbackEnabled &&
+                isAuthenticated &&
+                message.role === 'assistant' &&
+                Boolean(question) &&
+                !(isWorking && messageIndex === messages.length - 1)
 
               if (!text) {
                 return null
@@ -98,6 +122,13 @@ export function CompareChat() {
                   key={message.id}
                 >
                   <p className="whitespace-pre-wrap leading-7">{text}</p>
+                  {showFeedback ? (
+                    <CompareResponseFeedback
+                      answer={text}
+                      messageId={message.id}
+                      question={question}
+                    />
+                  ) : null}
                 </div>
               )
             })}

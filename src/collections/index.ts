@@ -6,6 +6,7 @@ import { Proposals } from './Proposals'
 import { PublicPositions } from './PublicPositions'
 import { Sources } from './Sources'
 import { Topics } from './Topics'
+import { ResponseFeedback } from '../features/feedback/collections/ResponseFeedback'
 
 export const collections = [
   Media,
@@ -16,4 +17,5 @@ export const collections = [
   Programs,
   Proposals,
   PublicPositions,
+  ResponseFeedback,
 ]
