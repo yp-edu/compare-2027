@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { useChat } from '@ai-sdk/react'
 import { LockKeyhole, SendHorizontal, Sparkles } from 'lucide-react'
+import { marked } from 'marked'
+import xss from 'xss'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +15,7 @@ import { useOnlineStatus } from '@/components/pwa/use-online-status'
 import { CompareResponseFeedback } from '@/features/feedback/components/compare-response-feedback'
 import { authClient } from '@/lib/auth-client'
 import { isLegalConsentCurrent } from '@/lib/legal'
+import { cn } from '@/lib/utils'
 
 const chatTransport = new DefaultChatTransport({ api: '/compare/chat' })
 
@@ -41,6 +44,66 @@ function getPreviousUserMessageText(messages: UIMessage[], messageIndex: number)
   return ''
 }
 
+type MarkdownMessageProps = {
+  isUser: boolean
+  text: string
+}
+
+function renderMarkdown(text: string) {
+  const html = marked.parse(text, { async: false, breaks: true, gfm: true }) as string
+
+  // User and model messages are rendered as HTML, so sanitize after Markdown parsing.
+  return xss(html)
+}
+
+function MarkdownMessage({ isUser, text }: MarkdownMessageProps) {
+  const html = renderMarkdown(text)
+
+  return (
+    <div
+      className={cn(
+        'break-words leading-7',
+        '[&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
+        '[&_a]:font-semibold [&_a]:underline [&_a]:underline-offset-4',
+        '[&_blockquote]:my-3 [&_blockquote]:border-l-4 [&_blockquote]:pl-4',
+        '[&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-[0.92em]',
+        '[&_h1]:mb-2 [&_h1]:text-xl [&_h1]:font-bold [&_h1]:leading-8',
+        '[&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:leading-8',
+        '[&_h3]:mb-2 [&_h3]:font-bold',
+        '[&_li]:pl-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:space-y-1 [&_ol]:pl-5',
+        '[&_p]:mb-3',
+        '[&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-xl [&_pre]:p-3 [&_pre]:text-sm [&_pre]:leading-6',
+        '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
+        '[&_table]:w-full [&_table]:border-collapse [&_table]:text-sm',
+        '[&_td]:border-t [&_td]:px-3 [&_td]:py-2 [&_td]:align-top',
+        '[&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold',
+        '[&_ul]:my-3 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5',
+        isUser
+          ? '[&_a]:text-primary-foreground [&_blockquote]:border-primary-foreground/40 [&_blockquote]:text-primary-foreground/90 [&_code]:bg-primary-foreground/15 [&_td]:border-primary-foreground/30 [&_th]:bg-primary-foreground/10 [&_th]:text-primary-foreground'
+          : '[&_a]:text-primary [&_blockquote]:border-primary/30 [&_blockquote]:text-muted-foreground [&_code]:bg-secondary [&_code]:text-secondary-foreground [&_td]:border-border/70 [&_th]:bg-secondary [&_th]:text-secondary-foreground',
+      )}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
+}
+
+function ThinkingIndicator() {
+  return (
+    <div
+      aria-live="polite"
+      className="flex max-w-2xl items-center gap-2 rounded-2xl border border-border bg-background/85 p-4 text-sm font-semibold text-muted-foreground"
+      role="status"
+    >
+      <span>Réflexion...</span>
+      <span className="flex gap-1" aria-hidden="true">
+        <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/70" />
+        <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/70 delay-150" />
+        <span className="size-1.5 animate-pulse rounded-full bg-muted-foreground/70 delay-300" />
+      </span>
+    </div>
+  )
+}
+
 type CompareChatProps = {
   feedbackEnabled?: boolean
 }
@@ -53,6 +116,10 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const isAuthenticated = Boolean(session?.user)
   const hasLegalConsent = isLegalConsentCurrent(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
+  const lastMessage = messages.at(-1)
+  const isAwaitingAssistantResponse =
+    isWorking &&
+    (!lastMessage || lastMessage.role !== 'assistant' || !getMessageText(lastMessage).trim())
   const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking || isOffline
 
   async function submitQuestion(question: string) {
@@ -144,7 +211,7 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                   }
                   key={message.id}
                 >
-                  <p className="whitespace-pre-wrap leading-7">{text}</p>
+                  <MarkdownMessage isUser={message.role === 'user'} text={text} />
                   {showFeedback ? (
                     <CompareResponseFeedback
                       answer={text}
@@ -155,6 +222,7 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                 </div>
               )
             })}
+            {isAwaitingAssistantResponse ? <ThinkingIndicator /> : null}
             {error ? (
               <p className="max-w-2xl rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
                 {error.message || 'La réponse n’a pas pu être générée.'}
