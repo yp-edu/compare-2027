@@ -1,14 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin, isAdminOrEditor, publishedOrAuthenticated } from '@/access'
+import { authenticatedReadPublished, isAdmin } from '@/access'
 
 export const Programs: CollectionConfig = {
   slug: 'programs',
   access: {
-    create: isAdminOrEditor,
+    create: isAdmin,
     delete: isAdmin,
-    read: publishedOrAuthenticated,
-    update: isAdminOrEditor,
+    read: authenticatedReadPublished,
+    update: isAdmin,
   },
   admin: {
     defaultColumns: ['title', 'actor', 'programDate', '_status'],

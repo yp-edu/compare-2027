@@ -91,7 +91,9 @@ async function upsertSource(
   })
 
   const data = {
+    fetchStatus: 'not_fetched' as const,
     language: 'fr',
+    platform: 'institution' as const,
     publisher: source.publisher || 'Commission nationale de contrôle de la campagne électorale',
     quote: source.quote,
     notes: source.notes,

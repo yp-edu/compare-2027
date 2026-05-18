@@ -1,8 +1,6 @@
-import type { Access, CollectionConfig } from 'payload'
+import type { CollectionConfig } from 'payload'
 
-import { isAdmin, isAdminOrEditor } from '@/access'
-
-const isAuthenticated: Access = ({ req }) => Boolean(req.user)
+import { isAdmin, isAdminOrEditor, isAuthenticated } from '@/access'
 
 export const ResponseFeedback: CollectionConfig = {
   slug: 'response-feedback',
