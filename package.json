@@ -80,14 +80,22 @@
     "vitest": "4.0.18"
   },
   "engines": {
-    "node": "^18.20.2 || >=20.9.0",
+    "node": "24",
     "pnpm": "^10"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp",
+      "bufferutil",
       "esbuild",
       "unrs-resolver"
-    ]
+    ],
+    "packageExtensions": {
+      "payload-auth@*": {
+        "dependencies": {
+          "zod": "^4.0.0"
+        }
+      }
+    }
   }
 }

@@ -4,6 +4,8 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+packageExtensionsChecksum: sha256-zpaJSJVANJI9He+ZhRUwaRNno+tW0tBqrteI3BnrkmM=
+
 importers:
   .:
     dependencies:
@@ -13255,6 +13257,7 @@ snapshots:
       svix: 1.84.1
       tailwind-merge: 3.4.0
       uncrypto: 0.1.3
+      zod: 4.4.3
     transitivePeerDependencies:
       - '@tanstack/react-start'
 
