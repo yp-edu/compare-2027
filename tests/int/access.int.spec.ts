@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { authenticatedReadPublished } from '@/access/authenticatedReadPublished'
 import { isAdminOrSelf } from '@/access/isAdminOrSelf'
 
 describe('isAdminOrSelf', () => {
@@ -19,5 +20,45 @@ describe('isAdminOrSelf', () => {
         equals: 'current-user-id',
       },
     })
+  })
+})
+
+describe('authenticatedReadPublished', () => {
+  it('rejects anonymous reads', () => {
+    const access = authenticatedReadPublished({
+      req: {},
+    } as unknown as Parameters<typeof authenticatedReadPublished>[0])
+
+    expect(access).toBe(false)
+  })
+
+  it('restricts authenticated non-admin users to published documents', () => {
+    const access = authenticatedReadPublished({
+      req: {
+        user: {
+          id: 'current-user-id',
+          role: 'user',
+        },
+      },
+    } as unknown as Parameters<typeof authenticatedReadPublished>[0])
+
+    expect(access).toEqual({
+      _status: {
+        equals: 'published',
+      },
+    })
+  })
+
+  it('allows admins to bypass the published query', () => {
+    const access = authenticatedReadPublished({
+      req: {
+        user: {
+          id: 'admin-user-id',
+          role: 'admin',
+        },
+      },
+    } as unknown as Parameters<typeof authenticatedReadPublished>[0])
+
+    expect(access).toBe(true)
   })
 })

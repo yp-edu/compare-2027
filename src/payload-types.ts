@@ -64,6 +64,7 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations
+    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations
   }
   blocks: {}
   collections: {
@@ -75,14 +76,21 @@ export interface Config {
     'admin-invitations': AdminInvitation
     media: Media
     sources: Source
+    'source-snapshots': SourceSnapshot
+    'source-documents': SourceDocument
+    'document-chunks': DocumentChunk
+    'ingestion-jobs': IngestionJob
     parties: Party
     candidates: Candidate
     topics: Topic
+    claims: Claim
+    'claim-evidence': ClaimEvidence
     programs: Program
     proposals: Proposal
     'public-positions': PublicPosition
     'response-feedback': ResponseFeedback
     search: Search
+    'payload-mcp-api-keys': PayloadMcpApiKey
     'payload-kv': PayloadKv
     'payload-locked-documents': PayloadLockedDocument
     'payload-preferences': PayloadPreference
@@ -103,14 +111,21 @@ export interface Config {
     'admin-invitations': AdminInvitationsSelect<false> | AdminInvitationsSelect<true>
     media: MediaSelect<false> | MediaSelect<true>
     sources: SourcesSelect<false> | SourcesSelect<true>
+    'source-snapshots': SourceSnapshotsSelect<false> | SourceSnapshotsSelect<true>
+    'source-documents': SourceDocumentsSelect<false> | SourceDocumentsSelect<true>
+    'document-chunks': DocumentChunksSelect<false> | DocumentChunksSelect<true>
+    'ingestion-jobs': IngestionJobsSelect<false> | IngestionJobsSelect<true>
     parties: PartiesSelect<false> | PartiesSelect<true>
     candidates: CandidatesSelect<false> | CandidatesSelect<true>
     topics: TopicsSelect<false> | TopicsSelect<true>
+    claims: ClaimsSelect<false> | ClaimsSelect<true>
+    'claim-evidence': ClaimEvidenceSelect<false> | ClaimEvidenceSelect<true>
     programs: ProgramsSelect<false> | ProgramsSelect<true>
     proposals: ProposalsSelect<false> | ProposalsSelect<true>
     'public-positions': PublicPositionsSelect<false> | PublicPositionsSelect<true>
     'response-feedback': ResponseFeedbackSelect<false> | ResponseFeedbackSelect<true>
     search: SearchSelect<false> | SearchSelect<true>
+    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
     'payload-locked-documents':
       | PayloadLockedDocumentsSelect<false>
@@ -132,13 +147,31 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget
   }
-  user: User
+  user: User | PayloadMcpApiKey
   jobs: {
     tasks: unknown
     workflows: unknown
   }
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string
+    password: string
+  }
+  login: {
+    email: string
+    password: string
+  }
+  registerFirstUser: {
+    email: string
+    password: string
+  }
+  unlock: {
+    email: string
+    password: string
+  }
+}
+export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
     email: string
     password: string
@@ -397,22 +430,171 @@ export interface Source {
     | 'article'
     | 'report'
     | 'other'
+  platform: 'party_site' | 'x' | 'assemblee' | 'datan' | 'press' | 'institution' | 'other'
   url?: string | null
+  canonicalUrl?: string | null
+  externalId?: string | null
   archivedUrl?: string | null
   file?: (number | null) | Media
   publisher?: string | null
   publishedAt?: string | null
   retrievedAt?: string | null
+  lastFetchedAt?: string | null
+  contentHash?: string | null
+  fetchStatus: 'not_fetched' | 'fetched' | 'failed' | 'skipped'
+  fetchError?: string | null
   language?: string | null
   quote?: string | null
   /**
    * Internal notes about verification, context, or caveats.
    */
   notes?: string | null
+  rawMetadata?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
   verificationStatus: 'pending' | 'verified' | 'disputed' | 'archived'
   updatedAt: string
   createdAt: string
   _status?: ('draft' | 'published') | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "source-snapshots".
+ */
+export interface SourceSnapshot {
+  id: number
+  title: string
+  source: number | Source
+  url: string
+  canonicalUrl?: string | null
+  externalId?: string | null
+  contentHash?: string | null
+  fetchStatus: 'fetched' | 'failed' | 'skipped'
+  httpStatus?: number | null
+  contentType?: string | null
+  fetchedAt: string
+  /**
+   * Raw fetched text or serialized payload kept for audit and re-parsing.
+   */
+  rawContent?: string | null
+  metadata?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "source-documents".
+ */
+export interface SourceDocument {
+  id: number
+  title: string
+  source: number | Source
+  snapshot?: (number | null) | SourceSnapshot
+  parser: 'manual' | 'html' | 'pdf' | 'social_post' | 'vote_import' | 'other'
+  language: string
+  content: string
+  summary?: string | null
+  wordCount?: number | null
+  parsedAt: string
+  metadata?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "document-chunks".
+ */
+export interface DocumentChunk {
+  id: number
+  title: string
+  document: number | SourceDocument
+  source: number | Source
+  snapshot?: (number | null) | SourceSnapshot
+  chunkIndex: number
+  text: string
+  sectionTitle?: string | null
+  pageNumber?: number | null
+  charStart?: number | null
+  charEnd?: number | null
+  tokenCount?: number | null
+  embeddingStatus: 'pending' | 'embedded' | 'failed' | 'skipped'
+  embeddingModel?: string | null
+  /**
+   * Temporary JSON storage until a dedicated vector index is introduced.
+   */
+  embedding?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  metadata?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingestion-jobs".
+ */
+export interface IngestionJob {
+  id: number
+  title: string
+  jobType: 'url' | 'document' | 'social_post' | 'vote_import' | 'scheduled_crawl'
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+  inputUrl: string
+  source?: (number | null) | Source
+  submittedBy?: (number | null) | User
+  attempts: number
+  priority: number
+  lastRunAt?: string | null
+  completedAt?: string | null
+  errorMessage?: string | null
+  metadata?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -468,6 +650,105 @@ export interface Topic {
   parent?: (number | null) | Topic
   order?: number | null
   color?: string | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "claims".
+ */
+export interface Claim {
+  id: number
+  title: string
+  claimText: string
+  actor:
+    | {
+        relationTo: 'candidates'
+        value: number | Candidate
+      }
+    | {
+        relationTo: 'parties'
+        value: number | Party
+      }
+  topics: (number | Topic)[]
+  primarySource: number | Source
+  sourceSnapshot?: (number | null) | SourceSnapshot
+  sourceDocument?: (number | null) | SourceDocument
+  claimType:
+    | 'program'
+    | 'public_position'
+    | 'vote'
+    | 'promise'
+    | 'factual_record'
+    | 'biography'
+    | 'criticism'
+    | 'other'
+  stance:
+    | 'proposes'
+    | 'supports'
+    | 'opposes'
+    | 'mixed'
+    | 'vote_for'
+    | 'vote_against'
+    | 'abstention'
+    | 'unclear'
+    | 'not_applicable'
+  /**
+   * Primary quote used for quick review. Additional spans belong in claim evidence.
+   */
+  evidenceQuote?: string | null
+  positionDate?: string | null
+  validFrom?: string | null
+  validUntil?: string | null
+  retrievedAt?: string | null
+  reviewStatus: 'pending' | 'reviewed' | 'rejected' | 'disputed'
+  confidence?: number | null
+  extractionMethod: 'manual' | 'llm' | 'crawler' | 'import' | 'api'
+  lastVerifiedAt?: string | null
+  rawExtraction?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "claim-evidence".
+ */
+export interface ClaimEvidence {
+  id: number
+  title: string
+  claim: number | Claim
+  source: number | Source
+  snapshot?: (number | null) | SourceSnapshot
+  document?: (number | null) | SourceDocument
+  chunk?: (number | null) | DocumentChunk
+  quote: string
+  sourceUrl?: string | null
+  sectionTitle?: string | null
+  pageNumber?: number | null
+  charStart?: number | null
+  charEnd?: number | null
+  confidence?: number | null
+  reviewStatus: 'pending' | 'reviewed' | 'rejected' | 'disputed'
+  notes?: string | null
+  metadata?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
   updatedAt: string
   createdAt: string
   _status?: ('draft' | 'published') | null
@@ -602,6 +883,22 @@ export interface Search {
         value: number | Topic
       }
     | {
+        relationTo: 'source-documents'
+        value: number | SourceDocument
+      }
+    | {
+        relationTo: 'document-chunks'
+        value: number | DocumentChunk
+      }
+    | {
+        relationTo: 'claims'
+        value: number | Claim
+      }
+    | {
+        relationTo: 'claim-evidence'
+        value: number | ClaimEvidence
+      }
+    | {
         relationTo: 'programs'
         value: number | Program
       }
@@ -617,6 +914,99 @@ export interface Search {
   excerpt?: string | null
   updatedAt: string
   createdAt: string
+}
+/**
+ * API keys control which collections, resources, tools, and prompts MCP clients can access
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys".
+ */
+export interface PayloadMcpApiKey {
+  id: number
+  /**
+   * The user that the API key is associated with.
+   */
+  user: number | User
+  /**
+   * A useful label for the API key.
+   */
+  label?: string | null
+  /**
+   * The purpose of the API key.
+   */
+  description?: string | null
+  candidates?: {
+    /**
+     * Allow clients to find candidates.
+     */
+    find?: boolean | null
+  }
+  claimEvidence?: {
+    /**
+     * Allow clients to find claim-evidence.
+     */
+    find?: boolean | null
+  }
+  claims?: {
+    /**
+     * Allow clients to find claims.
+     */
+    find?: boolean | null
+  }
+  documentChunks?: {
+    /**
+     * Allow clients to find document-chunks.
+     */
+    find?: boolean | null
+  }
+  parties?: {
+    /**
+     * Allow clients to find parties.
+     */
+    find?: boolean | null
+  }
+  programs?: {
+    /**
+     * Allow clients to find programs.
+     */
+    find?: boolean | null
+  }
+  proposals?: {
+    /**
+     * Allow clients to find proposals.
+     */
+    find?: boolean | null
+  }
+  publicPositions?: {
+    /**
+     * Allow clients to find public-positions.
+     */
+    find?: boolean | null
+  }
+  sourceDocuments?: {
+    /**
+     * Allow clients to find source-documents.
+     */
+    find?: boolean | null
+  }
+  sources?: {
+    /**
+     * Allow clients to find sources.
+     */
+    find?: boolean | null
+  }
+  topics?: {
+    /**
+     * Allow clients to find topics.
+     */
+    find?: boolean | null
+  }
+  updatedAt: string
+  createdAt: string
+  enableAPIKey?: boolean | null
+  apiKey?: string | null
+  apiKeyIndex?: string | null
+  collection: 'payload-mcp-api-keys'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -675,6 +1065,22 @@ export interface PayloadLockedDocument {
         value: number | Source
       } | null)
     | ({
+        relationTo: 'source-snapshots'
+        value: number | SourceSnapshot
+      } | null)
+    | ({
+        relationTo: 'source-documents'
+        value: number | SourceDocument
+      } | null)
+    | ({
+        relationTo: 'document-chunks'
+        value: number | DocumentChunk
+      } | null)
+    | ({
+        relationTo: 'ingestion-jobs'
+        value: number | IngestionJob
+      } | null)
+    | ({
         relationTo: 'parties'
         value: number | Party
       } | null)
@@ -685,6 +1091,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'topics'
         value: number | Topic
+      } | null)
+    | ({
+        relationTo: 'claims'
+        value: number | Claim
+      } | null)
+    | ({
+        relationTo: 'claim-evidence'
+        value: number | ClaimEvidence
       } | null)
     | ({
         relationTo: 'programs'
@@ -706,11 +1120,20 @@ export interface PayloadLockedDocument {
         relationTo: 'search'
         value: number | Search
       } | null)
+    | ({
+        relationTo: 'payload-mcp-api-keys'
+        value: number | PayloadMcpApiKey
+      } | null)
   globalSlug?: string | null
-  user: {
-    relationTo: 'users'
-    value: number | User
-  }
+  user:
+    | {
+        relationTo: 'users'
+        value: number | User
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys'
+        value: number | PayloadMcpApiKey
+      }
   updatedAt: string
   createdAt: string
 }
@@ -720,10 +1143,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number
-  user: {
-    relationTo: 'users'
-    value: number | User
-  }
+  user:
+    | {
+        relationTo: 'users'
+        value: number | User
+      }
+    | {
+        relationTo: 'payload-mcp-api-keys'
+        value: number | PayloadMcpApiKey
+      }
   key?: string | null
   value?:
     | {
@@ -863,19 +1291,110 @@ export interface MediaSelect<T extends boolean = true> {
 export interface SourcesSelect<T extends boolean = true> {
   title?: T
   type?: T
+  platform?: T
   url?: T
+  canonicalUrl?: T
+  externalId?: T
   archivedUrl?: T
   file?: T
   publisher?: T
   publishedAt?: T
   retrievedAt?: T
+  lastFetchedAt?: T
+  contentHash?: T
+  fetchStatus?: T
+  fetchError?: T
   language?: T
   quote?: T
   notes?: T
+  rawMetadata?: T
   verificationStatus?: T
   updatedAt?: T
   createdAt?: T
   _status?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "source-snapshots_select".
+ */
+export interface SourceSnapshotsSelect<T extends boolean = true> {
+  title?: T
+  source?: T
+  url?: T
+  canonicalUrl?: T
+  externalId?: T
+  contentHash?: T
+  fetchStatus?: T
+  httpStatus?: T
+  contentType?: T
+  fetchedAt?: T
+  rawContent?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "source-documents_select".
+ */
+export interface SourceDocumentsSelect<T extends boolean = true> {
+  title?: T
+  source?: T
+  snapshot?: T
+  parser?: T
+  language?: T
+  content?: T
+  summary?: T
+  wordCount?: T
+  parsedAt?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "document-chunks_select".
+ */
+export interface DocumentChunksSelect<T extends boolean = true> {
+  title?: T
+  document?: T
+  source?: T
+  snapshot?: T
+  chunkIndex?: T
+  text?: T
+  sectionTitle?: T
+  pageNumber?: T
+  charStart?: T
+  charEnd?: T
+  tokenCount?: T
+  embeddingStatus?: T
+  embeddingModel?: T
+  embedding?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ingestion-jobs_select".
+ */
+export interface IngestionJobsSelect<T extends boolean = true> {
+  title?: T
+  jobType?: T
+  status?: T
+  inputUrl?: T
+  source?: T
+  submittedBy?: T
+  attempts?: T
+  priority?: T
+  lastRunAt?: T
+  completedAt?: T
+  errorMessage?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -925,6 +1444,59 @@ export interface TopicsSelect<T extends boolean = true> {
   parent?: T
   order?: T
   color?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "claims_select".
+ */
+export interface ClaimsSelect<T extends boolean = true> {
+  title?: T
+  claimText?: T
+  actor?: T
+  topics?: T
+  primarySource?: T
+  sourceSnapshot?: T
+  sourceDocument?: T
+  claimType?: T
+  stance?: T
+  evidenceQuote?: T
+  positionDate?: T
+  validFrom?: T
+  validUntil?: T
+  retrievedAt?: T
+  reviewStatus?: T
+  confidence?: T
+  extractionMethod?: T
+  lastVerifiedAt?: T
+  rawExtraction?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "claim-evidence_select".
+ */
+export interface ClaimEvidenceSelect<T extends boolean = true> {
+  title?: T
+  claim?: T
+  source?: T
+  snapshot?: T
+  document?: T
+  chunk?: T
+  quote?: T
+  sourceUrl?: T
+  sectionTitle?: T
+  pageNumber?: T
+  charStart?: T
+  charEnd?: T
+  confidence?: T
+  reviewStatus?: T
+  notes?: T
+  metadata?: T
   updatedAt?: T
   createdAt?: T
   _status?: T
@@ -1009,6 +1581,75 @@ export interface SearchSelect<T extends boolean = true> {
   excerpt?: T
   updatedAt?: T
   createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-mcp-api-keys_select".
+ */
+export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
+  user?: T
+  label?: T
+  description?: T
+  candidates?:
+    | T
+    | {
+        find?: T
+      }
+  claimEvidence?:
+    | T
+    | {
+        find?: T
+      }
+  claims?:
+    | T
+    | {
+        find?: T
+      }
+  documentChunks?:
+    | T
+    | {
+        find?: T
+      }
+  parties?:
+    | T
+    | {
+        find?: T
+      }
+  programs?:
+    | T
+    | {
+        find?: T
+      }
+  proposals?:
+    | T
+    | {
+        find?: T
+      }
+  publicPositions?:
+    | T
+    | {
+        find?: T
+      }
+  sourceDocuments?:
+    | T
+    | {
+        find?: T
+      }
+  sources?:
+    | T
+    | {
+        find?: T
+      }
+  topics?:
+    | T
+    | {
+        find?: T
+      }
+  updatedAt?: T
+  createdAt?: T
+  enableAPIKey?: T
+  apiKey?: T
+  apiKeyIndex?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

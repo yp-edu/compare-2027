@@ -1,14 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { hasRole, isAdmin, isAdminOrEditor, publishedOrAuthenticated } from '@/access'
+import { authenticatedReadPublished, isAdmin, isAdminField } from '@/access'
 
 export const Sources: CollectionConfig = {
   slug: 'sources',
   access: {
-    create: isAdminOrEditor,
+    create: isAdmin,
     delete: isAdmin,
-    read: publishedOrAuthenticated,
-    update: isAdminOrEditor,
+    read: authenticatedReadPublished,
+    update: isAdmin,
   },
   admin: {
     defaultColumns: ['title', 'type', 'publisher', 'publishedAt', 'verificationStatus'],
@@ -38,8 +38,34 @@ export const Sources: CollectionConfig = {
       required: true,
     },
     {
+      name: 'platform',
+      type: 'select',
+      defaultValue: 'other',
+      options: [
+        { label: 'Party or candidate site', value: 'party_site' },
+        { label: 'X', value: 'x' },
+        { label: 'Assemblée nationale', value: 'assemblee' },
+        { label: 'Datan', value: 'datan' },
+        { label: 'Press', value: 'press' },
+        { label: 'Institution', value: 'institution' },
+        { label: 'Other', value: 'other' },
+      ],
+      required: true,
+    },
+    {
       name: 'url',
       type: 'text',
+      index: true,
+    },
+    {
+      name: 'canonicalUrl',
+      type: 'text',
+      index: true,
+    },
+    {
+      name: 'externalId',
+      type: 'text',
+      index: true,
     },
     {
       name: 'archivedUrl',
@@ -64,6 +90,34 @@ export const Sources: CollectionConfig = {
       type: 'date',
     },
     {
+      name: 'lastFetchedAt',
+      type: 'date',
+    },
+    {
+      name: 'contentHash',
+      type: 'text',
+      index: true,
+    },
+    {
+      name: 'fetchStatus',
+      type: 'select',
+      defaultValue: 'not_fetched',
+      options: [
+        { label: 'Not fetched', value: 'not_fetched' },
+        { label: 'Fetched', value: 'fetched' },
+        { label: 'Failed', value: 'failed' },
+        { label: 'Skipped', value: 'skipped' },
+      ],
+      required: true,
+    },
+    {
+      name: 'fetchError',
+      type: 'textarea',
+      access: {
+        read: isAdminField,
+      },
+    },
+    {
       name: 'language',
       type: 'text',
       defaultValue: 'fr',
@@ -76,10 +130,17 @@ export const Sources: CollectionConfig = {
       name: 'notes',
       type: 'textarea',
       access: {
-        read: ({ req }) => hasRole(req, ['admin', 'editor']),
+        read: isAdminField,
       },
       admin: {
         description: 'Internal notes about verification, context, or caveats.',
+      },
+    },
+    {
+      name: 'rawMetadata',
+      type: 'json',
+      access: {
+        read: isAdminField,
       },
     },
     {

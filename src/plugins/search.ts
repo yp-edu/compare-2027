@@ -5,6 +5,10 @@ const searchableCollections = [
   'parties',
   'candidates',
   'topics',
+  'source-documents',
+  'document-chunks',
+  'claims',
+  'claim-evidence',
   'programs',
   'proposals',
   'public-positions',
@@ -27,7 +31,7 @@ const getSearchTitle = (collectionSlug: string, doc: Record<string, unknown>) =>
 }
 
 const getSearchExcerpt = (doc: Record<string, unknown>) => {
-  for (const field of ['summary', 'description', 'bio', 'quote'] as const) {
+  for (const field of ['summary', 'description', 'bio', 'claimText', 'text', 'quote'] as const) {
     const value = doc[field]
 
     if (typeof value === 'string' && value.trim().length > 0) {
@@ -53,9 +57,13 @@ export const search = () =>
       candidates: 30,
       parties: 25,
       topics: 20,
+      claims: 18,
       proposals: 15,
+      'claim-evidence': 12,
+      'source-documents': 10,
       programs: 10,
       'public-positions': 10,
+      'document-chunks': 5,
     },
     searchOverrides: {
       admin: {

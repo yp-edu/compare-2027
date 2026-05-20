@@ -1,9 +1,14 @@
 import { randomUUID } from 'node:crypto'
+import path from 'node:path'
+import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 import { hashPassword } from 'better-auth/crypto'
-import type { BasePayload } from 'payload'
+import { getPayload, type BasePayload, type Payload } from 'payload'
 
 import type { User } from '@/payload-types'
+
+import config from '../payload.config'
 
 import {
   cnccepCandidatesSource,
@@ -86,7 +91,9 @@ async function upsertSource(
   })
 
   const data = {
+    fetchStatus: 'not_fetched' as const,
     language: 'fr',
+    platform: 'institution' as const,
     publisher: source.publisher || 'Commission nationale de contrôle de la campagne électorale',
     quote: source.quote,
     notes: source.notes,
@@ -347,4 +354,26 @@ export async function seed(payload: BasePayload) {
   await seedDemoContent(payload)
 
   return adminResult
+}
+
+async function runSeedScript() {
+  let payload: Payload | undefined
+
+  try {
+    const payloadConfig = await config
+    payload = await getPayload({ config: payloadConfig })
+
+    await seed(payload)
+  } finally {
+    await payload?.destroy()
+  }
+}
+
+const scriptPath = fileURLToPath(import.meta.url)
+
+if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
+  runSeedScript().catch((error: unknown) => {
+    console.error(error)
+    process.exitCode = 1
+  })
 }

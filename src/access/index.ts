@@ -1,4 +1,7 @@
+export { authenticatedReadPublished } from './authenticatedReadPublished'
 export { isAdmin } from './isAdmin'
+export { isAdminField } from './isAdminField'
+export { isAuthenticated } from './isAuthenticated'
 export { isAdminOrEditor } from './isAdminOrEditor'
 export { isAdminOrSelf } from './isAdminOrSelf'
 export { publishedOrAuthenticated } from './publishedOrAuthenticated'

@@ -18,8 +18,8 @@ import {
   boolean,
   timestamp,
   numeric,
-  type AnyPgColumn,
   jsonb,
+  type AnyPgColumn,
   pgEnum,
 } from '@payloadcms/db-vercel-postgres/drizzle/pg-core'
 import { sql, relations } from '@payloadcms/db-vercel-postgres/drizzle'
@@ -39,6 +39,21 @@ export const enum_sources_type = pgEnum('enum_sources_type', [
   'report',
   'other',
 ])
+export const enum_sources_platform = pgEnum('enum_sources_platform', [
+  'party_site',
+  'x',
+  'assemblee',
+  'datan',
+  'press',
+  'institution',
+  'other',
+])
+export const enum_sources_fetch_status = pgEnum('enum_sources_fetch_status', [
+  'not_fetched',
+  'fetched',
+  'failed',
+  'skipped',
+])
 export const enum_sources_verification_status = pgEnum('enum_sources_verification_status', [
   'pending',
   'verified',
@@ -56,6 +71,21 @@ export const enum__sources_v_version_type = pgEnum('enum__sources_v_version_type
   'report',
   'other',
 ])
+export const enum__sources_v_version_platform = pgEnum('enum__sources_v_version_platform', [
+  'party_site',
+  'x',
+  'assemblee',
+  'datan',
+  'press',
+  'institution',
+  'other',
+])
+export const enum__sources_v_version_fetch_status = pgEnum('enum__sources_v_version_fetch_status', [
+  'not_fetched',
+  'fetched',
+  'failed',
+  'skipped',
+])
 export const enum__sources_v_version_verification_status = pgEnum(
   'enum__sources_v_version_verification_status',
   ['pending', 'verified', 'disputed', 'archived'],
@@ -63,6 +93,61 @@ export const enum__sources_v_version_verification_status = pgEnum(
 export const enum__sources_v_version_status = pgEnum('enum__sources_v_version_status', [
   'draft',
   'published',
+])
+export const enum_source_snapshots_fetch_status = pgEnum('enum_source_snapshots_fetch_status', [
+  'fetched',
+  'failed',
+  'skipped',
+])
+export const enum_source_documents_parser = pgEnum('enum_source_documents_parser', [
+  'manual',
+  'html',
+  'pdf',
+  'social_post',
+  'vote_import',
+  'other',
+])
+export const enum_source_documents_status = pgEnum('enum_source_documents_status', [
+  'draft',
+  'published',
+])
+export const enum__source_documents_v_version_parser = pgEnum(
+  'enum__source_documents_v_version_parser',
+  ['manual', 'html', 'pdf', 'social_post', 'vote_import', 'other'],
+)
+export const enum__source_documents_v_version_status = pgEnum(
+  'enum__source_documents_v_version_status',
+  ['draft', 'published'],
+)
+export const enum_document_chunks_embedding_status = pgEnum(
+  'enum_document_chunks_embedding_status',
+  ['pending', 'embedded', 'failed', 'skipped'],
+)
+export const enum_document_chunks_status = pgEnum('enum_document_chunks_status', [
+  'draft',
+  'published',
+])
+export const enum__document_chunks_v_version_embedding_status = pgEnum(
+  'enum__document_chunks_v_version_embedding_status',
+  ['pending', 'embedded', 'failed', 'skipped'],
+)
+export const enum__document_chunks_v_version_status = pgEnum(
+  'enum__document_chunks_v_version_status',
+  ['draft', 'published'],
+)
+export const enum_ingestion_jobs_job_type = pgEnum('enum_ingestion_jobs_job_type', [
+  'url',
+  'document',
+  'social_post',
+  'vote_import',
+  'scheduled_crawl',
+])
+export const enum_ingestion_jobs_status = pgEnum('enum_ingestion_jobs_status', [
+  'queued',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
 ])
 export const enum_parties_status = pgEnum('enum_parties_status', ['draft', 'published'])
 export const enum__parties_v_version_status = pgEnum('enum__parties_v_version_status', [
@@ -90,6 +175,94 @@ export const enum__topics_v_version_status = pgEnum('enum__topics_v_version_stat
   'draft',
   'published',
 ])
+export const enum_claims_claim_type = pgEnum('enum_claims_claim_type', [
+  'program',
+  'public_position',
+  'vote',
+  'promise',
+  'factual_record',
+  'biography',
+  'criticism',
+  'other',
+])
+export const enum_claims_stance = pgEnum('enum_claims_stance', [
+  'proposes',
+  'supports',
+  'opposes',
+  'mixed',
+  'vote_for',
+  'vote_against',
+  'abstention',
+  'unclear',
+  'not_applicable',
+])
+export const enum_claims_review_status = pgEnum('enum_claims_review_status', [
+  'pending',
+  'reviewed',
+  'rejected',
+  'disputed',
+])
+export const enum_claims_extraction_method = pgEnum('enum_claims_extraction_method', [
+  'manual',
+  'llm',
+  'crawler',
+  'import',
+  'api',
+])
+export const enum_claims_status = pgEnum('enum_claims_status', ['draft', 'published'])
+export const enum__claims_v_version_claim_type = pgEnum('enum__claims_v_version_claim_type', [
+  'program',
+  'public_position',
+  'vote',
+  'promise',
+  'factual_record',
+  'biography',
+  'criticism',
+  'other',
+])
+export const enum__claims_v_version_stance = pgEnum('enum__claims_v_version_stance', [
+  'proposes',
+  'supports',
+  'opposes',
+  'mixed',
+  'vote_for',
+  'vote_against',
+  'abstention',
+  'unclear',
+  'not_applicable',
+])
+export const enum__claims_v_version_review_status = pgEnum('enum__claims_v_version_review_status', [
+  'pending',
+  'reviewed',
+  'rejected',
+  'disputed',
+])
+export const enum__claims_v_version_extraction_method = pgEnum(
+  'enum__claims_v_version_extraction_method',
+  ['manual', 'llm', 'crawler', 'import', 'api'],
+)
+export const enum__claims_v_version_status = pgEnum('enum__claims_v_version_status', [
+  'draft',
+  'published',
+])
+export const enum_claim_evidence_review_status = pgEnum('enum_claim_evidence_review_status', [
+  'pending',
+  'reviewed',
+  'rejected',
+  'disputed',
+])
+export const enum_claim_evidence_status = pgEnum('enum_claim_evidence_status', [
+  'draft',
+  'published',
+])
+export const enum__claim_evidence_v_version_review_status = pgEnum(
+  'enum__claim_evidence_v_version_review_status',
+  ['pending', 'reviewed', 'rejected', 'disputed'],
+)
+export const enum__claim_evidence_v_version_status = pgEnum(
+  'enum__claim_evidence_v_version_status',
+  ['draft', 'published'],
+)
 export const enum_programs_status = pgEnum('enum_programs_status', ['draft', 'published'])
 export const enum__programs_v_version_status = pgEnum('enum__programs_v_version_status', [
   'draft',
@@ -381,7 +554,10 @@ export const sources = pgTable(
     id: serial('id').primaryKey(),
     title: varchar('title'),
     type: enum_sources_type('type').default('other'),
+    platform: enum_sources_platform('platform').default('other'),
     url: varchar('url'),
+    canonicalUrl: varchar('canonical_url'),
+    externalId: varchar('external_id'),
     archivedUrl: varchar('archived_url'),
     file: integer('file_id').references(() => media.id, {
       onDelete: 'set null',
@@ -389,9 +565,18 @@ export const sources = pgTable(
     publisher: varchar('publisher'),
     publishedAt: timestamp('published_at', { mode: 'string', withTimezone: true, precision: 3 }),
     retrievedAt: timestamp('retrieved_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    lastFetchedAt: timestamp('last_fetched_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    contentHash: varchar('content_hash'),
+    fetchStatus: enum_sources_fetch_status('fetch_status').default('not_fetched'),
+    fetchError: varchar('fetch_error'),
     language: varchar('language').default('fr'),
     quote: varchar('quote'),
     notes: varchar('notes'),
+    rawMetadata: jsonb('raw_metadata'),
     verificationStatus: enum_sources_verification_status('verification_status').default('pending'),
     updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
       .defaultNow()
@@ -402,8 +587,12 @@ export const sources = pgTable(
     _status: enum_sources_status('_status').default('draft'),
   },
   (columns) => [
+    index('sources_url_idx').on(columns.url),
+    index('sources_canonical_url_idx').on(columns.canonicalUrl),
+    index('sources_external_id_idx').on(columns.externalId),
     index('sources_file_idx').on(columns.file),
     index('sources_published_at_idx').on(columns.publishedAt),
+    index('sources_content_hash_idx').on(columns.contentHash),
     index('sources_updated_at_idx').on(columns.updatedAt),
     index('sources_created_at_idx').on(columns.createdAt),
     index('sources__status_idx').on(columns._status),
@@ -419,7 +608,10 @@ export const _sources_v = pgTable(
     }),
     version_title: varchar('version_title'),
     version_type: enum__sources_v_version_type('version_type').default('other'),
+    version_platform: enum__sources_v_version_platform('version_platform').default('other'),
     version_url: varchar('version_url'),
+    version_canonicalUrl: varchar('version_canonical_url'),
+    version_externalId: varchar('version_external_id'),
     version_archivedUrl: varchar('version_archived_url'),
     version_file: integer('version_file_id').references(() => media.id, {
       onDelete: 'set null',
@@ -435,9 +627,19 @@ export const _sources_v = pgTable(
       withTimezone: true,
       precision: 3,
     }),
+    version_lastFetchedAt: timestamp('version_last_fetched_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_contentHash: varchar('version_content_hash'),
+    version_fetchStatus:
+      enum__sources_v_version_fetch_status('version_fetch_status').default('not_fetched'),
+    version_fetchError: varchar('version_fetch_error'),
     version_language: varchar('version_language').default('fr'),
     version_quote: varchar('version_quote'),
     version_notes: varchar('version_notes'),
+    version_rawMetadata: jsonb('version_raw_metadata'),
     version_verificationStatus: enum__sources_v_version_verification_status(
       'version_verification_status',
     ).default('pending'),
@@ -462,14 +664,305 @@ export const _sources_v = pgTable(
   },
   (columns) => [
     index('_sources_v_parent_idx').on(columns.parent),
+    index('_sources_v_version_version_url_idx').on(columns.version_url),
+    index('_sources_v_version_version_canonical_url_idx').on(columns.version_canonicalUrl),
+    index('_sources_v_version_version_external_id_idx').on(columns.version_externalId),
     index('_sources_v_version_version_file_idx').on(columns.version_file),
     index('_sources_v_version_version_published_at_idx').on(columns.version_publishedAt),
+    index('_sources_v_version_version_content_hash_idx').on(columns.version_contentHash),
     index('_sources_v_version_version_updated_at_idx').on(columns.version_updatedAt),
     index('_sources_v_version_version_created_at_idx').on(columns.version_createdAt),
     index('_sources_v_version_version__status_idx').on(columns.version__status),
     index('_sources_v_created_at_idx').on(columns.createdAt),
     index('_sources_v_updated_at_idx').on(columns.updatedAt),
     index('_sources_v_latest_idx').on(columns.latest),
+  ],
+)
+
+export const source_snapshots = pgTable(
+  'source_snapshots',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title').notNull(),
+    source: integer('source_id')
+      .notNull()
+      .references(() => sources.id, {
+        onDelete: 'set null',
+      }),
+    url: varchar('url').notNull(),
+    canonicalUrl: varchar('canonical_url'),
+    externalId: varchar('external_id'),
+    contentHash: varchar('content_hash'),
+    fetchStatus: enum_source_snapshots_fetch_status('fetch_status').notNull().default('fetched'),
+    httpStatus: numeric('http_status', { mode: 'number' }),
+    contentType: varchar('content_type'),
+    fetchedAt: timestamp('fetched_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    rawContent: varchar('raw_content'),
+    metadata: jsonb('metadata'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('source_snapshots_source_idx').on(columns.source),
+    index('source_snapshots_canonical_url_idx').on(columns.canonicalUrl),
+    index('source_snapshots_external_id_idx').on(columns.externalId),
+    index('source_snapshots_content_hash_idx').on(columns.contentHash),
+    index('source_snapshots_fetch_status_idx').on(columns.fetchStatus),
+    index('source_snapshots_fetched_at_idx').on(columns.fetchedAt),
+    index('source_snapshots_updated_at_idx').on(columns.updatedAt),
+    index('source_snapshots_created_at_idx').on(columns.createdAt),
+  ],
+)
+
+export const source_documents = pgTable(
+  'source_documents',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title'),
+    source: integer('source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    snapshot: integer('snapshot_id').references(() => source_snapshots.id, {
+      onDelete: 'set null',
+    }),
+    parser: enum_source_documents_parser('parser').default('manual'),
+    language: varchar('language').default('fr'),
+    content: varchar('content'),
+    summary: varchar('summary'),
+    wordCount: numeric('word_count', { mode: 'number' }),
+    parsedAt: timestamp('parsed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    metadata: jsonb('metadata'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    _status: enum_source_documents_status('_status').default('draft'),
+  },
+  (columns) => [
+    index('source_documents_source_idx').on(columns.source),
+    index('source_documents_snapshot_idx').on(columns.snapshot),
+    index('source_documents_parsed_at_idx').on(columns.parsedAt),
+    index('source_documents_updated_at_idx').on(columns.updatedAt),
+    index('source_documents_created_at_idx').on(columns.createdAt),
+    index('source_documents__status_idx').on(columns._status),
+  ],
+)
+
+export const _source_documents_v = pgTable(
+  '_source_documents_v',
+  {
+    id: serial('id').primaryKey(),
+    parent: integer('parent_id').references(() => source_documents.id, {
+      onDelete: 'set null',
+    }),
+    version_title: varchar('version_title'),
+    version_source: integer('version_source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    version_snapshot: integer('version_snapshot_id').references(() => source_snapshots.id, {
+      onDelete: 'set null',
+    }),
+    version_parser: enum__source_documents_v_version_parser('version_parser').default('manual'),
+    version_language: varchar('version_language').default('fr'),
+    version_content: varchar('version_content'),
+    version_summary: varchar('version_summary'),
+    version_wordCount: numeric('version_word_count', { mode: 'number' }),
+    version_parsedAt: timestamp('version_parsed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_metadata: jsonb('version_metadata'),
+    version_updatedAt: timestamp('version_updated_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_createdAt: timestamp('version_created_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version__status: enum__source_documents_v_version_status('version__status').default('draft'),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    latest: boolean('latest'),
+  },
+  (columns) => [
+    index('_source_documents_v_parent_idx').on(columns.parent),
+    index('_source_documents_v_version_version_source_idx').on(columns.version_source),
+    index('_source_documents_v_version_version_snapshot_idx').on(columns.version_snapshot),
+    index('_source_documents_v_version_version_parsed_at_idx').on(columns.version_parsedAt),
+    index('_source_documents_v_version_version_updated_at_idx').on(columns.version_updatedAt),
+    index('_source_documents_v_version_version_created_at_idx').on(columns.version_createdAt),
+    index('_source_documents_v_version_version__status_idx').on(columns.version__status),
+    index('_source_documents_v_created_at_idx').on(columns.createdAt),
+    index('_source_documents_v_updated_at_idx').on(columns.updatedAt),
+    index('_source_documents_v_latest_idx').on(columns.latest),
+  ],
+)
+
+export const document_chunks = pgTable(
+  'document_chunks',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title'),
+    document: integer('document_id').references(() => source_documents.id, {
+      onDelete: 'set null',
+    }),
+    source: integer('source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    snapshot: integer('snapshot_id').references(() => source_snapshots.id, {
+      onDelete: 'set null',
+    }),
+    chunkIndex: numeric('chunk_index', { mode: 'number' }),
+    text: varchar('text'),
+    sectionTitle: varchar('section_title'),
+    pageNumber: numeric('page_number', { mode: 'number' }),
+    charStart: numeric('char_start', { mode: 'number' }),
+    charEnd: numeric('char_end', { mode: 'number' }),
+    tokenCount: numeric('token_count', { mode: 'number' }),
+    embeddingStatus: enum_document_chunks_embedding_status('embedding_status').default('pending'),
+    embeddingModel: varchar('embedding_model'),
+    embedding: jsonb('embedding'),
+    metadata: jsonb('metadata'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    _status: enum_document_chunks_status('_status').default('draft'),
+  },
+  (columns) => [
+    index('document_chunks_document_idx').on(columns.document),
+    index('document_chunks_source_idx').on(columns.source),
+    index('document_chunks_snapshot_idx').on(columns.snapshot),
+    index('document_chunks_chunk_index_idx').on(columns.chunkIndex),
+    index('document_chunks_embedding_status_idx').on(columns.embeddingStatus),
+    index('document_chunks_updated_at_idx').on(columns.updatedAt),
+    index('document_chunks_created_at_idx').on(columns.createdAt),
+    index('document_chunks__status_idx').on(columns._status),
+  ],
+)
+
+export const _document_chunks_v = pgTable(
+  '_document_chunks_v',
+  {
+    id: serial('id').primaryKey(),
+    parent: integer('parent_id').references(() => document_chunks.id, {
+      onDelete: 'set null',
+    }),
+    version_title: varchar('version_title'),
+    version_document: integer('version_document_id').references(() => source_documents.id, {
+      onDelete: 'set null',
+    }),
+    version_source: integer('version_source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    version_snapshot: integer('version_snapshot_id').references(() => source_snapshots.id, {
+      onDelete: 'set null',
+    }),
+    version_chunkIndex: numeric('version_chunk_index', { mode: 'number' }),
+    version_text: varchar('version_text'),
+    version_sectionTitle: varchar('version_section_title'),
+    version_pageNumber: numeric('version_page_number', { mode: 'number' }),
+    version_charStart: numeric('version_char_start', { mode: 'number' }),
+    version_charEnd: numeric('version_char_end', { mode: 'number' }),
+    version_tokenCount: numeric('version_token_count', { mode: 'number' }),
+    version_embeddingStatus: enum__document_chunks_v_version_embedding_status(
+      'version_embedding_status',
+    ).default('pending'),
+    version_embeddingModel: varchar('version_embedding_model'),
+    version_embedding: jsonb('version_embedding'),
+    version_metadata: jsonb('version_metadata'),
+    version_updatedAt: timestamp('version_updated_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_createdAt: timestamp('version_created_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version__status: enum__document_chunks_v_version_status('version__status').default('draft'),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    latest: boolean('latest'),
+  },
+  (columns) => [
+    index('_document_chunks_v_parent_idx').on(columns.parent),
+    index('_document_chunks_v_version_version_document_idx').on(columns.version_document),
+    index('_document_chunks_v_version_version_source_idx').on(columns.version_source),
+    index('_document_chunks_v_version_version_snapshot_idx').on(columns.version_snapshot),
+    index('_document_chunks_v_version_version_chunk_index_idx').on(columns.version_chunkIndex),
+    index('_document_chunks_v_version_version_embedding_status_idx').on(
+      columns.version_embeddingStatus,
+    ),
+    index('_document_chunks_v_version_version_updated_at_idx').on(columns.version_updatedAt),
+    index('_document_chunks_v_version_version_created_at_idx').on(columns.version_createdAt),
+    index('_document_chunks_v_version_version__status_idx').on(columns.version__status),
+    index('_document_chunks_v_created_at_idx').on(columns.createdAt),
+    index('_document_chunks_v_updated_at_idx').on(columns.updatedAt),
+    index('_document_chunks_v_latest_idx').on(columns.latest),
+  ],
+)
+
+export const ingestion_jobs = pgTable(
+  'ingestion_jobs',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title').notNull(),
+    jobType: enum_ingestion_jobs_job_type('job_type').notNull().default('url'),
+    status: enum_ingestion_jobs_status('status').notNull().default('queued'),
+    inputUrl: varchar('input_url').notNull(),
+    source: integer('source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    submittedBy: integer('submitted_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    attempts: numeric('attempts', { mode: 'number' }).notNull().default(0),
+    priority: numeric('priority', { mode: 'number' }).notNull().default(0),
+    lastRunAt: timestamp('last_run_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    completedAt: timestamp('completed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    errorMessage: varchar('error_message'),
+    metadata: jsonb('metadata'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('ingestion_jobs_status_idx').on(columns.status),
+    index('ingestion_jobs_input_url_idx').on(columns.inputUrl),
+    index('ingestion_jobs_source_idx').on(columns.source),
+    index('ingestion_jobs_submitted_by_idx').on(columns.submittedBy),
+    index('ingestion_jobs_priority_idx').on(columns.priority),
+    index('ingestion_jobs_updated_at_idx').on(columns.updatedAt),
+    index('ingestion_jobs_created_at_idx').on(columns.createdAt),
   ],
 )
 
@@ -828,6 +1321,358 @@ export const _topics_v = pgTable(
     index('_topics_v_created_at_idx').on(columns.createdAt),
     index('_topics_v_updated_at_idx').on(columns.updatedAt),
     index('_topics_v_latest_idx').on(columns.latest),
+  ],
+)
+
+export const claims = pgTable(
+  'claims',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title'),
+    claimText: varchar('claim_text'),
+    primarySource: integer('primary_source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    sourceSnapshot: integer('source_snapshot_id').references(() => source_snapshots.id, {
+      onDelete: 'set null',
+    }),
+    sourceDocument: integer('source_document_id').references(() => source_documents.id, {
+      onDelete: 'set null',
+    }),
+    claimType: enum_claims_claim_type('claim_type').default('other'),
+    stance: enum_claims_stance('stance').default('unclear'),
+    evidenceQuote: varchar('evidence_quote'),
+    positionDate: timestamp('position_date', { mode: 'string', withTimezone: true, precision: 3 }),
+    validFrom: timestamp('valid_from', { mode: 'string', withTimezone: true, precision: 3 }),
+    validUntil: timestamp('valid_until', { mode: 'string', withTimezone: true, precision: 3 }),
+    retrievedAt: timestamp('retrieved_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    reviewStatus: enum_claims_review_status('review_status').default('pending'),
+    confidence: numeric('confidence', { mode: 'number' }),
+    extractionMethod: enum_claims_extraction_method('extraction_method').default('manual'),
+    lastVerifiedAt: timestamp('last_verified_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    rawExtraction: jsonb('raw_extraction'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    _status: enum_claims_status('_status').default('draft'),
+  },
+  (columns) => [
+    index('claims_primary_source_idx').on(columns.primarySource),
+    index('claims_source_snapshot_idx').on(columns.sourceSnapshot),
+    index('claims_source_document_idx').on(columns.sourceDocument),
+    index('claims_claim_type_idx').on(columns.claimType),
+    index('claims_stance_idx').on(columns.stance),
+    index('claims_position_date_idx').on(columns.positionDate),
+    index('claims_review_status_idx').on(columns.reviewStatus),
+    index('claims_updated_at_idx').on(columns.updatedAt),
+    index('claims_created_at_idx').on(columns.createdAt),
+    index('claims__status_idx').on(columns._status),
+  ],
+)
+
+export const claims_rels = pgTable(
+  'claims_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    candidatesID: integer('candidates_id'),
+    partiesID: integer('parties_id'),
+    topicsID: integer('topics_id'),
+  },
+  (columns) => [
+    index('claims_rels_order_idx').on(columns.order),
+    index('claims_rels_parent_idx').on(columns.parent),
+    index('claims_rels_path_idx').on(columns.path),
+    index('claims_rels_candidates_id_idx').on(columns.candidatesID),
+    index('claims_rels_parties_id_idx').on(columns.partiesID),
+    index('claims_rels_topics_id_idx').on(columns.topicsID),
+    foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [claims.id],
+      name: 'claims_rels_parent_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['candidatesID']],
+      foreignColumns: [candidates.id],
+      name: 'claims_rels_candidates_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['partiesID']],
+      foreignColumns: [parties.id],
+      name: 'claims_rels_parties_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['topicsID']],
+      foreignColumns: [topics.id],
+      name: 'claims_rels_topics_fk',
+    }).onDelete('cascade'),
+  ],
+)
+
+export const _claims_v = pgTable(
+  '_claims_v',
+  {
+    id: serial('id').primaryKey(),
+    parent: integer('parent_id').references(() => claims.id, {
+      onDelete: 'set null',
+    }),
+    version_title: varchar('version_title'),
+    version_claimText: varchar('version_claim_text'),
+    version_primarySource: integer('version_primary_source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    version_sourceSnapshot: integer('version_source_snapshot_id').references(
+      () => source_snapshots.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
+    version_sourceDocument: integer('version_source_document_id').references(
+      () => source_documents.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
+    version_claimType: enum__claims_v_version_claim_type('version_claim_type').default('other'),
+    version_stance: enum__claims_v_version_stance('version_stance').default('unclear'),
+    version_evidenceQuote: varchar('version_evidence_quote'),
+    version_positionDate: timestamp('version_position_date', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_validFrom: timestamp('version_valid_from', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_validUntil: timestamp('version_valid_until', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_retrievedAt: timestamp('version_retrieved_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_reviewStatus:
+      enum__claims_v_version_review_status('version_review_status').default('pending'),
+    version_confidence: numeric('version_confidence', { mode: 'number' }),
+    version_extractionMethod: enum__claims_v_version_extraction_method(
+      'version_extraction_method',
+    ).default('manual'),
+    version_lastVerifiedAt: timestamp('version_last_verified_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_rawExtraction: jsonb('version_raw_extraction'),
+    version_updatedAt: timestamp('version_updated_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_createdAt: timestamp('version_created_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version__status: enum__claims_v_version_status('version__status').default('draft'),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    latest: boolean('latest'),
+  },
+  (columns) => [
+    index('_claims_v_parent_idx').on(columns.parent),
+    index('_claims_v_version_version_primary_source_idx').on(columns.version_primarySource),
+    index('_claims_v_version_version_source_snapshot_idx').on(columns.version_sourceSnapshot),
+    index('_claims_v_version_version_source_document_idx').on(columns.version_sourceDocument),
+    index('_claims_v_version_version_claim_type_idx').on(columns.version_claimType),
+    index('_claims_v_version_version_stance_idx').on(columns.version_stance),
+    index('_claims_v_version_version_position_date_idx').on(columns.version_positionDate),
+    index('_claims_v_version_version_review_status_idx').on(columns.version_reviewStatus),
+    index('_claims_v_version_version_updated_at_idx').on(columns.version_updatedAt),
+    index('_claims_v_version_version_created_at_idx').on(columns.version_createdAt),
+    index('_claims_v_version_version__status_idx').on(columns.version__status),
+    index('_claims_v_created_at_idx').on(columns.createdAt),
+    index('_claims_v_updated_at_idx').on(columns.updatedAt),
+    index('_claims_v_latest_idx').on(columns.latest),
+  ],
+)
+
+export const _claims_v_rels = pgTable(
+  '_claims_v_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    candidatesID: integer('candidates_id'),
+    partiesID: integer('parties_id'),
+    topicsID: integer('topics_id'),
+  },
+  (columns) => [
+    index('_claims_v_rels_order_idx').on(columns.order),
+    index('_claims_v_rels_parent_idx').on(columns.parent),
+    index('_claims_v_rels_path_idx').on(columns.path),
+    index('_claims_v_rels_candidates_id_idx').on(columns.candidatesID),
+    index('_claims_v_rels_parties_id_idx').on(columns.partiesID),
+    index('_claims_v_rels_topics_id_idx').on(columns.topicsID),
+    foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [_claims_v.id],
+      name: '_claims_v_rels_parent_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['candidatesID']],
+      foreignColumns: [candidates.id],
+      name: '_claims_v_rels_candidates_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['partiesID']],
+      foreignColumns: [parties.id],
+      name: '_claims_v_rels_parties_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['topicsID']],
+      foreignColumns: [topics.id],
+      name: '_claims_v_rels_topics_fk',
+    }).onDelete('cascade'),
+  ],
+)
+
+export const claim_evidence = pgTable(
+  'claim_evidence',
+  {
+    id: serial('id').primaryKey(),
+    title: varchar('title'),
+    claim: integer('claim_id').references(() => claims.id, {
+      onDelete: 'set null',
+    }),
+    source: integer('source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    snapshot: integer('snapshot_id').references(() => source_snapshots.id, {
+      onDelete: 'set null',
+    }),
+    document: integer('document_id').references(() => source_documents.id, {
+      onDelete: 'set null',
+    }),
+    chunk: integer('chunk_id').references(() => document_chunks.id, {
+      onDelete: 'set null',
+    }),
+    quote: varchar('quote'),
+    sourceUrl: varchar('source_url'),
+    sectionTitle: varchar('section_title'),
+    pageNumber: numeric('page_number', { mode: 'number' }),
+    charStart: numeric('char_start', { mode: 'number' }),
+    charEnd: numeric('char_end', { mode: 'number' }),
+    confidence: numeric('confidence', { mode: 'number' }),
+    reviewStatus: enum_claim_evidence_review_status('review_status').default('pending'),
+    notes: varchar('notes'),
+    metadata: jsonb('metadata'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    _status: enum_claim_evidence_status('_status').default('draft'),
+  },
+  (columns) => [
+    index('claim_evidence_claim_idx').on(columns.claim),
+    index('claim_evidence_source_idx').on(columns.source),
+    index('claim_evidence_snapshot_idx').on(columns.snapshot),
+    index('claim_evidence_document_idx').on(columns.document),
+    index('claim_evidence_chunk_idx').on(columns.chunk),
+    index('claim_evidence_review_status_idx').on(columns.reviewStatus),
+    index('claim_evidence_updated_at_idx').on(columns.updatedAt),
+    index('claim_evidence_created_at_idx').on(columns.createdAt),
+    index('claim_evidence__status_idx').on(columns._status),
+  ],
+)
+
+export const _claim_evidence_v = pgTable(
+  '_claim_evidence_v',
+  {
+    id: serial('id').primaryKey(),
+    parent: integer('parent_id').references(() => claim_evidence.id, {
+      onDelete: 'set null',
+    }),
+    version_title: varchar('version_title'),
+    version_claim: integer('version_claim_id').references(() => claims.id, {
+      onDelete: 'set null',
+    }),
+    version_source: integer('version_source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    version_snapshot: integer('version_snapshot_id').references(() => source_snapshots.id, {
+      onDelete: 'set null',
+    }),
+    version_document: integer('version_document_id').references(() => source_documents.id, {
+      onDelete: 'set null',
+    }),
+    version_chunk: integer('version_chunk_id').references(() => document_chunks.id, {
+      onDelete: 'set null',
+    }),
+    version_quote: varchar('version_quote'),
+    version_sourceUrl: varchar('version_source_url'),
+    version_sectionTitle: varchar('version_section_title'),
+    version_pageNumber: numeric('version_page_number', { mode: 'number' }),
+    version_charStart: numeric('version_char_start', { mode: 'number' }),
+    version_charEnd: numeric('version_char_end', { mode: 'number' }),
+    version_confidence: numeric('version_confidence', { mode: 'number' }),
+    version_reviewStatus:
+      enum__claim_evidence_v_version_review_status('version_review_status').default('pending'),
+    version_notes: varchar('version_notes'),
+    version_metadata: jsonb('version_metadata'),
+    version_updatedAt: timestamp('version_updated_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_createdAt: timestamp('version_created_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version__status: enum__claim_evidence_v_version_status('version__status').default('draft'),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    latest: boolean('latest'),
+  },
+  (columns) => [
+    index('_claim_evidence_v_parent_idx').on(columns.parent),
+    index('_claim_evidence_v_version_version_claim_idx').on(columns.version_claim),
+    index('_claim_evidence_v_version_version_source_idx').on(columns.version_source),
+    index('_claim_evidence_v_version_version_snapshot_idx').on(columns.version_snapshot),
+    index('_claim_evidence_v_version_version_document_idx').on(columns.version_document),
+    index('_claim_evidence_v_version_version_chunk_idx').on(columns.version_chunk),
+    index('_claim_evidence_v_version_version_review_status_idx').on(columns.version_reviewStatus),
+    index('_claim_evidence_v_version_version_updated_at_idx').on(columns.version_updatedAt),
+    index('_claim_evidence_v_version_version_created_at_idx').on(columns.version_createdAt),
+    index('_claim_evidence_v_version_version__status_idx').on(columns.version__status),
+    index('_claim_evidence_v_created_at_idx').on(columns.createdAt),
+    index('_claim_evidence_v_updated_at_idx').on(columns.updatedAt),
+    index('_claim_evidence_v_latest_idx').on(columns.latest),
   ],
 )
 
@@ -1400,6 +2245,10 @@ export const search_rels = pgTable(
     partiesID: integer('parties_id'),
     candidatesID: integer('candidates_id'),
     topicsID: integer('topics_id'),
+    'source-documentsID': integer('source_documents_id'),
+    'document-chunksID': integer('document_chunks_id'),
+    claimsID: integer('claims_id'),
+    'claim-evidenceID': integer('claim_evidence_id'),
     programsID: integer('programs_id'),
     proposalsID: integer('proposals_id'),
     'public-positionsID': integer('public_positions_id'),
@@ -1411,6 +2260,10 @@ export const search_rels = pgTable(
     index('search_rels_parties_id_idx').on(columns.partiesID),
     index('search_rels_candidates_id_idx').on(columns.candidatesID),
     index('search_rels_topics_id_idx').on(columns.topicsID),
+    index('search_rels_source_documents_id_idx').on(columns['source-documentsID']),
+    index('search_rels_document_chunks_id_idx').on(columns['document-chunksID']),
+    index('search_rels_claims_id_idx').on(columns.claimsID),
+    index('search_rels_claim_evidence_id_idx').on(columns['claim-evidenceID']),
     index('search_rels_programs_id_idx').on(columns.programsID),
     index('search_rels_proposals_id_idx').on(columns.proposalsID),
     index('search_rels_public_positions_id_idx').on(columns['public-positionsID']),
@@ -1435,6 +2288,26 @@ export const search_rels = pgTable(
       name: 'search_rels_topics_fk',
     }).onDelete('cascade'),
     foreignKey({
+      columns: [columns['source-documentsID']],
+      foreignColumns: [source_documents.id],
+      name: 'search_rels_source_documents_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['document-chunksID']],
+      foreignColumns: [document_chunks.id],
+      name: 'search_rels_document_chunks_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['claimsID']],
+      foreignColumns: [claims.id],
+      name: 'search_rels_claims_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['claim-evidenceID']],
+      foreignColumns: [claim_evidence.id],
+      name: 'search_rels_claim_evidence_fk',
+    }).onDelete('cascade'),
+    foreignKey({
       columns: [columns['programsID']],
       foreignColumns: [programs.id],
       name: 'search_rels_programs_fk',
@@ -1449,6 +2322,45 @@ export const search_rels = pgTable(
       foreignColumns: [public_positions.id],
       name: 'search_rels_public_positions_fk',
     }).onDelete('cascade'),
+  ],
+)
+
+export const payload_mcp_api_keys = pgTable(
+  'payload_mcp_api_keys',
+  {
+    id: serial('id').primaryKey(),
+    user: integer('user_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'set null',
+      }),
+    label: varchar('label'),
+    description: varchar('description'),
+    candidates_find: boolean('candidates_find').default(false),
+    claimEvidence_find: boolean('claim_evidence_find').default(false),
+    claims_find: boolean('claims_find').default(false),
+    documentChunks_find: boolean('document_chunks_find').default(false),
+    parties_find: boolean('parties_find').default(false),
+    programs_find: boolean('programs_find').default(false),
+    proposals_find: boolean('proposals_find').default(false),
+    publicPositions_find: boolean('public_positions_find').default(false),
+    sourceDocuments_find: boolean('source_documents_find').default(false),
+    sources_find: boolean('sources_find').default(false),
+    topics_find: boolean('topics_find').default(false),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    enableAPIKey: boolean('enable_a_p_i_key'),
+    apiKey: varchar('api_key'),
+    apiKeyIndex: varchar('api_key_index'),
+  },
+  (columns) => [
+    index('payload_mcp_api_keys_user_idx').on(columns.user),
+    index('payload_mcp_api_keys_updated_at_idx').on(columns.updatedAt),
+    index('payload_mcp_api_keys_created_at_idx').on(columns.createdAt),
   ],
 )
 
@@ -1496,14 +2408,21 @@ export const payload_locked_documents_rels = pgTable(
     'admin-invitationsID': integer('admin_invitations_id'),
     mediaID: integer('media_id'),
     sourcesID: integer('sources_id'),
+    'source-snapshotsID': integer('source_snapshots_id'),
+    'source-documentsID': integer('source_documents_id'),
+    'document-chunksID': integer('document_chunks_id'),
+    'ingestion-jobsID': integer('ingestion_jobs_id'),
     partiesID: integer('parties_id'),
     candidatesID: integer('candidates_id'),
     topicsID: integer('topics_id'),
+    claimsID: integer('claims_id'),
+    'claim-evidenceID': integer('claim_evidence_id'),
     programsID: integer('programs_id'),
     proposalsID: integer('proposals_id'),
     'public-positionsID': integer('public_positions_id'),
     'response-feedbackID': integer('response_feedback_id'),
     searchID: integer('search_id'),
+    'payload-mcp-api-keysID': integer('payload_mcp_api_keys_id'),
   },
   (columns) => [
     index('payload_locked_documents_rels_order_idx').on(columns.order),
@@ -1519,9 +2438,19 @@ export const payload_locked_documents_rels = pgTable(
     ),
     index('payload_locked_documents_rels_media_id_idx').on(columns.mediaID),
     index('payload_locked_documents_rels_sources_id_idx').on(columns.sourcesID),
+    index('payload_locked_documents_rels_source_snapshots_id_idx').on(
+      columns['source-snapshotsID'],
+    ),
+    index('payload_locked_documents_rels_source_documents_id_idx').on(
+      columns['source-documentsID'],
+    ),
+    index('payload_locked_documents_rels_document_chunks_id_idx').on(columns['document-chunksID']),
+    index('payload_locked_documents_rels_ingestion_jobs_id_idx').on(columns['ingestion-jobsID']),
     index('payload_locked_documents_rels_parties_id_idx').on(columns.partiesID),
     index('payload_locked_documents_rels_candidates_id_idx').on(columns.candidatesID),
     index('payload_locked_documents_rels_topics_id_idx').on(columns.topicsID),
+    index('payload_locked_documents_rels_claims_id_idx').on(columns.claimsID),
+    index('payload_locked_documents_rels_claim_evidence_id_idx').on(columns['claim-evidenceID']),
     index('payload_locked_documents_rels_programs_id_idx').on(columns.programsID),
     index('payload_locked_documents_rels_proposals_id_idx').on(columns.proposalsID),
     index('payload_locked_documents_rels_public_positions_id_idx').on(
@@ -1531,6 +2460,9 @@ export const payload_locked_documents_rels = pgTable(
       columns['response-feedbackID'],
     ),
     index('payload_locked_documents_rels_search_id_idx').on(columns.searchID),
+    index('payload_locked_documents_rels_payload_mcp_api_keys_id_idx').on(
+      columns['payload-mcp-api-keysID'],
+    ),
     foreignKey({
       columns: [columns['parent']],
       foreignColumns: [payload_locked_documents.id],
@@ -1577,6 +2509,26 @@ export const payload_locked_documents_rels = pgTable(
       name: 'payload_locked_documents_rels_sources_fk',
     }).onDelete('cascade'),
     foreignKey({
+      columns: [columns['source-snapshotsID']],
+      foreignColumns: [source_snapshots.id],
+      name: 'payload_locked_documents_rels_source_snapshots_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['source-documentsID']],
+      foreignColumns: [source_documents.id],
+      name: 'payload_locked_documents_rels_source_documents_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['document-chunksID']],
+      foreignColumns: [document_chunks.id],
+      name: 'payload_locked_documents_rels_document_chunks_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['ingestion-jobsID']],
+      foreignColumns: [ingestion_jobs.id],
+      name: 'payload_locked_documents_rels_ingestion_jobs_fk',
+    }).onDelete('cascade'),
+    foreignKey({
       columns: [columns['partiesID']],
       foreignColumns: [parties.id],
       name: 'payload_locked_documents_rels_parties_fk',
@@ -1590,6 +2542,16 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['topicsID']],
       foreignColumns: [topics.id],
       name: 'payload_locked_documents_rels_topics_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['claimsID']],
+      foreignColumns: [claims.id],
+      name: 'payload_locked_documents_rels_claims_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['claim-evidenceID']],
+      foreignColumns: [claim_evidence.id],
+      name: 'payload_locked_documents_rels_claim_evidence_fk',
     }).onDelete('cascade'),
     foreignKey({
       columns: [columns['programsID']],
@@ -1615,6 +2577,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['searchID']],
       foreignColumns: [search.id],
       name: 'payload_locked_documents_rels_search_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['payload-mcp-api-keysID']],
+      foreignColumns: [payload_mcp_api_keys.id],
+      name: 'payload_locked_documents_rels_payload_mcp_api_keys_fk',
     }).onDelete('cascade'),
   ],
 )
@@ -1647,12 +2614,16 @@ export const payload_preferences_rels = pgTable(
     parent: integer('parent_id').notNull(),
     path: varchar('path').notNull(),
     usersID: integer('users_id'),
+    'payload-mcp-api-keysID': integer('payload_mcp_api_keys_id'),
   },
   (columns) => [
     index('payload_preferences_rels_order_idx').on(columns.order),
     index('payload_preferences_rels_parent_idx').on(columns.parent),
     index('payload_preferences_rels_path_idx').on(columns.path),
     index('payload_preferences_rels_users_id_idx').on(columns.usersID),
+    index('payload_preferences_rels_payload_mcp_api_keys_id_idx').on(
+      columns['payload-mcp-api-keysID'],
+    ),
     foreignKey({
       columns: [columns['parent']],
       foreignColumns: [payload_preferences.id],
@@ -1662,6 +2633,11 @@ export const payload_preferences_rels = pgTable(
       columns: [columns['usersID']],
       foreignColumns: [users.id],
       name: 'payload_preferences_rels_users_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['payload-mcp-api-keysID']],
+      foreignColumns: [payload_mcp_api_keys.id],
+      name: 'payload_preferences_rels_payload_mcp_api_keys_fk',
     }).onDelete('cascade'),
   ],
 )
@@ -1750,6 +2726,93 @@ export const relations__sources_v = relations(_sources_v, ({ one }) => ({
     fields: [_sources_v.version_file],
     references: [media.id],
     relationName: 'version_file',
+  }),
+}))
+export const relations_source_snapshots = relations(source_snapshots, ({ one }) => ({
+  source: one(sources, {
+    fields: [source_snapshots.source],
+    references: [sources.id],
+    relationName: 'source',
+  }),
+}))
+export const relations_source_documents = relations(source_documents, ({ one }) => ({
+  source: one(sources, {
+    fields: [source_documents.source],
+    references: [sources.id],
+    relationName: 'source',
+  }),
+  snapshot: one(source_snapshots, {
+    fields: [source_documents.snapshot],
+    references: [source_snapshots.id],
+    relationName: 'snapshot',
+  }),
+}))
+export const relations__source_documents_v = relations(_source_documents_v, ({ one }) => ({
+  parent: one(source_documents, {
+    fields: [_source_documents_v.parent],
+    references: [source_documents.id],
+    relationName: 'parent',
+  }),
+  version_source: one(sources, {
+    fields: [_source_documents_v.version_source],
+    references: [sources.id],
+    relationName: 'version_source',
+  }),
+  version_snapshot: one(source_snapshots, {
+    fields: [_source_documents_v.version_snapshot],
+    references: [source_snapshots.id],
+    relationName: 'version_snapshot',
+  }),
+}))
+export const relations_document_chunks = relations(document_chunks, ({ one }) => ({
+  document: one(source_documents, {
+    fields: [document_chunks.document],
+    references: [source_documents.id],
+    relationName: 'document',
+  }),
+  source: one(sources, {
+    fields: [document_chunks.source],
+    references: [sources.id],
+    relationName: 'source',
+  }),
+  snapshot: one(source_snapshots, {
+    fields: [document_chunks.snapshot],
+    references: [source_snapshots.id],
+    relationName: 'snapshot',
+  }),
+}))
+export const relations__document_chunks_v = relations(_document_chunks_v, ({ one }) => ({
+  parent: one(document_chunks, {
+    fields: [_document_chunks_v.parent],
+    references: [document_chunks.id],
+    relationName: 'parent',
+  }),
+  version_document: one(source_documents, {
+    fields: [_document_chunks_v.version_document],
+    references: [source_documents.id],
+    relationName: 'version_document',
+  }),
+  version_source: one(sources, {
+    fields: [_document_chunks_v.version_source],
+    references: [sources.id],
+    relationName: 'version_source',
+  }),
+  version_snapshot: one(source_snapshots, {
+    fields: [_document_chunks_v.version_snapshot],
+    references: [source_snapshots.id],
+    relationName: 'version_snapshot',
+  }),
+}))
+export const relations_ingestion_jobs = relations(ingestion_jobs, ({ one }) => ({
+  source: one(sources, {
+    fields: [ingestion_jobs.source],
+    references: [sources.id],
+    relationName: 'source',
+  }),
+  submittedBy: one(users, {
+    fields: [ingestion_jobs.submittedBy],
+    references: [users.id],
+    relationName: 'submittedBy',
   }),
 }))
 export const relations_parties_rels = relations(parties_rels, ({ one }) => ({
@@ -1877,6 +2940,154 @@ export const relations__topics_v = relations(_topics_v, ({ one }) => ({
     fields: [_topics_v.version_parent],
     references: [topics.id],
     relationName: 'version_parent',
+  }),
+}))
+export const relations_claims_rels = relations(claims_rels, ({ one }) => ({
+  parent: one(claims, {
+    fields: [claims_rels.parent],
+    references: [claims.id],
+    relationName: '_rels',
+  }),
+  candidatesID: one(candidates, {
+    fields: [claims_rels.candidatesID],
+    references: [candidates.id],
+    relationName: 'candidates',
+  }),
+  partiesID: one(parties, {
+    fields: [claims_rels.partiesID],
+    references: [parties.id],
+    relationName: 'parties',
+  }),
+  topicsID: one(topics, {
+    fields: [claims_rels.topicsID],
+    references: [topics.id],
+    relationName: 'topics',
+  }),
+}))
+export const relations_claims = relations(claims, ({ one, many }) => ({
+  primarySource: one(sources, {
+    fields: [claims.primarySource],
+    references: [sources.id],
+    relationName: 'primarySource',
+  }),
+  sourceSnapshot: one(source_snapshots, {
+    fields: [claims.sourceSnapshot],
+    references: [source_snapshots.id],
+    relationName: 'sourceSnapshot',
+  }),
+  sourceDocument: one(source_documents, {
+    fields: [claims.sourceDocument],
+    references: [source_documents.id],
+    relationName: 'sourceDocument',
+  }),
+  _rels: many(claims_rels, {
+    relationName: '_rels',
+  }),
+}))
+export const relations__claims_v_rels = relations(_claims_v_rels, ({ one }) => ({
+  parent: one(_claims_v, {
+    fields: [_claims_v_rels.parent],
+    references: [_claims_v.id],
+    relationName: '_rels',
+  }),
+  candidatesID: one(candidates, {
+    fields: [_claims_v_rels.candidatesID],
+    references: [candidates.id],
+    relationName: 'candidates',
+  }),
+  partiesID: one(parties, {
+    fields: [_claims_v_rels.partiesID],
+    references: [parties.id],
+    relationName: 'parties',
+  }),
+  topicsID: one(topics, {
+    fields: [_claims_v_rels.topicsID],
+    references: [topics.id],
+    relationName: 'topics',
+  }),
+}))
+export const relations__claims_v = relations(_claims_v, ({ one, many }) => ({
+  parent: one(claims, {
+    fields: [_claims_v.parent],
+    references: [claims.id],
+    relationName: 'parent',
+  }),
+  version_primarySource: one(sources, {
+    fields: [_claims_v.version_primarySource],
+    references: [sources.id],
+    relationName: 'version_primarySource',
+  }),
+  version_sourceSnapshot: one(source_snapshots, {
+    fields: [_claims_v.version_sourceSnapshot],
+    references: [source_snapshots.id],
+    relationName: 'version_sourceSnapshot',
+  }),
+  version_sourceDocument: one(source_documents, {
+    fields: [_claims_v.version_sourceDocument],
+    references: [source_documents.id],
+    relationName: 'version_sourceDocument',
+  }),
+  _rels: many(_claims_v_rels, {
+    relationName: '_rels',
+  }),
+}))
+export const relations_claim_evidence = relations(claim_evidence, ({ one }) => ({
+  claim: one(claims, {
+    fields: [claim_evidence.claim],
+    references: [claims.id],
+    relationName: 'claim',
+  }),
+  source: one(sources, {
+    fields: [claim_evidence.source],
+    references: [sources.id],
+    relationName: 'source',
+  }),
+  snapshot: one(source_snapshots, {
+    fields: [claim_evidence.snapshot],
+    references: [source_snapshots.id],
+    relationName: 'snapshot',
+  }),
+  document: one(source_documents, {
+    fields: [claim_evidence.document],
+    references: [source_documents.id],
+    relationName: 'document',
+  }),
+  chunk: one(document_chunks, {
+    fields: [claim_evidence.chunk],
+    references: [document_chunks.id],
+    relationName: 'chunk',
+  }),
+}))
+export const relations__claim_evidence_v = relations(_claim_evidence_v, ({ one }) => ({
+  parent: one(claim_evidence, {
+    fields: [_claim_evidence_v.parent],
+    references: [claim_evidence.id],
+    relationName: 'parent',
+  }),
+  version_claim: one(claims, {
+    fields: [_claim_evidence_v.version_claim],
+    references: [claims.id],
+    relationName: 'version_claim',
+  }),
+  version_source: one(sources, {
+    fields: [_claim_evidence_v.version_source],
+    references: [sources.id],
+    relationName: 'version_source',
+  }),
+  version_snapshot: one(source_snapshots, {
+    fields: [_claim_evidence_v.version_snapshot],
+    references: [source_snapshots.id],
+    relationName: 'version_snapshot',
+  }),
+  version_document: one(source_documents, {
+    fields: [_claim_evidence_v.version_document],
+    references: [source_documents.id],
+    relationName: 'version_document',
+  }),
+  version_chunk: one(document_chunks, {
+    fields: [_claim_evidence_v.version_chunk],
+    references: [document_chunks.id],
+    relationName: 'version_chunk',
   }),
 }))
 export const relations_programs_rels = relations(programs_rels, ({ one }) => ({
@@ -2117,6 +3328,26 @@ export const relations_search_rels = relations(search_rels, ({ one }) => ({
     references: [topics.id],
     relationName: 'topics',
   }),
+  'source-documentsID': one(source_documents, {
+    fields: [search_rels['source-documentsID']],
+    references: [source_documents.id],
+    relationName: 'source-documents',
+  }),
+  'document-chunksID': one(document_chunks, {
+    fields: [search_rels['document-chunksID']],
+    references: [document_chunks.id],
+    relationName: 'document-chunks',
+  }),
+  claimsID: one(claims, {
+    fields: [search_rels.claimsID],
+    references: [claims.id],
+    relationName: 'claims',
+  }),
+  'claim-evidenceID': one(claim_evidence, {
+    fields: [search_rels['claim-evidenceID']],
+    references: [claim_evidence.id],
+    relationName: 'claim-evidence',
+  }),
   programsID: one(programs, {
     fields: [search_rels.programsID],
     references: [programs.id],
@@ -2136,6 +3367,13 @@ export const relations_search_rels = relations(search_rels, ({ one }) => ({
 export const relations_search = relations(search, ({ many }) => ({
   _rels: many(search_rels, {
     relationName: '_rels',
+  }),
+}))
+export const relations_payload_mcp_api_keys = relations(payload_mcp_api_keys, ({ one }) => ({
+  user: one(users, {
+    fields: [payload_mcp_api_keys.user],
+    references: [users.id],
+    relationName: 'user',
   }),
 }))
 export const relations_payload_kv = relations(payload_kv, () => ({}))
@@ -2187,6 +3425,26 @@ export const relations_payload_locked_documents_rels = relations(
       references: [sources.id],
       relationName: 'sources',
     }),
+    'source-snapshotsID': one(source_snapshots, {
+      fields: [payload_locked_documents_rels['source-snapshotsID']],
+      references: [source_snapshots.id],
+      relationName: 'source-snapshots',
+    }),
+    'source-documentsID': one(source_documents, {
+      fields: [payload_locked_documents_rels['source-documentsID']],
+      references: [source_documents.id],
+      relationName: 'source-documents',
+    }),
+    'document-chunksID': one(document_chunks, {
+      fields: [payload_locked_documents_rels['document-chunksID']],
+      references: [document_chunks.id],
+      relationName: 'document-chunks',
+    }),
+    'ingestion-jobsID': one(ingestion_jobs, {
+      fields: [payload_locked_documents_rels['ingestion-jobsID']],
+      references: [ingestion_jobs.id],
+      relationName: 'ingestion-jobs',
+    }),
     partiesID: one(parties, {
       fields: [payload_locked_documents_rels.partiesID],
       references: [parties.id],
@@ -2201,6 +3459,16 @@ export const relations_payload_locked_documents_rels = relations(
       fields: [payload_locked_documents_rels.topicsID],
       references: [topics.id],
       relationName: 'topics',
+    }),
+    claimsID: one(claims, {
+      fields: [payload_locked_documents_rels.claimsID],
+      references: [claims.id],
+      relationName: 'claims',
+    }),
+    'claim-evidenceID': one(claim_evidence, {
+      fields: [payload_locked_documents_rels['claim-evidenceID']],
+      references: [claim_evidence.id],
+      relationName: 'claim-evidence',
     }),
     programsID: one(programs, {
       fields: [payload_locked_documents_rels.programsID],
@@ -2227,6 +3495,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [search.id],
       relationName: 'search',
     }),
+    'payload-mcp-api-keysID': one(payload_mcp_api_keys, {
+      fields: [payload_locked_documents_rels['payload-mcp-api-keysID']],
+      references: [payload_mcp_api_keys.id],
+      relationName: 'payload-mcp-api-keys',
+    }),
   }),
 )
 export const relations_payload_locked_documents = relations(
@@ -2250,6 +3523,11 @@ export const relations_payload_preferences_rels = relations(
       references: [users.id],
       relationName: 'users',
     }),
+    'payload-mcp-api-keysID': one(payload_mcp_api_keys, {
+      fields: [payload_preferences_rels['payload-mcp-api-keysID']],
+      references: [payload_mcp_api_keys.id],
+      relationName: 'payload-mcp-api-keys',
+    }),
   }),
 )
 export const relations_payload_preferences = relations(payload_preferences, ({ many }) => ({
@@ -2264,11 +3542,26 @@ type DatabaseSchema = {
   enum_users_role: typeof enum_users_role
   enum_admin_invitations_role: typeof enum_admin_invitations_role
   enum_sources_type: typeof enum_sources_type
+  enum_sources_platform: typeof enum_sources_platform
+  enum_sources_fetch_status: typeof enum_sources_fetch_status
   enum_sources_verification_status: typeof enum_sources_verification_status
   enum_sources_status: typeof enum_sources_status
   enum__sources_v_version_type: typeof enum__sources_v_version_type
+  enum__sources_v_version_platform: typeof enum__sources_v_version_platform
+  enum__sources_v_version_fetch_status: typeof enum__sources_v_version_fetch_status
   enum__sources_v_version_verification_status: typeof enum__sources_v_version_verification_status
   enum__sources_v_version_status: typeof enum__sources_v_version_status
+  enum_source_snapshots_fetch_status: typeof enum_source_snapshots_fetch_status
+  enum_source_documents_parser: typeof enum_source_documents_parser
+  enum_source_documents_status: typeof enum_source_documents_status
+  enum__source_documents_v_version_parser: typeof enum__source_documents_v_version_parser
+  enum__source_documents_v_version_status: typeof enum__source_documents_v_version_status
+  enum_document_chunks_embedding_status: typeof enum_document_chunks_embedding_status
+  enum_document_chunks_status: typeof enum_document_chunks_status
+  enum__document_chunks_v_version_embedding_status: typeof enum__document_chunks_v_version_embedding_status
+  enum__document_chunks_v_version_status: typeof enum__document_chunks_v_version_status
+  enum_ingestion_jobs_job_type: typeof enum_ingestion_jobs_job_type
+  enum_ingestion_jobs_status: typeof enum_ingestion_jobs_status
   enum_parties_status: typeof enum_parties_status
   enum__parties_v_version_status: typeof enum__parties_v_version_status
   enum_candidates_candidacy_status: typeof enum_candidates_candidacy_status
@@ -2277,6 +3570,20 @@ type DatabaseSchema = {
   enum__candidates_v_version_status: typeof enum__candidates_v_version_status
   enum_topics_status: typeof enum_topics_status
   enum__topics_v_version_status: typeof enum__topics_v_version_status
+  enum_claims_claim_type: typeof enum_claims_claim_type
+  enum_claims_stance: typeof enum_claims_stance
+  enum_claims_review_status: typeof enum_claims_review_status
+  enum_claims_extraction_method: typeof enum_claims_extraction_method
+  enum_claims_status: typeof enum_claims_status
+  enum__claims_v_version_claim_type: typeof enum__claims_v_version_claim_type
+  enum__claims_v_version_stance: typeof enum__claims_v_version_stance
+  enum__claims_v_version_review_status: typeof enum__claims_v_version_review_status
+  enum__claims_v_version_extraction_method: typeof enum__claims_v_version_extraction_method
+  enum__claims_v_version_status: typeof enum__claims_v_version_status
+  enum_claim_evidence_review_status: typeof enum_claim_evidence_review_status
+  enum_claim_evidence_status: typeof enum_claim_evidence_status
+  enum__claim_evidence_v_version_review_status: typeof enum__claim_evidence_v_version_review_status
+  enum__claim_evidence_v_version_status: typeof enum__claim_evidence_v_version_status
   enum_programs_status: typeof enum_programs_status
   enum__programs_v_version_status: typeof enum__programs_v_version_status
   enum_proposals_proposal_status: typeof enum_proposals_proposal_status
@@ -2300,6 +3607,12 @@ type DatabaseSchema = {
   media: typeof media
   sources: typeof sources
   _sources_v: typeof _sources_v
+  source_snapshots: typeof source_snapshots
+  source_documents: typeof source_documents
+  _source_documents_v: typeof _source_documents_v
+  document_chunks: typeof document_chunks
+  _document_chunks_v: typeof _document_chunks_v
+  ingestion_jobs: typeof ingestion_jobs
   parties: typeof parties
   parties_rels: typeof parties_rels
   _parties_v: typeof _parties_v
@@ -2310,6 +3623,12 @@ type DatabaseSchema = {
   _candidates_v_rels: typeof _candidates_v_rels
   topics: typeof topics
   _topics_v: typeof _topics_v
+  claims: typeof claims
+  claims_rels: typeof claims_rels
+  _claims_v: typeof _claims_v
+  _claims_v_rels: typeof _claims_v_rels
+  claim_evidence: typeof claim_evidence
+  _claim_evidence_v: typeof _claim_evidence_v
   programs: typeof programs
   programs_rels: typeof programs_rels
   _programs_v: typeof _programs_v
@@ -2325,6 +3644,7 @@ type DatabaseSchema = {
   response_feedback: typeof response_feedback
   search: typeof search
   search_rels: typeof search_rels
+  payload_mcp_api_keys: typeof payload_mcp_api_keys
   payload_kv: typeof payload_kv
   payload_locked_documents: typeof payload_locked_documents
   payload_locked_documents_rels: typeof payload_locked_documents_rels
@@ -2342,6 +3662,12 @@ type DatabaseSchema = {
   relations_media: typeof relations_media
   relations_sources: typeof relations_sources
   relations__sources_v: typeof relations__sources_v
+  relations_source_snapshots: typeof relations_source_snapshots
+  relations_source_documents: typeof relations_source_documents
+  relations__source_documents_v: typeof relations__source_documents_v
+  relations_document_chunks: typeof relations_document_chunks
+  relations__document_chunks_v: typeof relations__document_chunks_v
+  relations_ingestion_jobs: typeof relations_ingestion_jobs
   relations_parties_rels: typeof relations_parties_rels
   relations_parties: typeof relations_parties
   relations__parties_v_rels: typeof relations__parties_v_rels
@@ -2352,6 +3678,12 @@ type DatabaseSchema = {
   relations__candidates_v: typeof relations__candidates_v
   relations_topics: typeof relations_topics
   relations__topics_v: typeof relations__topics_v
+  relations_claims_rels: typeof relations_claims_rels
+  relations_claims: typeof relations_claims
+  relations__claims_v_rels: typeof relations__claims_v_rels
+  relations__claims_v: typeof relations__claims_v
+  relations_claim_evidence: typeof relations_claim_evidence
+  relations__claim_evidence_v: typeof relations__claim_evidence_v
   relations_programs_rels: typeof relations_programs_rels
   relations_programs: typeof relations_programs
   relations__programs_v_rels: typeof relations__programs_v_rels
@@ -2367,6 +3699,7 @@ type DatabaseSchema = {
   relations_response_feedback: typeof relations_response_feedback
   relations_search_rels: typeof relations_search_rels
   relations_search: typeof relations_search
+  relations_payload_mcp_api_keys: typeof relations_payload_mcp_api_keys
   relations_payload_kv: typeof relations_payload_kv
   relations_payload_locked_documents_rels: typeof relations_payload_locked_documents_rels
   relations_payload_locked_documents: typeof relations_payload_locked_documents

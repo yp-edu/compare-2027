@@ -1,14 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin, isAdminOrEditor, publishedOrAuthenticated } from '@/access'
+import { authenticatedReadPublished, isAdmin } from '@/access'
 
 export const PublicPositions: CollectionConfig = {
   slug: 'public-positions',
   access: {
-    create: isAdminOrEditor,
+    create: isAdmin,
     delete: isAdmin,
-    read: publishedOrAuthenticated,
-    update: isAdminOrEditor,
+    read: authenticatedReadPublished,
+    update: isAdmin,
   },
   admin: {
     defaultColumns: ['title', 'actor', 'positionType', 'positionDate', '_status'],

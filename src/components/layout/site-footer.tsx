@@ -85,8 +85,6 @@ export function SiteFooter() {
                   Code source
                 </a>
               </li>
-              <li>Contenu éditorial en français.</li>
-              <li>Code et documentation en anglais.</li>
             </ul>
           </div>
         </div>

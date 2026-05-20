@@ -8,7 +8,6 @@ import sharp from 'sharp'
 
 import { collections } from './collections'
 import { globals } from './globals'
-import { seed } from './init/seed'
 import { getAllowedOrigins, getServerURL } from './lib/server-urls'
 import { plugins } from './plugins'
 
@@ -43,10 +42,8 @@ export default buildConfig({
     pool: {
       connectionString: process.env.POSTGRES_URL || '',
     },
+    push: false,
   }),
-  onInit: async (payload) => {
-    await seed(payload)
-  },
   sharp,
   plugins,
 })

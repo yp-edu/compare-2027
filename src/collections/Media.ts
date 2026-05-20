@@ -1,14 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdmin, isAdminOrEditor } from '@/access'
+import { isAdmin } from '@/access'
 
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
-    create: isAdminOrEditor,
+    create: isAdmin,
     delete: isAdmin,
     read: () => true,
-    update: isAdminOrEditor,
+    update: isAdmin,
   },
   admin: {
     group: 'Content',
