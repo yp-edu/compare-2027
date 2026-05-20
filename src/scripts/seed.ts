@@ -11,13 +11,15 @@ import type { User } from '@/payload-types'
 import config from '../payload.config'
 
 import {
-  cnccepCandidatesSource,
-  demoCandidates,
-  demoParties,
-  getDeclarationURL,
-  type DemoCandidateSeed,
-  type DemoPartySeed,
-} from './demo-2022'
+  campaignCandidates,
+  campaignParties,
+  legacy2022CandidateSlugs,
+  legacy2022PartySlugs,
+  legacy2022SourceURLs,
+  type CampaignCandidateSeed,
+  type CampaignPartySeed,
+  type CampaignSourceSeed,
+} from './campaign-2027'
 
 type SeedUser = Pick<User, 'email' | 'name'> & {
   role: NonNullable<User['role']>
@@ -31,7 +33,7 @@ const seedUser: SeedUser = {
   role: ['admin'],
 }
 
-const demoRetrievedAt = '2026-05-16T00:00:00.000Z'
+const seedRetrievedAt = '2026-05-21T00:00:00.000Z'
 
 function isSeedDataCurrent(doc: unknown, data: SeedData) {
   const record = doc as Record<string, unknown>
@@ -68,17 +70,7 @@ async function createCredentialAccount(payload: BasePayload, userID: User['id'],
   })
 }
 
-async function upsertSource(
-  payload: BasePayload,
-  source: {
-    notes?: string
-    publisher?: string
-    quote?: string
-    title: string
-    type?: 'official_program' | 'other'
-    url: string
-  },
-) {
+async function upsertSource(payload: BasePayload, source: CampaignSourceSeed) {
   const existingSource = await payload.find({
     collection: 'sources',
     depth: 0,
@@ -93,15 +85,16 @@ async function upsertSource(
   const data = {
     fetchStatus: 'not_fetched' as const,
     language: 'fr',
-    platform: 'institution' as const,
-    publisher: source.publisher || 'Commission nationale de contrôle de la campagne électorale',
+    platform: source.platform || ('party_site' as const),
+    publishedAt: source.publishedAt,
+    publisher: source.publisher,
     quote: source.quote,
     notes: source.notes,
     processingStatus: 'skipped' as const,
-    retrievedAt: demoRetrievedAt,
+    retrievedAt: seedRetrievedAt,
     submissionStatus: 'internal' as const,
     title: source.title,
-    type: source.type || 'other',
+    type: source.type,
     url: source.url,
     verificationStatus: 'verified' as const,
     _status: 'published' as const,
@@ -122,11 +115,10 @@ async function upsertSource(
   return payload.create({
     collection: 'sources',
     data,
-    draft: true,
   })
 }
 
-async function upsertParty(payload: BasePayload, party: DemoPartySeed, sourceID: number) {
+async function upsertParty(payload: BasePayload, party: CampaignPartySeed) {
   const existingParty = await payload.find({
     collection: 'parties',
     depth: 0,
@@ -144,7 +136,7 @@ async function upsertParty(payload: BasePayload, party: DemoPartySeed, sourceID:
     name: party.name,
     shortName: party.shortName,
     slug: party.slug,
-    sources: [sourceID],
+    sources: [],
     website: party.website,
     _status: 'published' as const,
   }
@@ -169,17 +161,10 @@ async function upsertParty(payload: BasePayload, party: DemoPartySeed, sourceID:
 
 async function upsertCandidate(
   payload: BasePayload,
-  candidate: DemoCandidateSeed,
+  candidate: CampaignCandidateSeed,
   partyID: number,
 ) {
-  const source = await upsertSource(payload, {
-    notes:
-      'Déclaration de candidat publiée par la CNCCEP pour le premier tour de l’élection présidentielle 2022.',
-    publisher: 'Commission nationale de contrôle de la campagne électorale',
-    title: `Déclaration 2022 - ${candidate.displayName}`,
-    type: 'official_program',
-    url: getDeclarationURL(candidate),
-  })
+  const source = await upsertSource(payload, candidate.candidacySource)
   const existingCandidate = await payload.find({
     collection: 'candidates',
     depth: 0,
@@ -192,15 +177,18 @@ async function upsertCandidate(
   })
 
   const data = {
-    bio: `${candidate.displayName} fait partie des 12 candidats du premier tour de l’élection présidentielle française de 2022. Cette fiche sert de corpus de démonstration sourcé pour Compare 2027.`,
+    bio: candidate.bio,
     candidacyStatus: 'declared' as const,
     currentParty: partyID,
+    declarationSource: source.id,
+    declaredAt: candidate.declaredAt,
     displayName: candidate.displayName,
     firstName: candidate.firstName,
     lastName: candidate.lastName,
     slug: candidate.slug,
     sortOrder: candidate.sortOrder,
     sources: [source.id],
+    website: candidate.website,
     _status: 'published' as const,
   }
 
@@ -222,32 +210,122 @@ async function upsertCandidate(
   })
 }
 
-async function seedDemoContent(payload: BasePayload) {
-  const indexSource = await upsertSource(payload, {
-    notes:
-      'Page officielle listant les candidats et leurs déclarations pour le premier tour de l’élection présidentielle 2022.',
-    title: cnccepCandidatesSource.title,
-    type: 'other',
-    url: cnccepCandidatesSource.url,
+async function cleanupLegacy2022Content(payload: BasePayload) {
+  await payload.delete({
+    collection: 'candidates',
+    where: {
+      or: legacy2022CandidateSlugs.map((slug) => ({
+        slug: {
+          equals: slug,
+        },
+      })),
+    },
   })
+
+  await payload.delete({
+    collection: 'parties',
+    where: {
+      or: legacy2022PartySlugs.map((slug) => ({
+        slug: {
+          equals: slug,
+        },
+      })),
+    },
+  })
+
+  const legacySources = await payload.find({
+    collection: 'sources',
+    depth: 0,
+    limit: 100,
+    where: {
+      or: legacy2022SourceURLs.map((url) => ({
+        url: {
+          equals: url,
+        },
+      })),
+    },
+  })
+
+  const sourceIDs = legacySources.docs.map((source) => source.id)
+
+  if (sourceIDs.length === 0) {
+    return
+  }
+
+  const sourceWhere = {
+    or: sourceIDs.map((sourceID) => ({
+      source: {
+        equals: sourceID,
+      },
+    })),
+  }
+
+  await payload.delete({
+    collection: 'claim-evidence',
+    where: sourceWhere,
+  })
+
+  await payload.delete({
+    collection: 'claims',
+    where: {
+      or: sourceIDs.map((sourceID) => ({
+        primarySource: {
+          equals: sourceID,
+        },
+      })),
+    },
+  })
+
+  await payload.delete({
+    collection: 'document-chunks',
+    where: sourceWhere,
+  })
+
+  await payload.delete({
+    collection: 'source-documents',
+    where: sourceWhere,
+  })
+
+  await payload.delete({
+    collection: 'source-snapshots',
+    where: sourceWhere,
+  })
+
+  await payload.delete({
+    collection: 'sources',
+    where: {
+      or: sourceIDs.map((id) => ({
+        id: {
+          equals: id,
+        },
+      })),
+    },
+  })
+
+  payload.logger.info('Removed legacy 2022 seed candidates, parties, sources, and documents')
+}
+
+async function seedCampaignContent(payload: BasePayload) {
+  await cleanupLegacy2022Content(payload)
+
   const partyIDsBySlug = new Map<string, number>()
 
-  for (const party of demoParties) {
-    const partyDoc = await upsertParty(payload, party, indexSource.id)
+  for (const party of campaignParties) {
+    const partyDoc = await upsertParty(payload, party)
     partyIDsBySlug.set(party.slug, partyDoc.id)
   }
 
-  for (const candidate of demoCandidates) {
+  for (const candidate of campaignCandidates) {
     const partyID = partyIDsBySlug.get(candidate.partySlug)
 
     if (!partyID) {
-      throw new Error(`Missing demo party for candidate ${candidate.displayName}`)
+      throw new Error(`Missing campaign party for candidate ${candidate.displayName}`)
     }
 
     await upsertCandidate(payload, candidate, partyID)
   }
 
-  payload.logger.info('Seeded demo content: 2022 candidates and parties')
+  payload.logger.info('Seeded campaign content: 2027 declared candidates and parties')
 }
 
 async function seedAdminUser(payload: BasePayload) {
@@ -354,7 +432,7 @@ async function seedAdminUser(payload: BasePayload) {
 export async function seed(payload: BasePayload) {
   const adminResult = await seedAdminUser(payload)
 
-  await seedDemoContent(payload)
+  await seedCampaignContent(payload)
 
   return adminResult
 }
