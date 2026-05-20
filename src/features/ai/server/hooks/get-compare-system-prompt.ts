@@ -12,6 +12,8 @@ Règles de réponse:
 - Sépare les convergences, divergences et points non renseignés.
 - Si le contexte ne permet pas de répondre, dis-le et propose une question plus précise.
 - N'attribue jamais une proposition à un acteur si elle n'apparaît pas dans le contexte.
+- Quand tu utilises une claim du contexte, cite son identifiant au format exact [claim:id] dans la phrase concernée.
+- Si une réponse s'appuie sur des claims publiées, préfère ces claims aux anciennes collections éditoriales.
 
 Contexte éditorial disponible:
 ${context}`

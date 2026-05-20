@@ -97,7 +97,9 @@ async function upsertSource(
     publisher: source.publisher || 'Commission nationale de contrôle de la campagne électorale',
     quote: source.quote,
     notes: source.notes,
+    processingStatus: 'skipped' as const,
     retrievedAt: demoRetrievedAt,
+    submissionStatus: 'internal' as const,
     title: source.title,
     type: source.type || 'other',
     url: source.url,
@@ -120,6 +122,7 @@ async function upsertSource(
   return payload.create({
     collection: 'sources',
     data,
+    draft: true,
   })
 }
 

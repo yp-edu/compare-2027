@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { OfflineGuard } from '@/components/pwa/offline-guard'
 import { useOnlineStatus } from '@/components/pwa/use-online-status'
+import { ClaimFreshnessFeedback } from '@/features/feedback/components/claim-freshness-feedback'
 import { CompareResponseFeedback } from '@/features/feedback/components/compare-response-feedback'
 import { authClient } from '@/lib/auth-client'
 import { isLegalConsentCurrent } from '@/lib/legal'
@@ -42,6 +43,10 @@ function getPreviousUserMessageText(messages: UIMessage[], messageIndex: number)
   }
 
   return ''
+}
+
+function getClaimIds(text: string) {
+  return Array.from(new Set(Array.from(text.matchAll(/\[claim:(\d+)\]/g), (match) => match[1])))
 }
 
 type MarkdownMessageProps = {
@@ -191,11 +196,18 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
             {messages.map((message, messageIndex) => {
               const text = getMessageText(message)
               const question = getPreviousUserMessageText(messages, messageIndex)
+              const claimIds = getClaimIds(text)
               const showFeedback =
                 feedbackEnabled &&
                 isAuthenticated &&
                 message.role === 'assistant' &&
                 Boolean(question) &&
+                !(isWorking && messageIndex === messages.length - 1)
+              const showClaimFeedback =
+                isAuthenticated &&
+                message.role === 'assistant' &&
+                Boolean(question) &&
+                claimIds.length > 0 &&
                 !(isWorking && messageIndex === messages.length - 1)
 
               if (!text) {
@@ -218,6 +230,22 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                       messageId={message.id}
                       question={question}
                     />
+                  ) : null}
+                  {showClaimFeedback ? (
+                    <div className="mt-4 border-t border-border/70 pt-3">
+                      <p className="text-sm font-semibold text-muted-foreground">
+                        Une information citée semble dépassée ? Ajoutez une source plus récente.
+                      </p>
+                      {claimIds.map((claimId) => (
+                        <ClaimFreshnessFeedback
+                          answer={text}
+                          claimId={claimId}
+                          key={claimId}
+                          messageId={message.id}
+                          question={question}
+                        />
+                      ))}
+                    </div>
                   ) : null}
                 </div>
               )

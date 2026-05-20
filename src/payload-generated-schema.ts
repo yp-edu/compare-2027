@@ -34,6 +34,8 @@ export const enum_sources_type = pgEnum('enum_sources_type', [
   'speech',
   'interview',
   'press_release',
+  'candidacy_declaration',
+  'social_post',
   'vote',
   'article',
   'report',
@@ -47,6 +49,19 @@ export const enum_sources_platform = pgEnum('enum_sources_platform', [
   'press',
   'institution',
   'other',
+])
+export const enum_sources_submission_status = pgEnum('enum_sources_submission_status', [
+  'internal',
+  'submitted',
+  'accepted',
+  'rejected',
+])
+export const enum_sources_processing_status = pgEnum('enum_sources_processing_status', [
+  'queued',
+  'processing',
+  'completed',
+  'failed',
+  'skipped',
 ])
 export const enum_sources_fetch_status = pgEnum('enum_sources_fetch_status', [
   'not_fetched',
@@ -66,6 +81,8 @@ export const enum__sources_v_version_type = pgEnum('enum__sources_v_version_type
   'speech',
   'interview',
   'press_release',
+  'candidacy_declaration',
+  'social_post',
   'vote',
   'article',
   'report',
@@ -80,6 +97,14 @@ export const enum__sources_v_version_platform = pgEnum('enum__sources_v_version_
   'institution',
   'other',
 ])
+export const enum__sources_v_version_submission_status = pgEnum(
+  'enum__sources_v_version_submission_status',
+  ['internal', 'submitted', 'accepted', 'rejected'],
+)
+export const enum__sources_v_version_processing_status = pgEnum(
+  'enum__sources_v_version_processing_status',
+  ['queued', 'processing', 'completed', 'failed', 'skipped'],
+)
 export const enum__sources_v_version_fetch_status = pgEnum('enum__sources_v_version_fetch_status', [
   'not_fetched',
   'fetched',
@@ -169,6 +194,12 @@ export const enum__candidates_v_version_candidacy_status = pgEnum(
 export const enum__candidates_v_version_status = pgEnum('enum__candidates_v_version_status', [
   'draft',
   'published',
+])
+export const enum_candidate_submissions_status = pgEnum('enum_candidate_submissions_status', [
+  'pending',
+  'accepted',
+  'rejected',
+  'duplicate',
 ])
 export const enum_topics_status = pgEnum('enum_topics_status', ['draft', 'published'])
 export const enum__topics_v_version_status = pgEnum('enum__topics_v_version_status', [
@@ -263,6 +294,12 @@ export const enum__claim_evidence_v_version_status = pgEnum(
   'enum__claim_evidence_v_version_status',
   ['draft', 'published'],
 )
+export const enum_claim_feedback_status = pgEnum('enum_claim_feedback_status', [
+  'pending',
+  'accepted',
+  'rejected',
+  'duplicate',
+])
 export const enum_programs_status = pgEnum('enum_programs_status', ['draft', 'published'])
 export const enum__programs_v_version_status = pgEnum('enum__programs_v_version_status', [
   'draft',
@@ -558,6 +595,14 @@ export const sources = pgTable(
     url: varchar('url'),
     canonicalUrl: varchar('canonical_url'),
     externalId: varchar('external_id'),
+    submittedBy: integer('submitted_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    submissionStatus: enum_sources_submission_status('submission_status').default('internal'),
+    processingStatus: enum_sources_processing_status('processing_status').default('queued'),
+    processedAt: timestamp('processed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    processingError: varchar('processing_error'),
+    llmModel: varchar('llm_model'),
     archivedUrl: varchar('archived_url'),
     file: integer('file_id').references(() => media.id, {
       onDelete: 'set null',
@@ -590,12 +635,42 @@ export const sources = pgTable(
     index('sources_url_idx').on(columns.url),
     index('sources_canonical_url_idx').on(columns.canonicalUrl),
     index('sources_external_id_idx').on(columns.externalId),
+    index('sources_submitted_by_idx').on(columns.submittedBy),
+    index('sources_submission_status_idx').on(columns.submissionStatus),
+    index('sources_processing_status_idx').on(columns.processingStatus),
     index('sources_file_idx').on(columns.file),
     index('sources_published_at_idx').on(columns.publishedAt),
     index('sources_content_hash_idx').on(columns.contentHash),
     index('sources_updated_at_idx').on(columns.updatedAt),
     index('sources_created_at_idx').on(columns.createdAt),
     index('sources__status_idx').on(columns._status),
+  ],
+)
+
+export const sources_rels = pgTable(
+  'sources_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    candidatesID: integer('candidates_id'),
+  },
+  (columns) => [
+    index('sources_rels_order_idx').on(columns.order),
+    index('sources_rels_parent_idx').on(columns.parent),
+    index('sources_rels_path_idx').on(columns.path),
+    index('sources_rels_candidates_id_idx').on(columns.candidatesID),
+    foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [sources.id],
+      name: 'sources_rels_parent_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['candidatesID']],
+      foreignColumns: [candidates.id],
+      name: 'sources_rels_candidates_fk',
+    }).onDelete('cascade'),
   ],
 )
 
@@ -612,6 +687,22 @@ export const _sources_v = pgTable(
     version_url: varchar('version_url'),
     version_canonicalUrl: varchar('version_canonical_url'),
     version_externalId: varchar('version_external_id'),
+    version_submittedBy: integer('version_submitted_by_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    version_submissionStatus: enum__sources_v_version_submission_status(
+      'version_submission_status',
+    ).default('internal'),
+    version_processingStatus: enum__sources_v_version_processing_status(
+      'version_processing_status',
+    ).default('queued'),
+    version_processedAt: timestamp('version_processed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
+    version_processingError: varchar('version_processing_error'),
+    version_llmModel: varchar('version_llm_model'),
     version_archivedUrl: varchar('version_archived_url'),
     version_file: integer('version_file_id').references(() => media.id, {
       onDelete: 'set null',
@@ -667,6 +758,9 @@ export const _sources_v = pgTable(
     index('_sources_v_version_version_url_idx').on(columns.version_url),
     index('_sources_v_version_version_canonical_url_idx').on(columns.version_canonicalUrl),
     index('_sources_v_version_version_external_id_idx').on(columns.version_externalId),
+    index('_sources_v_version_version_submitted_by_idx').on(columns.version_submittedBy),
+    index('_sources_v_version_version_submission_status_idx').on(columns.version_submissionStatus),
+    index('_sources_v_version_version_processing_status_idx').on(columns.version_processingStatus),
     index('_sources_v_version_version_file_idx').on(columns.version_file),
     index('_sources_v_version_version_published_at_idx').on(columns.version_publishedAt),
     index('_sources_v_version_version_content_hash_idx').on(columns.version_contentHash),
@@ -676,6 +770,33 @@ export const _sources_v = pgTable(
     index('_sources_v_created_at_idx').on(columns.createdAt),
     index('_sources_v_updated_at_idx').on(columns.updatedAt),
     index('_sources_v_latest_idx').on(columns.latest),
+  ],
+)
+
+export const _sources_v_rels = pgTable(
+  '_sources_v_rels',
+  {
+    id: serial('id').primaryKey(),
+    order: integer('order'),
+    parent: integer('parent_id').notNull(),
+    path: varchar('path').notNull(),
+    candidatesID: integer('candidates_id'),
+  },
+  (columns) => [
+    index('_sources_v_rels_order_idx').on(columns.order),
+    index('_sources_v_rels_parent_idx').on(columns.parent),
+    index('_sources_v_rels_path_idx').on(columns.path),
+    index('_sources_v_rels_candidates_id_idx').on(columns.candidatesID),
+    foreignKey({
+      columns: [columns['parent']],
+      foreignColumns: [_sources_v.id],
+      name: '_sources_v_rels_parent_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['candidatesID']],
+      foreignColumns: [candidates.id],
+      name: '_sources_v_rels_candidates_fk',
+    }).onDelete('cascade'),
   ],
 )
 
@@ -1113,6 +1234,10 @@ export const candidates = pgTable(
       onDelete: 'set null',
     }),
     candidacyStatus: enum_candidates_candidacy_status('candidacy_status').default('expected'),
+    declarationSource: integer('declaration_source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    declaredAt: timestamp('declared_at', { mode: 'string', withTimezone: true, precision: 3 }),
     website: varchar('website'),
     bio: varchar('bio'),
     sortOrder: numeric('sort_order', { mode: 'number' }).default(0),
@@ -1128,6 +1253,8 @@ export const candidates = pgTable(
     uniqueIndex('candidates_slug_idx').on(columns.slug),
     index('candidates_photo_idx').on(columns.photo),
     index('candidates_current_party_idx').on(columns.currentParty),
+    index('candidates_declaration_source_idx').on(columns.declarationSource),
+    index('candidates_declared_at_idx').on(columns.declaredAt),
     index('candidates_sort_order_idx').on(columns.sortOrder),
     index('candidates_updated_at_idx').on(columns.updatedAt),
     index('candidates_created_at_idx').on(columns.createdAt),
@@ -1182,6 +1309,17 @@ export const _candidates_v = pgTable(
     version_candidacyStatus: enum__candidates_v_version_candidacy_status(
       'version_candidacy_status',
     ).default('expected'),
+    version_declarationSource: integer('version_declaration_source_id').references(
+      () => sources.id,
+      {
+        onDelete: 'set null',
+      },
+    ),
+    version_declaredAt: timestamp('version_declared_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }),
     version_website: varchar('version_website'),
     version_bio: varchar('version_bio'),
     version_sortOrder: numeric('version_sort_order', { mode: 'number' }).default(0),
@@ -1209,6 +1347,10 @@ export const _candidates_v = pgTable(
     index('_candidates_v_version_version_slug_idx').on(columns.version_slug),
     index('_candidates_v_version_version_photo_idx').on(columns.version_photo),
     index('_candidates_v_version_version_current_party_idx').on(columns.version_currentParty),
+    index('_candidates_v_version_version_declaration_source_idx').on(
+      columns.version_declarationSource,
+    ),
+    index('_candidates_v_version_version_declared_at_idx').on(columns.version_declaredAt),
     index('_candidates_v_version_version_sort_order_idx').on(columns.version_sortOrder),
     index('_candidates_v_version_version_updated_at_idx').on(columns.version_updatedAt),
     index('_candidates_v_version_version_created_at_idx').on(columns.version_createdAt),
@@ -1243,6 +1385,44 @@ export const _candidates_v_rels = pgTable(
       foreignColumns: [sources.id],
       name: '_candidates_v_rels_sources_fk',
     }).onDelete('cascade'),
+  ],
+)
+
+export const candidate_submissions = pgTable(
+  'candidate_submissions',
+  {
+    id: serial('id').primaryKey(),
+    candidateName: varchar('candidate_name').notNull(),
+    candidateDetails: varchar('candidate_details'),
+    matchedCandidate: integer('matched_candidate_id').references(() => candidates.id, {
+      onDelete: 'set null',
+    }),
+    declarationSource: integer('declaration_source_id')
+      .notNull()
+      .references(() => sources.id, {
+        onDelete: 'set null',
+      }),
+    submittedBy: integer('submitted_by_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'set null',
+      }),
+    status: enum_candidate_submissions_status('status').notNull().default('pending'),
+    reviewNotes: varchar('review_notes'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('candidate_submissions_matched_candidate_idx').on(columns.matchedCandidate),
+    index('candidate_submissions_declaration_source_idx').on(columns.declarationSource),
+    index('candidate_submissions_submitted_by_idx').on(columns.submittedBy),
+    index('candidate_submissions_status_idx').on(columns.status),
+    index('candidate_submissions_updated_at_idx').on(columns.updatedAt),
+    index('candidate_submissions_created_at_idx').on(columns.createdAt),
   ],
 )
 
@@ -1673,6 +1853,48 @@ export const _claim_evidence_v = pgTable(
     index('_claim_evidence_v_created_at_idx').on(columns.createdAt),
     index('_claim_evidence_v_updated_at_idx').on(columns.updatedAt),
     index('_claim_evidence_v_latest_idx').on(columns.latest),
+  ],
+)
+
+export const claim_feedback = pgTable(
+  'claim_feedback',
+  {
+    id: serial('id').primaryKey(),
+    claim: integer('claim_id')
+      .notNull()
+      .references(() => claims.id, {
+        onDelete: 'set null',
+      }),
+    invalidatingSourceUrl: varchar('invalidating_source_url').notNull(),
+    invalidatingSource: integer('invalidating_source_id').references(() => sources.id, {
+      onDelete: 'set null',
+    }),
+    submittedBy: integer('submitted_by_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'set null',
+      }),
+    messageId: varchar('message_id'),
+    question: varchar('question'),
+    answer: varchar('answer'),
+    comment: varchar('comment'),
+    status: enum_claim_feedback_status('status').notNull().default('pending'),
+    reviewNotes: varchar('review_notes'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('claim_feedback_claim_idx').on(columns.claim),
+    index('claim_feedback_invalidating_source_idx').on(columns.invalidatingSource),
+    index('claim_feedback_submitted_by_idx').on(columns.submittedBy),
+    index('claim_feedback_message_id_idx').on(columns.messageId),
+    index('claim_feedback_status_idx').on(columns.status),
+    index('claim_feedback_updated_at_idx').on(columns.updatedAt),
+    index('claim_feedback_created_at_idx').on(columns.createdAt),
   ],
 )
 
@@ -2414,9 +2636,11 @@ export const payload_locked_documents_rels = pgTable(
     'ingestion-jobsID': integer('ingestion_jobs_id'),
     partiesID: integer('parties_id'),
     candidatesID: integer('candidates_id'),
+    'candidate-submissionsID': integer('candidate_submissions_id'),
     topicsID: integer('topics_id'),
     claimsID: integer('claims_id'),
     'claim-evidenceID': integer('claim_evidence_id'),
+    'claim-feedbackID': integer('claim_feedback_id'),
     programsID: integer('programs_id'),
     proposalsID: integer('proposals_id'),
     'public-positionsID': integer('public_positions_id'),
@@ -2448,9 +2672,13 @@ export const payload_locked_documents_rels = pgTable(
     index('payload_locked_documents_rels_ingestion_jobs_id_idx').on(columns['ingestion-jobsID']),
     index('payload_locked_documents_rels_parties_id_idx').on(columns.partiesID),
     index('payload_locked_documents_rels_candidates_id_idx').on(columns.candidatesID),
+    index('payload_locked_documents_rels_candidate_submissions_id_idx').on(
+      columns['candidate-submissionsID'],
+    ),
     index('payload_locked_documents_rels_topics_id_idx').on(columns.topicsID),
     index('payload_locked_documents_rels_claims_id_idx').on(columns.claimsID),
     index('payload_locked_documents_rels_claim_evidence_id_idx').on(columns['claim-evidenceID']),
+    index('payload_locked_documents_rels_claim_feedback_id_idx').on(columns['claim-feedbackID']),
     index('payload_locked_documents_rels_programs_id_idx').on(columns.programsID),
     index('payload_locked_documents_rels_proposals_id_idx').on(columns.proposalsID),
     index('payload_locked_documents_rels_public_positions_id_idx').on(
@@ -2539,6 +2767,11 @@ export const payload_locked_documents_rels = pgTable(
       name: 'payload_locked_documents_rels_candidates_fk',
     }).onDelete('cascade'),
     foreignKey({
+      columns: [columns['candidate-submissionsID']],
+      foreignColumns: [candidate_submissions.id],
+      name: 'payload_locked_documents_rels_candidate_submissions_fk',
+    }).onDelete('cascade'),
+    foreignKey({
       columns: [columns['topicsID']],
       foreignColumns: [topics.id],
       name: 'payload_locked_documents_rels_topics_fk',
@@ -2552,6 +2785,11 @@ export const payload_locked_documents_rels = pgTable(
       columns: [columns['claim-evidenceID']],
       foreignColumns: [claim_evidence.id],
       name: 'payload_locked_documents_rels_claim_evidence_fk',
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [columns['claim-feedbackID']],
+      foreignColumns: [claim_feedback.id],
+      name: 'payload_locked_documents_rels_claim_feedback_fk',
     }).onDelete('cascade'),
     foreignKey({
       columns: [columns['programsID']],
@@ -2709,23 +2947,63 @@ export const relations_two_factors = relations(two_factors, ({ one }) => ({
 }))
 export const relations_admin_invitations = relations(admin_invitations, () => ({}))
 export const relations_media = relations(media, () => ({}))
-export const relations_sources = relations(sources, ({ one }) => ({
+export const relations_sources_rels = relations(sources_rels, ({ one }) => ({
+  parent: one(sources, {
+    fields: [sources_rels.parent],
+    references: [sources.id],
+    relationName: '_rels',
+  }),
+  candidatesID: one(candidates, {
+    fields: [sources_rels.candidatesID],
+    references: [candidates.id],
+    relationName: 'candidates',
+  }),
+}))
+export const relations_sources = relations(sources, ({ one, many }) => ({
+  submittedBy: one(users, {
+    fields: [sources.submittedBy],
+    references: [users.id],
+    relationName: 'submittedBy',
+  }),
   file: one(media, {
     fields: [sources.file],
     references: [media.id],
     relationName: 'file',
   }),
+  _rels: many(sources_rels, {
+    relationName: '_rels',
+  }),
 }))
-export const relations__sources_v = relations(_sources_v, ({ one }) => ({
+export const relations__sources_v_rels = relations(_sources_v_rels, ({ one }) => ({
+  parent: one(_sources_v, {
+    fields: [_sources_v_rels.parent],
+    references: [_sources_v.id],
+    relationName: '_rels',
+  }),
+  candidatesID: one(candidates, {
+    fields: [_sources_v_rels.candidatesID],
+    references: [candidates.id],
+    relationName: 'candidates',
+  }),
+}))
+export const relations__sources_v = relations(_sources_v, ({ one, many }) => ({
   parent: one(sources, {
     fields: [_sources_v.parent],
     references: [sources.id],
     relationName: 'parent',
   }),
+  version_submittedBy: one(users, {
+    fields: [_sources_v.version_submittedBy],
+    references: [users.id],
+    relationName: 'version_submittedBy',
+  }),
   version_file: one(media, {
     fields: [_sources_v.version_file],
     references: [media.id],
     relationName: 'version_file',
+  }),
+  _rels: many(_sources_v_rels, {
+    relationName: '_rels',
   }),
 }))
 export const relations_source_snapshots = relations(source_snapshots, ({ one }) => ({
@@ -2887,6 +3165,11 @@ export const relations_candidates = relations(candidates, ({ one, many }) => ({
     references: [parties.id],
     relationName: 'currentParty',
   }),
+  declarationSource: one(sources, {
+    fields: [candidates.declarationSource],
+    references: [sources.id],
+    relationName: 'declarationSource',
+  }),
   _rels: many(candidates_rels, {
     relationName: '_rels',
   }),
@@ -2919,8 +3202,30 @@ export const relations__candidates_v = relations(_candidates_v, ({ one, many }) 
     references: [parties.id],
     relationName: 'version_currentParty',
   }),
+  version_declarationSource: one(sources, {
+    fields: [_candidates_v.version_declarationSource],
+    references: [sources.id],
+    relationName: 'version_declarationSource',
+  }),
   _rels: many(_candidates_v_rels, {
     relationName: '_rels',
+  }),
+}))
+export const relations_candidate_submissions = relations(candidate_submissions, ({ one }) => ({
+  matchedCandidate: one(candidates, {
+    fields: [candidate_submissions.matchedCandidate],
+    references: [candidates.id],
+    relationName: 'matchedCandidate',
+  }),
+  declarationSource: one(sources, {
+    fields: [candidate_submissions.declarationSource],
+    references: [sources.id],
+    relationName: 'declarationSource',
+  }),
+  submittedBy: one(users, {
+    fields: [candidate_submissions.submittedBy],
+    references: [users.id],
+    relationName: 'submittedBy',
   }),
 }))
 export const relations_topics = relations(topics, ({ one }) => ({
@@ -3088,6 +3393,23 @@ export const relations__claim_evidence_v = relations(_claim_evidence_v, ({ one }
     fields: [_claim_evidence_v.version_chunk],
     references: [document_chunks.id],
     relationName: 'version_chunk',
+  }),
+}))
+export const relations_claim_feedback = relations(claim_feedback, ({ one }) => ({
+  claim: one(claims, {
+    fields: [claim_feedback.claim],
+    references: [claims.id],
+    relationName: 'claim',
+  }),
+  invalidatingSource: one(sources, {
+    fields: [claim_feedback.invalidatingSource],
+    references: [sources.id],
+    relationName: 'invalidatingSource',
+  }),
+  submittedBy: one(users, {
+    fields: [claim_feedback.submittedBy],
+    references: [users.id],
+    relationName: 'submittedBy',
   }),
 }))
 export const relations_programs_rels = relations(programs_rels, ({ one }) => ({
@@ -3455,6 +3777,11 @@ export const relations_payload_locked_documents_rels = relations(
       references: [candidates.id],
       relationName: 'candidates',
     }),
+    'candidate-submissionsID': one(candidate_submissions, {
+      fields: [payload_locked_documents_rels['candidate-submissionsID']],
+      references: [candidate_submissions.id],
+      relationName: 'candidate-submissions',
+    }),
     topicsID: one(topics, {
       fields: [payload_locked_documents_rels.topicsID],
       references: [topics.id],
@@ -3469,6 +3796,11 @@ export const relations_payload_locked_documents_rels = relations(
       fields: [payload_locked_documents_rels['claim-evidenceID']],
       references: [claim_evidence.id],
       relationName: 'claim-evidence',
+    }),
+    'claim-feedbackID': one(claim_feedback, {
+      fields: [payload_locked_documents_rels['claim-feedbackID']],
+      references: [claim_feedback.id],
+      relationName: 'claim-feedback',
     }),
     programsID: one(programs, {
       fields: [payload_locked_documents_rels.programsID],
@@ -3543,11 +3875,15 @@ type DatabaseSchema = {
   enum_admin_invitations_role: typeof enum_admin_invitations_role
   enum_sources_type: typeof enum_sources_type
   enum_sources_platform: typeof enum_sources_platform
+  enum_sources_submission_status: typeof enum_sources_submission_status
+  enum_sources_processing_status: typeof enum_sources_processing_status
   enum_sources_fetch_status: typeof enum_sources_fetch_status
   enum_sources_verification_status: typeof enum_sources_verification_status
   enum_sources_status: typeof enum_sources_status
   enum__sources_v_version_type: typeof enum__sources_v_version_type
   enum__sources_v_version_platform: typeof enum__sources_v_version_platform
+  enum__sources_v_version_submission_status: typeof enum__sources_v_version_submission_status
+  enum__sources_v_version_processing_status: typeof enum__sources_v_version_processing_status
   enum__sources_v_version_fetch_status: typeof enum__sources_v_version_fetch_status
   enum__sources_v_version_verification_status: typeof enum__sources_v_version_verification_status
   enum__sources_v_version_status: typeof enum__sources_v_version_status
@@ -3568,6 +3904,7 @@ type DatabaseSchema = {
   enum_candidates_status: typeof enum_candidates_status
   enum__candidates_v_version_candidacy_status: typeof enum__candidates_v_version_candidacy_status
   enum__candidates_v_version_status: typeof enum__candidates_v_version_status
+  enum_candidate_submissions_status: typeof enum_candidate_submissions_status
   enum_topics_status: typeof enum_topics_status
   enum__topics_v_version_status: typeof enum__topics_v_version_status
   enum_claims_claim_type: typeof enum_claims_claim_type
@@ -3584,6 +3921,7 @@ type DatabaseSchema = {
   enum_claim_evidence_status: typeof enum_claim_evidence_status
   enum__claim_evidence_v_version_review_status: typeof enum__claim_evidence_v_version_review_status
   enum__claim_evidence_v_version_status: typeof enum__claim_evidence_v_version_status
+  enum_claim_feedback_status: typeof enum_claim_feedback_status
   enum_programs_status: typeof enum_programs_status
   enum__programs_v_version_status: typeof enum__programs_v_version_status
   enum_proposals_proposal_status: typeof enum_proposals_proposal_status
@@ -3606,7 +3944,9 @@ type DatabaseSchema = {
   admin_invitations: typeof admin_invitations
   media: typeof media
   sources: typeof sources
+  sources_rels: typeof sources_rels
   _sources_v: typeof _sources_v
+  _sources_v_rels: typeof _sources_v_rels
   source_snapshots: typeof source_snapshots
   source_documents: typeof source_documents
   _source_documents_v: typeof _source_documents_v
@@ -3621,6 +3961,7 @@ type DatabaseSchema = {
   candidates_rels: typeof candidates_rels
   _candidates_v: typeof _candidates_v
   _candidates_v_rels: typeof _candidates_v_rels
+  candidate_submissions: typeof candidate_submissions
   topics: typeof topics
   _topics_v: typeof _topics_v
   claims: typeof claims
@@ -3629,6 +3970,7 @@ type DatabaseSchema = {
   _claims_v_rels: typeof _claims_v_rels
   claim_evidence: typeof claim_evidence
   _claim_evidence_v: typeof _claim_evidence_v
+  claim_feedback: typeof claim_feedback
   programs: typeof programs
   programs_rels: typeof programs_rels
   _programs_v: typeof _programs_v
@@ -3660,7 +4002,9 @@ type DatabaseSchema = {
   relations_two_factors: typeof relations_two_factors
   relations_admin_invitations: typeof relations_admin_invitations
   relations_media: typeof relations_media
+  relations_sources_rels: typeof relations_sources_rels
   relations_sources: typeof relations_sources
+  relations__sources_v_rels: typeof relations__sources_v_rels
   relations__sources_v: typeof relations__sources_v
   relations_source_snapshots: typeof relations_source_snapshots
   relations_source_documents: typeof relations_source_documents
@@ -3676,6 +4020,7 @@ type DatabaseSchema = {
   relations_candidates: typeof relations_candidates
   relations__candidates_v_rels: typeof relations__candidates_v_rels
   relations__candidates_v: typeof relations__candidates_v
+  relations_candidate_submissions: typeof relations_candidate_submissions
   relations_topics: typeof relations_topics
   relations__topics_v: typeof relations__topics_v
   relations_claims_rels: typeof relations_claims_rels
@@ -3684,6 +4029,7 @@ type DatabaseSchema = {
   relations__claims_v: typeof relations__claims_v
   relations_claim_evidence: typeof relations_claim_evidence
   relations__claim_evidence_v: typeof relations__claim_evidence_v
+  relations_claim_feedback: typeof relations_claim_feedback
   relations_programs_rels: typeof relations_programs_rels
   relations_programs: typeof relations_programs
   relations__programs_v_rels: typeof relations__programs_v_rels

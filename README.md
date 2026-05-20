@@ -6,6 +6,12 @@ The public-facing content is written in French. Code, repository documentation, 
 
 Production URL: <https://compare2027.fr/>
 
+## Sources
+
+Compare 2027 is designed around verifiable, URL-based sources first. Current primary sources are public web pages, official program links, interviews, speeches, press releases, articles, reports, and institutional records.
+
+The backend source model is also prepared for future source families, especially public posts such as X posts and vote records such as `datan.fr` votes. User-submitted sources are kept pending until processing and editorial review are complete.
+
 ## Inspirations And Alternatives
 
 Compare 2027 is inspired by, and sits alongside, other civic tech projects that help voters understand political candidates, parties, programs, and representatives:
