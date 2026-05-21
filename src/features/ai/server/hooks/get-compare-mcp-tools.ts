@@ -168,6 +168,23 @@ function getMcpEndpointURL() {
   return new URL('/api/mcp', getServerURL()).toString()
 }
 
+function getMcpRequestHeaders(bearerToken: string) {
+  const headers: Record<string, string> = {
+    accept: 'application/json, text/event-stream',
+    authorization: `Bearer ${bearerToken}`,
+    'content-type': 'application/json',
+    'mcp-protocol-version': '2025-06-18',
+  }
+
+  const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+
+  if (vercelProtectionBypass) {
+    headers['x-vercel-protection-bypass'] = vercelProtectionBypass
+  }
+
+  return headers
+}
+
 function parseSSEJson(text: string) {
   const data = text
     .split('\n')
@@ -257,12 +274,7 @@ async function callMcp<T>(
         method,
         ...(params ? { params } : {}),
       }),
-      headers: {
-        accept: 'application/json, text/event-stream',
-        authorization: `Bearer ${bearerToken}`,
-        'content-type': 'application/json',
-        'mcp-protocol-version': '2025-06-18',
-      },
+      headers: getMcpRequestHeaders(bearerToken),
       method: 'POST',
     })
   } catch (error) {

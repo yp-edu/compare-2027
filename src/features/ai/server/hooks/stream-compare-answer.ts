@@ -89,7 +89,6 @@ export async function streamCompareAnswer({
       model: getAzureOpenAIModel(),
       ...(mcpTools ? { stopWhen: stepCountIs(4), tools: mcpTools } : {}),
       system: getCompareSystemPrompt(context),
-      temperature: 0.2,
     }),
   }
 }
