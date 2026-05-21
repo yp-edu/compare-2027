@@ -101,15 +101,17 @@ describe('source outbound fetch URL validation', () => {
     vi.resetAllMocks()
   })
 
-  it('rejects private literal IP addresses without DNS lookup', async () => {
-    await expect(validateOutboundFetchUrl('http://127.0.0.1/source')).rejects.toThrow(
-      'public IP address',
+  it('rejects literal IP addresses without DNS lookup', async () => {
+    await expect(validateOutboundFetchUrl('http://93.184.216.34/source')).rejects.toThrow(
+      'domain name',
     )
-    await expect(validateOutboundFetchUrl('http://[::1]/source')).rejects.toThrow(
-      'public IP address',
-    )
+    await expect(validateOutboundFetchUrl('http://127.0.0.1/source')).rejects.toThrow('domain name')
+    await expect(
+      validateOutboundFetchUrl('http://[2606:2800:220:1:248:1893:25c8:1946]/source'),
+    ).rejects.toThrow('domain name')
+    await expect(validateOutboundFetchUrl('http://[::1]/source')).rejects.toThrow('domain name')
     await expect(validateOutboundFetchUrl('http://[::ffff:7f00:1]/source')).rejects.toThrow(
-      'public IP address',
+      'domain name',
     )
     expect(mockedLookup).not.toHaveBeenCalled()
   })
@@ -169,13 +171,11 @@ describe('source outbound fetch URL validation', () => {
     expect(lookupResults).toEqual([{ address: '93.184.216.34', family: 4 }])
   })
 
-  it('rejects redirects to blocked addresses before following them', async () => {
+  it('rejects redirects to IP addresses before following them', async () => {
     mockedLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }])
-    mockHttpsResponse({ headers: { location: 'http://127.0.0.1/admin' }, status: 302 })
+    mockHttpsResponse({ headers: { location: 'http://93.184.216.34/admin' }, status: 302 })
 
-    await expect(fetchSourceUrl('https://source.example.test/path')).rejects.toThrow(
-      'public IP address',
-    )
+    await expect(fetchSourceUrl('https://source.example.test/path')).rejects.toThrow('domain name')
     expect(mockedHttpsRequest).toHaveBeenCalledTimes(1)
   })
 })
