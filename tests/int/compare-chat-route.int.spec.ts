@@ -12,6 +12,7 @@ const originalAzureEnv = {
   AZURE_OPENAI_API_KEY: process.env.AZURE_OPENAI_API_KEY,
   AZURE_OPENAI_DEPLOYMENT: process.env.AZURE_OPENAI_DEPLOYMENT,
   AZURE_OPENAI_RESOURCE_NAME: process.env.AZURE_OPENAI_RESOURCE_NAME,
+  CHAT_DEBUG: process.env.CHAT_DEBUG,
 }
 
 function restoreEnv(name: keyof typeof originalAzureEnv) {
@@ -41,6 +42,7 @@ describe('compare chat route', () => {
     restoreEnv('AZURE_OPENAI_API_KEY')
     restoreEnv('AZURE_OPENAI_DEPLOYMENT')
     restoreEnv('AZURE_OPENAI_RESOURCE_NAME')
+    restoreEnv('CHAT_DEBUG')
   })
 
   it('returns a client error for malformed JSON', async () => {
@@ -113,6 +115,43 @@ describe('compare chat route', () => {
         'x-chat-request-id': expect.any(String),
         'x-compare-mcp-status': 'connected',
         'x-compare-mcp-tool-count': '2',
+      },
+      onError: expect.any(Function),
+    })
+  })
+
+  it('sanitizes MCP diagnostics before adding them to response headers', async () => {
+    const toUIMessageStreamResponse = vi.fn(({ headers }: { headers: HeadersInit }) =>
+      new Response(null, { headers, status: 200 }),
+    )
+
+    process.env.CHAT_DEBUG = '1'
+    vi.mocked(streamCompareAnswer).mockResolvedValueOnce({
+      mcp: {
+        error: 'MCP\nfailed ✓',
+        status: 'disconnected',
+        toolCount: 0,
+      },
+      result: {
+        toUIMessageStreamResponse,
+      },
+    } as unknown as Awaited<ReturnType<typeof streamCompareAnswer>>)
+
+    const response = await POST(
+      new Request('http://localhost/compare/chat', {
+        body: JSON.stringify({ messages: [{ id: 'message-1', parts: [], role: 'user' }] }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(toUIMessageStreamResponse).toHaveBeenCalledWith({
+      headers: {
+        'x-chat-request-id': expect.any(String),
+        'x-compare-mcp-error': 'MCP failed',
+        'x-compare-mcp-status': 'disconnected',
+        'x-compare-mcp-tool-count': '0',
       },
       onError: expect.any(Function),
     })

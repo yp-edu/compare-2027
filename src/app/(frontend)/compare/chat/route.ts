@@ -92,6 +92,25 @@ function hasAdminRole(role: unknown) {
   return role === 'admin'
 }
 
+function sanitizeHeaderValue(value: string) {
+  return Array.from(value, (character) => {
+    const codePoint = character.codePointAt(0) ?? 0
+
+    if (codePoint >= 0x20 && codePoint <= 0x7e) {
+      return character
+    }
+
+    if (codePoint >= 0x80 && codePoint <= 0xff) {
+      return character
+    }
+
+    return ' '
+  })
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function isUIMessageArray(value: unknown): value is UIMessage[] {
   return (
     Array.isArray(value) &&
@@ -204,7 +223,7 @@ export async function POST(request: Request) {
     const exposeMcpDiagnostics = hasAdminRole((session.user as { role?: unknown }).role)
 
     if ((exposeMcpDiagnostics || process.env.CHAT_DEBUG === '1') && mcp.error) {
-      headers['x-compare-mcp-error'] = mcp.error
+      headers['x-compare-mcp-error'] = sanitizeHeaderValue(mcp.error)
     }
 
     return result.toUIMessageStreamResponse({
