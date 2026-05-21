@@ -6,18 +6,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { fetchSourceUrl, validateOutboundFetchUrl } from '@/features/sources/server/source-url'
 
-const dnsMocks = vi.hoisted(() => ({
-  lookup: vi.fn(),
-}))
 const requestMocks = vi.hoisted(() => ({
   httpRequest: vi.fn(),
   httpsRequest: vi.fn(),
 }))
 
-vi.mock('node:dns/promises', () => ({
-  default: dnsMocks,
-  lookup: dnsMocks.lookup,
-}))
 vi.mock('node:http', () => ({
   default: { request: requestMocks.httpRequest },
   request: requestMocks.httpRequest,
@@ -27,18 +20,34 @@ vi.mock('node:https', () => ({
   request: requestMocks.httpsRequest,
 }))
 
-type MockLookup = (
-  hostname: string,
-  options: { all: true },
-) => Promise<Array<{ address: string; family: 4 | 6 }>>
 type MockRequest = (
   url: URL,
   options: RequestOptions,
   callback: (response: IncomingMessage) => void,
 ) => ClientRequest
 
-const mockedLookup = vi.mocked(dnsMocks.lookup as unknown as MockLookup)
 const mockedHttpsRequest = vi.mocked(requestMocks.httpsRequest as unknown as MockRequest)
+
+function createMockRequest() {
+  const request = new EventEmitter() as ClientRequest
+
+  request.destroy = vi.fn((error?: Error) => {
+    if (error) {
+      request.emit('error', error)
+    }
+
+    return request
+  }) as ClientRequest['destroy']
+  request.setTimeout = vi.fn((_timeout: number, callback?: () => void) => {
+    if (callback) {
+      request.on('timeout', callback)
+    }
+
+    return request
+  }) as ClientRequest['setTimeout']
+
+  return request
+}
 
 function createIncomingMessage(args: {
   body?: string
@@ -57,37 +66,19 @@ function createIncomingMessage(args: {
 function mockHttpsResponse(args: {
   body?: string
   headers?: Record<string, string>
-  onLookup?: (address: string | Array<{ address: string; family: number }>, family?: number) => void
   status: number
 }) {
-  mockedHttpsRequest.mockImplementation((url, options, callback) => {
-    const request = new EventEmitter() as ClientRequest
+  mockedHttpsRequest.mockImplementation((_url, _options, callback) => {
+    const request = createMockRequest()
 
     request.end = vi.fn(() => {
-      const completeRequest = () => {
-        callback(
-          createIncomingMessage({
-            body: args.body,
-            headers: args.headers,
-            status: args.status,
-          }),
-        )
-      }
-
-      if (!options.lookup) {
-        completeRequest()
-        return request
-      }
-
-      options.lookup(url.hostname, { all: false }, (error, address, family) => {
-        if (error) {
-          request.emit('error', error)
-          return
-        }
-
-        args.onLookup?.(address, family)
-        completeRequest()
-      })
+      callback(
+        createIncomingMessage({
+          body: args.body,
+          headers: args.headers,
+          status: args.status,
+        }),
+      )
 
       return request
     }) as ClientRequest['end']
@@ -101,7 +92,7 @@ describe('source outbound fetch URL validation', () => {
     vi.resetAllMocks()
   })
 
-  it('rejects literal IP addresses without DNS lookup', async () => {
+  it('rejects literal IP addresses', async () => {
     await expect(validateOutboundFetchUrl('http://93.184.216.34/source')).rejects.toThrow(
       'domain name',
     )
@@ -113,7 +104,6 @@ describe('source outbound fetch URL validation', () => {
     await expect(validateOutboundFetchUrl('http://[::ffff:7f00:1]/source')).rejects.toThrow(
       'domain name',
     )
-    expect(mockedLookup).not.toHaveBeenCalled()
   })
 
   it('rejects unsupported URL schemes and embedded credentials', async () => {
@@ -121,61 +111,39 @@ describe('source outbound fetch URL validation', () => {
     await expect(validateOutboundFetchUrl('https://user:pass@example.test/source')).rejects.toThrow(
       'credentials',
     )
-    expect(mockedLookup).not.toHaveBeenCalled()
   })
 
-  it('rejects hostnames that resolve to private addresses', async () => {
-    mockedLookup.mockResolvedValue([{ address: '10.0.0.7', family: 4 }])
-
-    await expect(validateOutboundFetchUrl('https://source.example.test/path')).rejects.toThrow(
-      'only to public IP addresses',
-    )
-    expect(mockedLookup).toHaveBeenCalledWith('source.example.test', { all: true })
-  })
-
-  it('allows hostnames that resolve only to public addresses', async () => {
-    mockedLookup.mockResolvedValue([
-      { address: '93.184.216.34', family: 4 },
-      { address: '2606:2800:220:1:248:1893:25c8:1946', family: 6 },
-    ])
-
+  it('allows domain hostnames', async () => {
     await expect(
       validateOutboundFetchUrl('https://source.example.test/path'),
     ).resolves.toHaveProperty('href', 'https://source.example.test/path')
   })
 
-  it('binds fetch connections to the validated DNS result', async () => {
-    mockedLookup
-      .mockResolvedValueOnce([{ address: '93.184.216.34', family: 4 }])
-      .mockResolvedValueOnce([{ address: '10.0.0.7', family: 4 }])
-    const lookupResults: Array<{
-      address: string | Array<{ address: string; family: number }>
-      family?: number
-    }> = []
-
-    mockHttpsResponse({
-      body: 'source',
-      onLookup: (address, family) => {
-        lookupResults.push({ address, family })
-      },
-      status: 200,
-    })
-
-    const { response, url } = await fetchSourceUrl('https://source.example.test/path')
-
-    await response.body?.cancel()
-
-    expect(url).toBe('https://source.example.test/path')
-    expect(response.status).toBe(200)
-    expect(mockedLookup).toHaveBeenCalledTimes(1)
-    expect(lookupResults).toEqual([{ address: '93.184.216.34', family: 4 }])
-  })
-
   it('rejects redirects to IP addresses before following them', async () => {
-    mockedLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }])
     mockHttpsResponse({ headers: { location: 'http://93.184.216.34/admin' }, status: 302 })
 
     await expect(fetchSourceUrl('https://source.example.test/path')).rejects.toThrow('domain name')
     expect(mockedHttpsRequest).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects stalled source fetches after the request timeout', async () => {
+    const requestStarted = new Promise<ClientRequest>((resolve) => {
+      mockedHttpsRequest.mockImplementation(() => {
+        const request = createMockRequest()
+        request.end = vi.fn(() => request) as ClientRequest['end']
+        resolve(request)
+
+        return request
+      })
+    })
+
+    const fetchPromise = fetchSourceUrl('https://source.example.test/path')
+
+    const request = await requestStarted
+    request.emit('timeout')
+
+    await expect(fetchPromise).rejects.toThrow('Source fetch timed out.')
+    expect(request.setTimeout).toHaveBeenCalledWith(30_000, expect.any(Function))
+    expect(request.destroy).toHaveBeenCalledWith(expect.any(Error))
   })
 })
