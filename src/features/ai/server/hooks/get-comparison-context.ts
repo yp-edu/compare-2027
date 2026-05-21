@@ -4,8 +4,10 @@ import config from '@/payload.config'
 
 type NamedValue = {
   displayName?: string | null
+  id?: number | string
   name?: string | null
   references?: SourceReference[] | null
+  slug?: string | null
   sources?: ProgramSource[] | null
   shortName?: string | null
   title?: string | null
@@ -62,11 +64,12 @@ function getSourceReference(source: unknown) {
 
   const named = source as NamedValue
   const title = getNamedValue(source)
+  const sourceId = named.id ? `source:${named.id} ` : ''
   const primaryReference = (named.references || []).find((reference) => reference.isPrimary)
   const fallbackReference = (named.references || []).find((reference) => reference.url)
   const url = primaryReference?.url || fallbackReference?.url
 
-  return url ? `${title} (${url})` : title
+  return url ? `${sourceId}${title} (${url})` : `${sourceId}${title}`
 }
 
 function getProgramSources(program: NamedValue) {
