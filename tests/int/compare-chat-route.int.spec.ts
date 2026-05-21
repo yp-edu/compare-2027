@@ -84,7 +84,13 @@ describe('compare chat route', () => {
     const toUIMessageStreamResponse = vi.fn(() => new Response(null, { status: 200 }))
 
     vi.mocked(streamCompareAnswer).mockResolvedValueOnce({
-      toUIMessageStreamResponse,
+      mcp: {
+        status: 'connected',
+        toolCount: 2,
+      },
+      result: {
+        toUIMessageStreamResponse,
+      },
     } as unknown as Awaited<ReturnType<typeof streamCompareAnswer>>)
 
     const messages = [{ id: 'message-1', parts: [], role: 'user' }]
@@ -103,7 +109,11 @@ describe('compare chat route', () => {
       userId: 123,
     })
     expect(toUIMessageStreamResponse).toHaveBeenCalledWith({
-      headers: { 'x-chat-request-id': expect.any(String) },
+      headers: {
+        'x-chat-request-id': expect.any(String),
+        'x-compare-mcp-status': 'connected',
+        'x-compare-mcp-tool-count': '2',
+      },
       onError: expect.any(Function),
     })
   })
