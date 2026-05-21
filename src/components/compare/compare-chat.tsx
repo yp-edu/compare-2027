@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type FormEvent, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
 import Link from 'next/link'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { useChat } from '@ai-sdk/react'
@@ -68,6 +68,11 @@ type CitationTarget = {
 }
 
 type SourceCitation = {
+  actor?: {
+    color: null | string
+    name: null | string
+    type: null | string
+  } | null
   id: number
   platform: null | string
   publishedAt: null | string
@@ -100,6 +105,13 @@ type CitationMetadata = {
 type CitationResponse = {
   claims?: ClaimCitation[]
   sources?: SourceCitation[]
+}
+
+type RectLike = Pick<DOMRect, 'bottom' | 'left' | 'top'>
+
+type CitationPopupPosition = {
+  left: number
+  top: number
 }
 
 type MarkdownMessageProps = {
@@ -171,11 +183,12 @@ function getCitationIds(text: string) {
 }
 
 function getCitationColor(citation: CitationTarget, metadata: CitationMetadata) {
-  if (citation.kind !== 'claim') {
-    return null
-  }
+  const color =
+    citation.kind === 'claim'
+      ? metadata.claims[citation.id]?.actor.color
+      : metadata.sources[citation.id]?.actor?.color
 
-  return getHexColor(metadata.claims[citation.id]?.actor.color)
+  return getHexColor(color)
 }
 
 function getCitationStyle(citation: CitationTarget, metadata: CitationMetadata) {
@@ -231,6 +244,23 @@ function toCitationMetadata(response: CitationResponse): CitationMetadata {
   }
 }
 
+export function getCitationPopupPosition(
+  containerRect: RectLike,
+  linkRect: RectLike,
+  viewportWidth: number,
+): CitationPopupPosition {
+  const gutter = 24
+  const popupWidth = Math.min(416, Math.max(0, viewportWidth - gutter * 2))
+  const minViewportLeft = gutter
+  const maxViewportLeft = Math.max(minViewportLeft, viewportWidth - popupWidth - gutter)
+  const viewportLeft = Math.min(Math.max(linkRect.left, minViewportLeft), maxViewportLeft)
+
+  return {
+    left: viewportLeft - containerRect.left,
+    top: linkRect.bottom - containerRect.top + 8,
+  }
+}
+
 function CitationDetails({
   answer,
   canSubmitClaimFeedback,
@@ -238,6 +268,7 @@ function CitationDetails({
   metadata,
   messageId,
   onClose,
+  position,
   question,
 }: {
   answer?: string
@@ -246,17 +277,23 @@ function CitationDetails({
   metadata: CitationMetadata
   messageId?: string
   onClose: () => void
+  position: CitationPopupPosition
   question?: string
 }) {
   const claim = citation.kind === 'claim' ? metadata.claims[citation.id] : undefined
   const source = citation.kind === 'source' ? metadata.sources[citation.id] : claim?.source
   const sourceUrl = getSafeSourceUrl(claim?.sourceUrl) || getSafeSourceUrl(source?.url)
   const color = getCitationColor(citation, metadata)
+  const sourceActor = citation.kind === 'source' ? source?.actor : null
 
   return (
     <div
-      className="absolute left-0 top-full z-20 mt-2 w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
-      style={color ? { borderColor: `${color}66` } : undefined}
+      className="absolute z-20 w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
+      style={{
+        left: position.left,
+        top: position.top,
+        ...(color ? { borderColor: `${color}66` } : {}),
+      }}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -287,6 +324,11 @@ function CitationDetails({
       {source ? (
         <div className="mt-3 rounded-xl bg-secondary/50 p-3 text-sm leading-6">
           <p className="font-semibold">{source.title}</p>
+          {sourceActor?.name ? (
+            <p className="font-medium" style={color ? { color } : undefined}>
+              {sourceActor.name}
+            </p>
+          ) : null}
           <p className="text-muted-foreground">
             {[
               source.publishedAt ? new Date(source.publishedAt).toLocaleDateString('fr-FR') : null,
@@ -329,11 +371,13 @@ function MarkdownMessage({
   question,
   text,
 }: MarkdownMessageProps) {
+  const markdownRef = useRef<HTMLDivElement>(null)
   const [citationMetadata, setCitationMetadata] = useState<CitationMetadata>({
     claims: {},
     sources: {},
   })
   const [selectedCitation, setSelectedCitation] = useState<CitationTarget | null>(null)
+  const [citationPosition, setCitationPosition] = useState<CitationPopupPosition | null>(null)
   const html = renderMarkdown(text, citationMetadata)
 
   useEffect(() => {
@@ -384,6 +428,18 @@ function MarkdownMessage({
     }
 
     event.preventDefault()
+    const container = markdownRef.current
+
+    if (container) {
+      setCitationPosition(
+        getCitationPopupPosition(
+          container.getBoundingClientRect(),
+          link.getBoundingClientRect(),
+          window.innerWidth,
+        ),
+      )
+    }
+
     setSelectedCitation({ id, kind, label: link.textContent?.trim() || 'Citation' })
   }
 
@@ -414,8 +470,9 @@ function MarkdownMessage({
         )}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={handleCitationClick}
+        ref={markdownRef}
       />
-      {selectedCitation ? (
+      {selectedCitation && citationPosition ? (
         <CitationDetails
           answer={answer}
           canSubmitClaimFeedback={canSubmitClaimFeedback}
@@ -423,6 +480,7 @@ function MarkdownMessage({
           metadata={citationMetadata}
           messageId={messageId}
           onClose={() => setSelectedCitation(null)}
+          position={citationPosition}
           question={question}
         />
       ) : null}
