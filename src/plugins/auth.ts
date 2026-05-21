@@ -42,8 +42,15 @@ type AuthHookContext = {
   body?: Record<string, unknown>
   headers?: Headers
   path?: string
+  query?: Record<string, unknown>
   request?: Request
   context?: {
+    adapter?: {
+      count: (args: {
+        model: string
+        where: { field: string; operator: 'eq'; value: string }[]
+      }) => Promise<number>
+    }
     headers?: Headers
     request?: Request
   }
@@ -61,6 +68,53 @@ function isEmailPasswordSignup(ctx: AuthHookContext | undefined) {
 
 function hasAcceptedLegalConsent(ctx: AuthHookContext | undefined) {
   return ctx?.body?.legalConsentAccepted === true || ctx?.body?.legalConsentAccepted === 'true'
+}
+
+function getStringValue(value: unknown) {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (Array.isArray(value) && typeof value[0] === 'string') {
+    return value[0]
+  }
+
+  return null
+}
+
+function getAdminInviteToken(ctx: AuthHookContext | undefined) {
+  const additionalData = ctx?.body?.additionalData
+
+  return (
+    ctx?.headers?.get('x-admin-invite-token') ||
+    getStringValue(ctx?.query?.adminInviteToken) ||
+    getStringValue(ctx?.body?.adminInviteToken) ||
+    (typeof additionalData === 'object' && additionalData
+      ? getStringValue((additionalData as Record<string, unknown>).adminInviteToken)
+      : null)
+  )
+}
+
+async function isValidAdminInviteSignup(ctx: AuthHookContext | undefined) {
+  const adminInviteToken = getAdminInviteToken(ctx)
+  const adapter = ctx?.context?.adapter
+
+  if (!adminInviteToken || !adapter) {
+    return false
+  }
+
+  const count = await adapter.count({
+    model: 'admin-invitations',
+    where: [
+      {
+        field: 'token',
+        operator: 'eq',
+        value: adminInviteToken,
+      },
+    ],
+  })
+
+  return count > 0
 }
 
 export const betterAuthOptions = {
@@ -121,6 +175,10 @@ export const betterAuthOptions = {
           const hookContext = ctx as AuthHookContext | undefined
 
           if (!isEmailPasswordSignup(hookContext)) {
+            return { data: user }
+          }
+
+          if (await isValidAdminInviteSignup(hookContext)) {
             return { data: user }
           }
 
