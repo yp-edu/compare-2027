@@ -26,6 +26,20 @@ const suggestedQuestions = [
   'Où sont les divergences sur la transition écologique ?',
 ]
 
+const toolDisplayNames: Record<string, string> = {
+  findCandidates: 'Candidats',
+  findClaimEvidence: 'Éléments de preuve',
+  findClaims: 'Affirmations',
+  findDocumentChunks: 'Extraits de documents',
+  findParties: 'Partis et mouvements',
+  findPrograms: 'Programmes',
+  findProposals: 'Propositions',
+  findPublicPositions: 'Positions publiques',
+  findSourceDocuments: 'Documents sources',
+  findSources: 'Sources',
+  findTopics: 'Thématiques',
+}
+
 function getMessageText(message: UIMessage) {
   return message.parts
     .filter((part) => part.type === 'text')
@@ -113,6 +127,14 @@ export function getSafeSourceUrl(value?: null | string) {
   } catch {
     return null
   }
+}
+
+export function getToolDisplayName(name?: null | string) {
+  if (!name) {
+    return 'Outil MCP'
+  }
+
+  return toolDisplayNames[name] || 'Outil MCP'
 }
 
 function escapeHtml(value: string) {
@@ -410,10 +432,12 @@ function MarkdownMessage({
 
 function getToolPartName(part: UIMessage['parts'][number]) {
   if (part.type === 'dynamic-tool' && 'toolName' in part) {
-    return String(part.toolName)
+    return getToolDisplayName(String(part.toolName))
   }
 
-  return part.type.startsWith('tool-') ? part.type.replace(/^tool-/, '') : 'outil'
+  return part.type.startsWith('tool-')
+    ? getToolDisplayName(part.type.replace(/^tool-/, ''))
+    : getToolDisplayName()
 }
 
 function getToolPartState(part: UIMessage['parts'][number]) {
