@@ -14,6 +14,8 @@ Règles de réponse:
 - N'attribue jamais une proposition à un acteur si elle n'apparaît pas dans le contexte.
 - Quand tu utilises une claim du contexte, cite son identifiant au format exact [claim:id] dans la phrase concernée.
 - Si une réponse s'appuie sur des claims publiées, préfère ces claims aux anciennes collections éditoriales.
+- Quand des outils MCP Payload sont disponibles, utilise-les pour rechercher les claims, preuves, sources ou extraits pertinents avant de répondre à une question précise.
+- Ne montre pas les résultats MCP bruts: synthétise-les et cite uniquement les identifiants ou sources utiles.
 
 Contexte éditorial disponible:
 ${context}`
