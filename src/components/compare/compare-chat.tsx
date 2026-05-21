@@ -1,15 +1,33 @@
 'use client'
 
-import { useEffect, useState, type FormEvent, type MouseEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { useChat } from '@ai-sdk/react'
-import { ExternalLink, LockKeyhole, Search, SendHorizontal, Sparkles, X } from 'lucide-react'
+import {
+  ExternalLink,
+  LockKeyhole,
+  Maximize2,
+  Minimize2,
+  RotateCcw,
+  Search,
+  SendHorizontal,
+  X,
+} from 'lucide-react'
 import { marked } from 'marked'
+import useSWR from 'swr'
 import xss, { getDefaultWhiteList } from 'xss'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { OfflineGuard } from '@/components/pwa/offline-guard'
 import { useOnlineStatus } from '@/components/pwa/use-online-status'
 import { ClaimFreshnessFeedback } from '@/features/feedback/components/claim-freshness-feedback'
@@ -18,13 +36,160 @@ import { authClient } from '@/lib/auth-client'
 import { isLegalConsentCurrent } from '@/lib/legal'
 import { cn } from '@/lib/utils'
 
-const chatTransport = new DefaultChatTransport({ api: '/compare/chat' })
+type ChatErrorPayload = {
+  details?: unknown
+  error?: unknown
+  requestId?: unknown
+  stage?: unknown
+}
+
+type CompareMCPAccessStatus = {
+  error?: string
+  requestId?: string
+  status: 'checking' | 'connected' | 'disconnected' | 'unknown'
+  toolCount?: number
+}
+
+const mcpStatusEventType = 'compare-chat:mcp-status'
+
+function parseChatErrorPayload(value: string): ChatErrorPayload | null {
+  try {
+    const parsed = JSON.parse(value) as unknown
+
+    return parsed && typeof parsed === 'object' && 'error' in parsed ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function getDebugValue(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
+
+function getReadableChatErrorMessage(error: Error) {
+  const payload = parseChatErrorPayload(error.message)
+
+  if (!payload) {
+    return error.message || 'La réponse n’a pas pu être générée.'
+  }
+
+  const message = getDebugValue(payload.error) || 'La réponse n’a pas pu être générée.'
+  const stage = getDebugValue(payload.stage)
+  const requestId = getDebugValue(payload.requestId)
+  const suffix = [stage ? `étape: ${stage}` : null, requestId ? `référence: ${requestId}` : null]
+    .filter(Boolean)
+    .join(' · ')
+
+  return suffix ? `${message} (${suffix})` : message
+}
+
+function hasAdminRole(role: unknown) {
+  if (Array.isArray(role)) {
+    return role.includes('admin')
+  }
+
+  return role === 'admin'
+}
+
+function logClientChatError(stage: string, error: unknown, context?: Record<string, unknown>) {
+  const message = error instanceof Error ? error.message : String(error)
+  const payload = parseChatErrorPayload(message)
+
+  console.error('[compare-chat]', {
+    ...context,
+    details: payload?.details,
+    error: payload?.error || message,
+    requestId: payload?.requestId,
+    stage: payload?.stage || stage,
+  })
+}
+
+async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const response = await fetch(input, init)
+  const chatRequestId = response.headers.get('x-chat-request-id') || undefined
+  const mcpError = response.headers.get('x-compare-mcp-error') || undefined
+  const mcpStatus = response.headers.get('x-compare-mcp-status')
+  const mcpToolCount = Number(response.headers.get('x-compare-mcp-tool-count') || 0)
+  let didDispatchMcpStatus = false
+
+  if (
+    typeof window !== 'undefined' &&
+    (mcpStatus === 'connected' || mcpStatus === 'disconnected')
+  ) {
+    didDispatchMcpStatus = true
+    window.dispatchEvent(
+      new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
+        detail: {
+          ...(chatRequestId ? { requestId: chatRequestId } : {}),
+          ...(mcpError ? { error: mcpError } : {}),
+          status: mcpStatus,
+          toolCount: Number.isFinite(mcpToolCount) ? mcpToolCount : 0,
+        },
+      }),
+    )
+  } else if (typeof window !== 'undefined' && response.ok) {
+    didDispatchMcpStatus = true
+    window.dispatchEvent(
+      new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
+        detail: { status: 'unknown' },
+      }),
+    )
+  }
+
+  if (!response.ok) {
+    if (typeof window !== 'undefined' && !didDispatchMcpStatus) {
+      window.dispatchEvent(
+        new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
+          detail: {
+            ...(chatRequestId ? { requestId: chatRequestId } : {}),
+            status: 'disconnected',
+            toolCount: 0,
+          },
+        }),
+      )
+    }
+
+    const body = await response
+      .clone()
+      .text()
+      .catch(() => '')
+    const payload = parseChatErrorPayload(body)
+
+    console.error('[compare-chat]', {
+      body: payload ? undefined : body,
+      details: payload?.details,
+      error: payload?.error || response.statusText,
+      requestId: payload?.requestId,
+      stage: payload?.stage || 'http-response',
+      status: response.status,
+      url: input instanceof Request ? input.url : input.toString(),
+    })
+  }
+
+  return response
+}
+
+const chatTransport = new DefaultChatTransport({ api: '/compare/chat', fetch: debugChatFetch })
 
 const suggestedQuestions = [
   'Compare les positions sur le pouvoir d’achat.',
   'Quels candidats proposent une réforme de l’école ?',
   'Où sont les divergences sur la transition écologique ?',
 ]
+
+const toolDisplayNames: Record<string, string> = {
+  findCandidates: 'Candidats',
+  findClaimEvidence: 'Éléments de preuve',
+  findClaims: 'Affirmations',
+  findDocumentChunks: 'Extraits de documents',
+  findParties: 'Partis et mouvements',
+  findPrograms: 'Programmes',
+  findProposals: 'Propositions',
+  findPublicPositions: 'Positions publiques',
+  findSourceDocuments: 'Documents sources',
+  findSources: 'Sources',
+  findTopics: 'Thématiques',
+}
 
 function getMessageText(message: UIMessage) {
   return message.parts
@@ -54,6 +219,11 @@ type CitationTarget = {
 }
 
 type SourceCitation = {
+  actor?: {
+    color: null | string
+    name: null | string
+    type: null | string
+  } | null
   id: number
   platform: null | string
   publishedAt: null | string
@@ -88,14 +258,24 @@ type CitationResponse = {
   sources?: SourceCitation[]
 }
 
+type RectLike = Pick<DOMRect, 'bottom' | 'left'>
+
+type CitationPopupPosition = {
+  left: number
+  top: number
+}
+
 type MarkdownMessageProps = {
   answer?: string
   canSubmitClaimFeedback?: boolean
+  citationMetadata: CitationMetadata
   isUser: boolean
   messageId?: string
   question?: string
   text: string
 }
+
+const emptyCitationMetadata: CitationMetadata = { claims: {}, sources: {} }
 
 function getHexColor(color?: null | string) {
   return color && /^#[\dA-F]{6}$/i.test(color) ? color : null
@@ -113,6 +293,14 @@ export function getSafeSourceUrl(value?: null | string) {
   } catch {
     return null
   }
+}
+
+export function getToolDisplayName(name?: null | string) {
+  if (!name) {
+    return 'Outil MCP'
+  }
+
+  return toolDisplayNames[name] || 'Outil MCP'
 }
 
 function escapeHtml(value: string) {
@@ -148,12 +336,76 @@ function getCitationIds(text: string) {
   return { claims: Array.from(claims), sources: Array.from(sources) }
 }
 
-function getCitationColor(citation: CitationTarget, metadata: CitationMetadata) {
-  if (citation.kind !== 'claim') {
+function sortCitationIds(ids: Iterable<string>) {
+  return Array.from(ids).sort((left, right) => Number(left) - Number(right))
+}
+
+export function getCitationMetadataUrl(texts: string[]) {
+  const claims = new Set<string>()
+  const sources = new Set<string>()
+
+  for (const text of texts) {
+    const citationIds = getCitationIds(text)
+
+    for (const id of citationIds.claims) {
+      claims.add(id)
+    }
+
+    for (const id of citationIds.sources) {
+      sources.add(id)
+    }
+  }
+
+  if (claims.size === 0 && sources.size === 0) {
     return null
   }
 
-  return getHexColor(metadata.claims[citation.id]?.actor.color)
+  const params = new URLSearchParams()
+  const sortedClaims = sortCitationIds(claims)
+  const sortedSources = sortCitationIds(sources)
+
+  if (sortedClaims.length > 0) {
+    params.set('claims', sortedClaims.join(','))
+  }
+
+  if (sortedSources.length > 0) {
+    params.set('sources', sortedSources.join(','))
+  }
+
+  return `/compare/citations?${params.toString()}`
+}
+
+function getMessageTexts(messages: UIMessage[]) {
+  return messages.flatMap((message) =>
+    message.parts.filter((part) => part.type === 'text').map((part) => part.text),
+  )
+}
+
+async function fetchCitationMetadata(url: string): Promise<CitationMetadata> {
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    return emptyCitationMetadata
+  }
+
+  return toCitationMetadata((await response.json()) as CitationResponse)
+}
+
+function useCitationMetadata(url: null | string) {
+  const { data } = useSWR<CitationMetadata>(url, fetchCitationMetadata, {
+    fallbackData: emptyCitationMetadata,
+  })
+
+  return data || emptyCitationMetadata
+}
+
+function getCitationColor(citation: CitationTarget, metadata: CitationMetadata) {
+  const color =
+    citation.kind === 'claim'
+      ? metadata.claims[citation.id]?.actor.color
+      : metadata.sources[citation.id]?.actor?.color
+
+  return getHexColor(color)
 }
 
 function getCitationStyle(citation: CitationTarget, metadata: CitationMetadata) {
@@ -209,6 +461,24 @@ function toCitationMetadata(response: CitationResponse): CitationMetadata {
   }
 }
 
+export function getCitationPopupPosition(
+  linkRect: RectLike,
+  viewportWidth: number,
+  scrollX = 0,
+  scrollY = 0,
+): CitationPopupPosition {
+  const gutter = 24
+  const popupWidth = Math.min(416, Math.max(0, viewportWidth - gutter * 2))
+  const minViewportLeft = gutter
+  const maxViewportLeft = Math.max(minViewportLeft, viewportWidth - popupWidth - gutter)
+  const viewportLeft = Math.min(Math.max(linkRect.left, minViewportLeft), maxViewportLeft)
+
+  return {
+    left: viewportLeft + scrollX,
+    top: linkRect.bottom + scrollY + 8,
+  }
+}
+
 function CitationDetails({
   answer,
   canSubmitClaimFeedback,
@@ -216,6 +486,7 @@ function CitationDetails({
   metadata,
   messageId,
   onClose,
+  position,
   question,
 }: {
   answer?: string
@@ -224,17 +495,23 @@ function CitationDetails({
   metadata: CitationMetadata
   messageId?: string
   onClose: () => void
+  position: CitationPopupPosition
   question?: string
 }) {
   const claim = citation.kind === 'claim' ? metadata.claims[citation.id] : undefined
   const source = citation.kind === 'source' ? metadata.sources[citation.id] : claim?.source
   const sourceUrl = getSafeSourceUrl(claim?.sourceUrl) || getSafeSourceUrl(source?.url)
   const color = getCitationColor(citation, metadata)
+  const sourceActor = citation.kind === 'source' ? source?.actor : null
 
   return (
     <div
-      className="absolute left-0 top-full z-20 mt-2 w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
-      style={color ? { borderColor: `${color}66` } : undefined}
+      className="absolute z-[100] w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
+      style={{
+        left: position.left,
+        top: position.top,
+        ...(color ? { borderColor: `${color}66` } : {}),
+      }}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -265,6 +542,11 @@ function CitationDetails({
       {source ? (
         <div className="mt-3 rounded-xl bg-secondary/50 p-3 text-sm leading-6">
           <p className="font-semibold">{source.title}</p>
+          {sourceActor?.name ? (
+            <p className="font-medium" style={color ? { color } : undefined}>
+              {sourceActor.name}
+            </p>
+          ) : null}
           <p className="text-muted-foreground">
             {[
               source.publishedAt ? new Date(source.publishedAt).toLocaleDateString('fr-FR') : null,
@@ -302,49 +584,58 @@ function CitationDetails({
 function MarkdownMessage({
   answer,
   canSubmitClaimFeedback,
+  citationMetadata,
   isUser,
   messageId,
   question,
   text,
 }: MarkdownMessageProps) {
-  const [citationMetadata, setCitationMetadata] = useState<CitationMetadata>({
-    claims: {},
-    sources: {},
-  })
   const [selectedCitation, setSelectedCitation] = useState<CitationTarget | null>(null)
+  const [citationPosition, setCitationPosition] = useState<CitationPopupPosition | null>(null)
+  const selectedCitationLinkRef = useRef<HTMLAnchorElement | null>(null)
   const html = renderMarkdown(text, citationMetadata)
 
-  useEffect(() => {
-    const citationIds = getCitationIds(text)
+  function clearSelectedCitation() {
+    selectedCitationLinkRef.current = null
+    setSelectedCitation(null)
+    setCitationPosition(null)
+  }
 
-    if (citationIds.claims.length === 0 && citationIds.sources.length === 0) {
+  function updateCitationPosition(link: HTMLAnchorElement) {
+    setCitationPosition(
+      getCitationPopupPosition(
+        link.getBoundingClientRect(),
+        window.innerWidth,
+        window.scrollX,
+        window.scrollY,
+      ),
+    )
+  }
+
+  useEffect(() => {
+    if (!selectedCitation) {
       return
     }
 
-    const params = new URLSearchParams()
-    const controller = new AbortController()
+    function syncCitationPosition() {
+      const link = selectedCitationLinkRef.current
 
-    if (citationIds.claims.length > 0) {
-      params.set('claims', citationIds.claims.join(','))
+      if (!link?.isConnected) {
+        clearSelectedCitation()
+        return
+      }
+
+      updateCitationPosition(link)
     }
 
-    if (citationIds.sources.length > 0) {
-      params.set('sources', citationIds.sources.join(','))
+    window.addEventListener('scroll', syncCitationPosition, true)
+    window.addEventListener('resize', syncCitationPosition)
+
+    return () => {
+      window.removeEventListener('scroll', syncCitationPosition, true)
+      window.removeEventListener('resize', syncCitationPosition)
     }
-
-    fetch(`/compare/citations?${params.toString()}`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : { claims: [], sources: [] }))
-      .then((response: CitationResponse) => setCitationMetadata(toCitationMetadata(response)))
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return
-        }
-
-        setCitationMetadata({ claims: {}, sources: {} })
-      })
-
-    return () => controller.abort()
-  }, [text])
+  }, [selectedCitation])
 
   function handleCitationClick(event: MouseEvent<HTMLDivElement>) {
     const target = event.target instanceof Element ? event.target : null
@@ -362,11 +653,31 @@ function MarkdownMessage({
     }
 
     event.preventDefault()
+    selectedCitationLinkRef.current = link
+    updateCitationPosition(link)
+
     setSelectedCitation({ id, kind, label: link.textContent?.trim() || 'Citation' })
   }
 
+  const citationPopup =
+    selectedCitation && citationPosition && typeof document !== 'undefined'
+      ? createPortal(
+          <CitationDetails
+            answer={answer}
+            canSubmitClaimFeedback={canSubmitClaimFeedback}
+            citation={selectedCitation}
+            metadata={citationMetadata}
+            messageId={messageId}
+            onClose={clearSelectedCitation}
+            position={citationPosition}
+            question={question}
+          />,
+          document.body,
+        )
+      : null
+
   return (
-    <div className="relative">
+    <>
       <div
         className={cn(
           'break-words leading-7',
@@ -393,27 +704,19 @@ function MarkdownMessage({
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={handleCitationClick}
       />
-      {selectedCitation ? (
-        <CitationDetails
-          answer={answer}
-          canSubmitClaimFeedback={canSubmitClaimFeedback}
-          citation={selectedCitation}
-          metadata={citationMetadata}
-          messageId={messageId}
-          onClose={() => setSelectedCitation(null)}
-          question={question}
-        />
-      ) : null}
-    </div>
+      {citationPopup}
+    </>
   )
 }
 
 function getToolPartName(part: UIMessage['parts'][number]) {
   if (part.type === 'dynamic-tool' && 'toolName' in part) {
-    return String(part.toolName)
+    return getToolDisplayName(String(part.toolName))
   }
 
-  return part.type.startsWith('tool-') ? part.type.replace(/^tool-/, '') : 'outil'
+  return part.type.startsWith('tool-')
+    ? getToolDisplayName(part.type.replace(/^tool-/, ''))
+    : getToolDisplayName()
 }
 
 function getToolPartState(part: UIMessage['parts'][number]) {
@@ -469,6 +772,57 @@ function ThinkingIndicator() {
   )
 }
 
+function McpStatusBadge({ status }: { status: CompareMCPAccessStatus }) {
+  const isConnected = status.status === 'connected'
+  const label =
+    status.status === 'checking'
+      ? 'MCP...'
+      : isConnected
+        ? `MCP actif (${status.toolCount || 0})`
+        : status.status === 'disconnected'
+          ? 'MCP absent'
+          : 'MCP non testé'
+  const titleLines = [
+    isConnected
+      ? `Dernier appel: le modèle a reçu ${status.toolCount || 0} outils MCP.`
+      : status.status === 'disconnected'
+        ? "Dernier appel: le modèle n'a pas reçu d'outils MCP."
+        : status.status === 'checking'
+          ? 'Vérification MCP sur la requête en cours.'
+          : 'Envoyez un message pour vérifier si le modèle reçoit les outils MCP.',
+    status.requestId ? `Request: ${status.requestId}` : null,
+    status.error ? `Erreur MCP: ${status.error}` : null,
+  ].filter(Boolean)
+  const title = titleLines.join('\n')
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold',
+        status.status === 'checking' || status.status === 'unknown'
+          ? 'border-border bg-secondary text-muted-foreground'
+          : isConnected
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+            : 'border-destructive/30 bg-destructive/10 text-destructive',
+      )}
+      title={title}
+    >
+      <span
+        className={cn(
+          'size-2 rounded-full',
+          status.status === 'checking' || status.status === 'unknown'
+            ? 'bg-muted-foreground'
+            : isConnected
+              ? 'bg-emerald-500'
+              : 'bg-destructive',
+        )}
+        aria-hidden="true"
+      />
+      {label}
+    </span>
+  )
+}
+
 type CompareChatProps = {
   feedbackEnabled?: boolean
 }
@@ -477,7 +831,29 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const { data: session, isPending } = authClient.useSession()
   const { isOffline } = useOnlineStatus()
   const [input, setInput] = useState('')
-  const { error, messages, sendMessage, status } = useChat({ transport: chatTransport })
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const { clearError, error, messages, sendMessage, setMessages, status, stop } = useChat({
+    onError: (chatError) => logClientChatError('client-chat', chatError),
+    onFinish: ({ finishReason, isAbort, isDisconnect, isError, messages }) => {
+      if (!isAbort && !isDisconnect && !isError) {
+        return
+      }
+
+      console.warn('[compare-chat]', {
+        finishReason,
+        isAbort,
+        isDisconnect,
+        isError,
+        lastRole: messages.at(-1)?.role,
+        messageCount: messages.length,
+        stage: 'client-finish',
+      })
+    },
+    transport: chatTransport,
+  })
+  const role = (session?.user as { role?: unknown } | undefined)?.role
+  const isAdmin = hasAdminRole(role)
+  const [mcpAccess, setMcpAccess] = useState<CompareMCPAccessStatus>({ status: 'unknown' })
   const isAuthenticated = Boolean(session?.user)
   const hasLegalConsent = isLegalConsentCurrent(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
@@ -486,6 +862,43 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     isWorking &&
     (!lastMessage || lastMessage.role !== 'assistant' || !getMessageText(lastMessage).trim())
   const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking || isOffline
+  const canStartNewConversation =
+    messages.length > 0 || Boolean(input) || Boolean(error) || isWorking
+  const citationMetadataUrl =
+    isAuthenticated && hasLegalConsent ? getCitationMetadataUrl(getMessageTexts(messages)) : null
+  const citationMetadata = useCitationMetadata(citationMetadataUrl)
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return
+    }
+
+    function handleMcpStatus(event: Event) {
+      const detail = (event as CustomEvent<CompareMCPAccessStatus>).detail
+
+      if (detail?.status) {
+        setMcpAccess(detail)
+      }
+    }
+
+    window.addEventListener(mcpStatusEventType, handleMcpStatus)
+
+    return () => window.removeEventListener(mcpStatusEventType, handleMcpStatus)
+  }, [isAdmin])
+
+  function handleNewConversation() {
+    if (!canStartNewConversation) {
+      return
+    }
+
+    if (isWorking) {
+      stop()
+    }
+
+    clearError()
+    setMessages([])
+    setInput('')
+  }
 
   async function submitQuestion(question: string) {
     const text = question.trim()
@@ -495,6 +908,9 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     }
 
     setInput('')
+    if (isAdmin) {
+      setMcpAccess({ status: 'checking' })
+    }
     await sendMessage({ text })
   }
 
@@ -503,195 +919,220 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     await submitQuestion(input)
   }
 
-  return (
-    <div className="grid gap-6 lg:grid-cols-[0.72fr_0.28fr]">
-      <Card className="min-h-[36rem] border-primary/15 bg-card/90 shadow-2xl shadow-primary/10 backdrop-blur">
-        <CardHeader className="border-b border-border/70">
-          <CardTitle className="flex items-center gap-3 text-2xl">
-            <Sparkles className="size-5 text-primary" aria-hidden="true" />
-            Chat comparatif
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex min-h-[31rem] flex-col p-0">
-          <div className="flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
-            <div className="max-w-2xl rounded-2xl bg-secondary p-4 text-secondary-foreground">
-              <p className="font-semibold">Bienvenue dans le comparateur.</p>
+  async function handleTextareaKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
+      return
+    }
+
+    event.preventDefault()
+    await submitQuestion(input)
+  }
+
+  const chatPanel = (
+    <Card
+      aria-label="Chat comparatif"
+      className={cn(
+        'flex h-[min(46rem,calc(100vh-9rem))] min-h-[32rem] flex-col overflow-hidden border-primary/15 bg-card/90 shadow-2xl shadow-primary/10 backdrop-blur',
+        isFullscreen && 'h-full min-h-0 rounded-none border-border shadow-none sm:rounded-xl',
+      )}
+      role="region"
+    >
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 border-b border-border/70 p-3 sm:p-4">
+        <div>{isAdmin ? <McpStatusBadge status={mcpAccess} /> : null}</div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            aria-label="Commencer une nouvelle conversation"
+            disabled={!canStartNewConversation}
+            onClick={handleNewConversation}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <RotateCcw aria-hidden="true" />
+            Nouvelle conversation
+          </Button>
+          <Button
+            aria-label={isFullscreen ? 'Réduire le chat' : 'Afficher le chat en plein écran'}
+            onClick={() => setIsFullscreen((value) => !value)}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {isFullscreen ? <Minimize2 aria-hidden="true" /> : <Maximize2 aria-hidden="true" />}
+            {isFullscreen ? 'Réduire' : 'Plein écran'}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
+          {messages.length === 0 ? (
+            <div className="mx-auto max-w-2xl py-6 text-center sm:py-10">
+              <p className="text-lg font-semibold">Que voulez-vous comparer ?</p>
               <p className="mt-2 leading-7 text-muted-foreground">
-                Posez une question sur un thème, un candidat, un parti ou une proposition. La
-                réponse doit distinguer les éléments sourcés, les écarts et les limites des données.
+                Posez une question libre ou lancez un exemple pour démarrer.
               </p>
+              <div className="mt-5 grid gap-2 text-left sm:grid-cols-3">
+                {suggestedQuestions.map((question) => (
+                  <button
+                    className="rounded-xl border border-border bg-background/75 p-3 text-sm font-semibold leading-6 transition hover:border-primary/40 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={isDisabled}
+                    key={question}
+                    onClick={() => submitQuestion(question)}
+                    type="button"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
             </div>
-            {!isAuthenticated && !isPending ? (
-              <div className="flex max-w-2xl items-start gap-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
-                <LockKeyhole className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" />
-                <div>
-                  <p className="font-semibold">Connexion requise</p>
-                  <p className="mt-1 leading-7 text-muted-foreground">
-                    Le chat est visible mais désactivé pour les visiteurs anonymes.
-                  </p>
-                  <Button asChild className="mt-3" size="sm">
-                    <Link href="/signin">Se connecter pour comparer</Link>
-                  </Button>
-                </div>
+          ) : null}
+          {!isAuthenticated && !isPending ? (
+            <div className="flex max-w-2xl items-start gap-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
+              <LockKeyhole className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" />
+              <div>
+                <p className="font-semibold">Connexion requise</p>
+                <p className="mt-1 leading-7 text-muted-foreground">
+                  Le chat est visible mais désactivé pour les visiteurs anonymes.
+                </p>
+                <Button asChild className="mt-3" size="sm">
+                  <Link href="/signin">Se connecter pour comparer</Link>
+                </Button>
               </div>
-            ) : null}
-            {isAuthenticated && !hasLegalConsent && !isPending ? (
-              <div className="flex max-w-2xl items-start gap-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
-                <LockKeyhole className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" />
-                <div>
-                  <p className="font-semibold">Consentement requis</p>
-                  <p className="mt-1 leading-7 text-muted-foreground">
-                    Confirmez les CGU, la confidentialité et la neutralité avant d’utiliser le chat.
-                  </p>
-                  <Button asChild className="mt-3" size="sm">
-                    <Link href="/consent?next=/compare">Confirmer et comparer</Link>
-                  </Button>
-                </div>
+            </div>
+          ) : null}
+          {isAuthenticated && !hasLegalConsent && !isPending ? (
+            <div className="flex max-w-2xl items-start gap-3 rounded-2xl border border-primary/20 bg-background/80 p-4">
+              <LockKeyhole className="mt-1 size-5 shrink-0 text-primary" aria-hidden="true" />
+              <div>
+                <p className="font-semibold">Consentement requis</p>
+                <p className="mt-1 leading-7 text-muted-foreground">
+                  Confirmez les CGU, la confidentialité et la neutralité avant d’utiliser le chat.
+                </p>
+                <Button asChild className="mt-3" size="sm">
+                  <Link href="/consent?next=/compare">Confirmer et comparer</Link>
+                </Button>
               </div>
-            ) : null}
-            <OfflineGuard
-              className="max-w-2xl"
-              message="Le chat comparatif nécessite une connexion Internet. Les pages déjà chargées restent lisibles hors ligne."
-            />
-            {messages.map((message, messageIndex) => {
-              const text = getMessageText(message)
-              const question = getPreviousUserMessageText(messages, messageIndex)
-              const hasVisibleParts =
-                Boolean(text.trim()) ||
-                message.parts.some((part) => part.type === 'reasoning' || isToolStatusPart(part))
-              const showFeedback =
-                feedbackEnabled &&
-                isAuthenticated &&
-                message.role === 'assistant' &&
-                Boolean(question) &&
-                !(isWorking && messageIndex === messages.length - 1)
-              const canSubmitClaimFeedback =
-                isAuthenticated &&
-                message.role === 'assistant' &&
-                Boolean(question) &&
-                !(isWorking && messageIndex === messages.length - 1)
+            </div>
+          ) : null}
+          <OfflineGuard
+            className="max-w-2xl"
+            message="Le chat comparatif nécessite une connexion Internet. Les pages déjà chargées restent lisibles hors ligne."
+          />
+          {messages.map((message, messageIndex) => {
+            const text = getMessageText(message)
+            const question = getPreviousUserMessageText(messages, messageIndex)
+            const hasVisibleParts =
+              Boolean(text.trim()) ||
+              message.parts.some((part) => part.type === 'reasoning' || isToolStatusPart(part))
+            const showFeedback =
+              feedbackEnabled &&
+              isAuthenticated &&
+              message.role === 'assistant' &&
+              Boolean(question) &&
+              !(isWorking && messageIndex === messages.length - 1)
+            const canSubmitClaimFeedback =
+              isAuthenticated &&
+              message.role === 'assistant' &&
+              Boolean(question) &&
+              !(isWorking && messageIndex === messages.length - 1)
 
-              if (!hasVisibleParts) {
-                return null
-              }
+            if (!hasVisibleParts) {
+              return null
+            }
 
-              return (
-                <div
-                  className={
-                    message.role === 'user'
-                      ? 'ml-auto max-w-2xl rounded-2xl bg-primary p-4 text-primary-foreground'
-                      : 'max-w-2xl rounded-2xl border border-border bg-background/85 p-4 text-foreground'
-                  }
-                  key={message.id}
-                >
-                  {message.parts.map((part, partIndex) => {
-                    if (part.type === 'text') {
-                      return (
-                        <MarkdownMessage
-                          answer={text}
-                          canSubmitClaimFeedback={canSubmitClaimFeedback}
-                          isUser={message.role === 'user'}
-                          key={`${message.id}-text-${partIndex}`}
-                          messageId={message.id}
-                          question={question}
-                          text={part.text}
-                        />
-                      )
-                    }
-
-                    if (message.role === 'assistant' && part.type === 'reasoning') {
-                      return (
-                        <ReasoningStatusPart
-                          key={`${message.id}-reasoning-${partIndex}`}
-                          part={part}
-                        />
-                      )
-                    }
-
-                    if (message.role === 'assistant' && isToolStatusPart(part)) {
-                      return <ToolStatusPart key={`${message.id}-tool-${partIndex}`} part={part} />
-                    }
-
-                    return null
-                  })}
-                  {showFeedback ? (
-                    <CompareResponseFeedback
-                      answer={text}
-                      messageId={message.id}
-                      question={question}
-                    />
-                  ) : null}
-                </div>
-              )
-            })}
-            {isAwaitingAssistantResponse ? <ThinkingIndicator /> : null}
-            {error ? (
-              <p className="max-w-2xl rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
-                {error.message || 'La réponse n’a pas pu être générée.'}
-              </p>
-            ) : null}
-          </div>
-          <form className="border-t border-border/70 p-4 sm:p-5" onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <textarea
-                className="min-h-24 flex-1 resize-none rounded-xl border border-input bg-background/85 px-4 py-3 text-base outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isDisabled}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder={
-                  isOffline
-                    ? 'Reconnectez-vous pour poser une question.'
-                    : isAuthenticated
-                      ? hasLegalConsent
-                        ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
-                        : 'Confirmez les conditions pour poser une question.'
-                      : 'Connectez-vous pour poser une question.'
+            return (
+              <div
+                className={
+                  message.role === 'user'
+                    ? 'ml-auto max-w-2xl rounded-2xl bg-primary p-4 text-primary-foreground'
+                    : 'max-w-2xl rounded-2xl border border-border bg-background/85 p-4 text-foreground'
                 }
-                value={input}
-              />
-              <Button
-                className="sm:self-end"
-                disabled={isDisabled || !input.trim()}
-                size="lg"
-                type="submit"
+                key={message.id}
               >
-                Envoyer
-                <SendHorizontal aria-hidden="true" />
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-      <aside className="space-y-4">
-        <Card className="bg-card/85 backdrop-blur">
-          <CardHeader>
-            <CardTitle className="text-xl">Questions rapides</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {suggestedQuestions.map((question) => (
-              <button
-                className="w-full rounded-xl border border-border bg-background/75 p-3 text-left text-sm font-semibold leading-6 transition hover:border-primary/40 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isDisabled}
-                key={question}
-                onClick={() => submitQuestion(question)}
-                type="button"
-              >
-                {question}
-              </button>
-            ))}
-          </CardContent>
-        </Card>
-        <Card className="bg-primary text-primary-foreground">
-          <CardContent className="p-5">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary-foreground/70">
-              Garde-fou
+                {message.parts.map((part, partIndex) => {
+                  if (part.type === 'text') {
+                    return (
+                      <MarkdownMessage
+                        answer={text}
+                        canSubmitClaimFeedback={canSubmitClaimFeedback}
+                        citationMetadata={citationMetadata}
+                        isUser={message.role === 'user'}
+                        key={`${message.id}-text-${partIndex}`}
+                        messageId={message.id}
+                        question={question}
+                        text={part.text}
+                      />
+                    )
+                  }
+
+                  if (message.role === 'assistant' && part.type === 'reasoning') {
+                    return (
+                      <ReasoningStatusPart
+                        key={`${message.id}-reasoning-${partIndex}`}
+                        part={part}
+                      />
+                    )
+                  }
+
+                  if (message.role === 'assistant' && isToolStatusPart(part)) {
+                    return <ToolStatusPart key={`${message.id}-tool-${partIndex}`} part={part} />
+                  }
+
+                  return null
+                })}
+                {showFeedback ? (
+                  <CompareResponseFeedback
+                    answer={text}
+                    messageId={message.id}
+                    question={question}
+                  />
+                ) : null}
+              </div>
+            )
+          })}
+          {isAwaitingAssistantResponse ? <ThinkingIndicator /> : null}
+          {error ? (
+            <p className="max-w-2xl rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
+              {getReadableChatErrorMessage(error)}
             </p>
-            <p className="mt-3 leading-7 text-primary-foreground/90">
-              Les réponses doivent rester comparatives et indiquer quand les données disponibles
-              sont insuffisantes.
-            </p>
-          </CardContent>
-        </Card>
-      </aside>
-    </div>
+          ) : null}
+        </div>
+        <form className="shrink-0 border-t border-border/70 p-4 sm:p-5" onSubmit={handleSubmit}>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <textarea
+              className="min-h-24 flex-1 resize-none rounded-xl border border-input bg-background/85 px-4 py-3 text-base outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isDisabled}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={handleTextareaKeyDown}
+              placeholder={
+                isOffline
+                  ? 'Reconnectez-vous pour poser une question.'
+                  : isAuthenticated
+                    ? hasLegalConsent
+                      ? 'Ex. Compare les positions sur la santé entre les principaux candidats.'
+                      : 'Confirmez les conditions pour poser une question.'
+                    : 'Connectez-vous pour poser une question.'
+              }
+              value={input}
+            />
+            <Button
+              className="sm:self-end"
+              disabled={isDisabled || !input.trim()}
+              size="lg"
+              type="submit"
+            >
+              Envoyer
+              <SendHorizontal aria-hidden="true" />
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   )
+
+  if (isFullscreen) {
+    return <div className="fixed inset-0 z-50 bg-background p-0 sm:p-4">{chatPanel}</div>
+  }
+
+  return <div className="mx-auto max-w-5xl">{chatPanel}</div>
 }

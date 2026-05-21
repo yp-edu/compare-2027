@@ -1,7 +1,7 @@
 import type { CollectionConfig, FieldHook } from 'payload'
 
 import { authenticatedReadPublished, isAdmin, isAdminField } from '@/access'
-import { processSourceAfterChange } from '@/features/sources/server/process-source'
+import { queueSourceIngestionAfterChange } from '@/features/sources/server/process-source'
 
 type SourceSiblingData = {
   processingStatus?: unknown
@@ -69,7 +69,7 @@ export const Sources: CollectionConfig = {
     update: isAdmin,
   },
   hooks: {
-    afterChange: [processSourceAfterChange],
+    afterChange: [queueSourceIngestionAfterChange],
   },
   admin: {
     defaultColumns: [

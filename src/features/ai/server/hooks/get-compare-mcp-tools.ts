@@ -38,61 +38,151 @@ type MCPToolCallResult = {
 
 type JsonSchemaInput = Parameters<typeof jsonSchema>[0]
 
+type McpDiagnosticsOptions = {
+  requestId?: string
+}
+
+function getErrorDetails(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    }
+  }
+
+  return {
+    message: String(error),
+    name: typeof error,
+  }
+}
+
+function logMcpError(stage: string, error: unknown, context?: Record<string, unknown>) {
+  console.error('[compare-chat]', {
+    ...context,
+    stage,
+    ...getErrorDetails(error),
+  })
+}
+
+function logMcpInfo(stage: string, context?: Record<string, unknown>) {
+  console.info('[compare-chat]', {
+    ...context,
+    stage,
+  })
+}
+
+function getBodyPreview(text: string) {
+  return text.length > 500 ? `${text.slice(0, 500)}...` : text
+}
+
 function generateMcpApiKey() {
   return randomBytes(32).toString('base64url')
 }
 
-async function getOrCreateMcpBearerToken(userId: number) {
-  const payload = await getPayload({ config })
-  const { docs } = await payload.find({
-    collection: 'payload-mcp-api-keys',
-    depth: 0,
-    limit: 1,
-    pagination: false,
-    sort: '-updatedAt',
-    where: {
-      user: {
-        equals: userId,
+function getEnabledPermissionCount(value: Record<string, unknown>) {
+  return Object.keys(getCompareMcpApiKeyPermissions()).filter((field) => {
+    const permission = value[field]
+
+    return Boolean(
+      permission &&
+      typeof permission === 'object' &&
+      'find' in permission &&
+      (permission as { find?: unknown }).find === true,
+    )
+  }).length
+}
+
+async function getOrCreateMcpBearerToken(userId: number, options: McpDiagnosticsOptions = {}) {
+  try {
+    const payload = await getPayload({ config })
+    const { docs } = await payload.find({
+      collection: 'payload-mcp-api-keys',
+      depth: 0,
+      limit: 1,
+      pagination: false,
+      sort: '-updatedAt',
+      where: {
+        user: {
+          equals: userId,
+        },
       },
-    },
-  })
+    })
 
-  const existingKey = docs[0]
+    const existingKey = docs[0]
 
-  if (existingKey?.enableAPIKey && existingKey.apiKey) {
-    return existingKey.apiKey
-  }
+    if (existingKey?.enableAPIKey && existingKey.apiKey) {
+      const enabledPermissionCount = getEnabledPermissionCount(
+        existingKey as unknown as Record<string, unknown>,
+      )
 
-  const apiKey = generateMcpApiKey()
-  const data = {
-    ...getCompareMcpApiKeyPermissions(),
-    apiKey,
-    description: 'Automatically managed key for Compare chat MCP calls.',
-    enableAPIKey: true,
-    label: 'Compare chat MCP',
-    user: userId,
-  }
+      logMcpInfo('mcp-api-key-selected', {
+        enabledPermissionCount,
+        keyAction: 'reused',
+        keyId: existingKey.id,
+        keyLabel: existingKey.label,
+        requestId: options.requestId,
+        userId,
+      })
 
-  if (existingKey) {
-    await payload.update({
+      return existingKey.apiKey
+    }
+
+    const apiKey = generateMcpApiKey()
+    const data = {
+      ...getCompareMcpApiKeyPermissions(),
+      apiKey,
+      description: 'Automatically managed key for Compare chat MCP calls.',
+      enableAPIKey: true,
+      label: 'Compare chat MCP',
+      user: userId,
+    }
+
+    if (existingKey) {
+      await payload.update({
+        collection: 'payload-mcp-api-keys',
+        data,
+        id: existingKey.id,
+      })
+
+      return apiKey
+    }
+
+    await payload.create({
       collection: 'payload-mcp-api-keys',
       data,
-      id: existingKey.id,
     })
 
     return apiKey
+  } catch (error) {
+    logMcpError('mcp-api-key', error, {
+      requestId: options.requestId,
+      userId,
+    })
+
+    throw error
   }
-
-  await payload.create({
-    collection: 'payload-mcp-api-keys',
-    data,
-  })
-
-  return apiKey
 }
 
 function getMcpEndpointURL() {
   return new URL('/api/mcp', getServerURL()).toString()
+}
+
+function getMcpRequestHeaders(bearerToken: string) {
+  const headers: Record<string, string> = {
+    accept: 'application/json, text/event-stream',
+    authorization: `Bearer ${bearerToken}`,
+    'content-type': 'application/json',
+    'mcp-protocol-version': '2025-06-18',
+  }
+
+  const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+
+  if (vercelProtectionBypass) {
+    headers['x-vercel-protection-bypass'] = vercelProtectionBypass
+  }
+
+  return headers
 }
 
 function parseSSEJson(text: string) {
@@ -113,47 +203,105 @@ function parseSSEJson(text: string) {
   throw new Error('MCP response did not include a JSON-RPC payload')
 }
 
-async function parseMcpResponse<T>(response: Response) {
+async function parseMcpResponse<T>(
+  response: Response,
+  { method, requestId }: { method: string; requestId?: string },
+) {
   const text = await response.text()
   const contentType = response.headers.get('content-type') || ''
-  const parsed = (
-    contentType.includes('text/event-stream') ? parseSSEJson(text) : JSON.parse(text)
-  ) as JsonRpcResponse<T> | JsonRpcResponse<T>[]
+  let parsed: JsonRpcResponse<T> | JsonRpcResponse<T>[]
+
+  try {
+    parsed = (contentType.includes('text/event-stream') ? parseSSEJson(text) : JSON.parse(text)) as
+      | JsonRpcResponse<T>
+      | JsonRpcResponse<T>[]
+  } catch (error) {
+    logMcpError('mcp-parse-response', error, {
+      bodyPreview: getBodyPreview(text),
+      contentType,
+      method,
+      requestId,
+      status: response.status,
+    })
+
+    throw error
+  }
+
   const payload = Array.isArray(parsed) ? parsed[0] : parsed
 
   if (!payload) {
-    throw new Error('MCP response was empty')
+    const error = new Error('MCP response was empty')
+
+    logMcpError('mcp-empty-response', error, {
+      bodyPreview: getBodyPreview(text),
+      contentType,
+      method,
+      requestId,
+      status: response.status,
+    })
+
+    throw error
   }
 
   if (payload.error) {
-    throw new Error(`MCP ${payload.error.code}: ${payload.error.message}`)
+    const error = new Error(`MCP ${payload.error.code}: ${payload.error.message}`)
+
+    logMcpError('mcp-json-rpc', error, {
+      code: payload.error.code,
+      method,
+      requestId,
+    })
+
+    throw error
   }
 
   return payload.result as T
 }
 
-async function callMcp<T>(bearerToken: string, method: string, params?: Record<string, unknown>) {
-  const response = await fetch(getMcpEndpointURL(), {
-    body: JSON.stringify({
-      id: randomUUID(),
-      jsonrpc: '2.0',
-      method,
-      ...(params ? { params } : {}),
-    }),
-    headers: {
-      accept: 'application/json, text/event-stream',
-      authorization: `Bearer ${bearerToken}`,
-      'content-type': 'application/json',
-      'mcp-protocol-version': '2025-06-18',
-    },
-    method: 'POST',
-  })
+async function callMcp<T>(
+  bearerToken: string,
+  method: string,
+  params?: Record<string, unknown>,
+  options: McpDiagnosticsOptions = {},
+) {
+  let response: Response
 
-  if (!response.ok) {
-    throw new Error(`MCP request failed with status ${response.status}`)
+  try {
+    response = await fetch(getMcpEndpointURL(), {
+      body: JSON.stringify({
+        id: randomUUID(),
+        jsonrpc: '2.0',
+        method,
+        ...(params ? { params } : {}),
+      }),
+      headers: getMcpRequestHeaders(bearerToken),
+      method: 'POST',
+    })
+  } catch (error) {
+    logMcpError('mcp-request', error, {
+      method,
+      requestId: options.requestId,
+    })
+
+    throw error
   }
 
-  return parseMcpResponse<T>(response)
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    const error = new Error(`MCP request failed with status ${response.status}`)
+
+    logMcpError('mcp-http', error, {
+      bodyPreview: getBodyPreview(text),
+      contentType: response.headers.get('content-type') || '',
+      method,
+      requestId: options.requestId,
+      status: response.status,
+    })
+
+    throw error
+  }
+
+  return parseMcpResponse<T>(response, { method, requestId: options.requestId })
 }
 
 function getInputSchema(inputSchema: unknown): JsonSchemaInput {
@@ -182,17 +330,24 @@ function getToolText(result: MCPToolCallResult) {
   return text
 }
 
-export async function getCompareMCPTools(userId: number) {
-  const bearerToken = await getOrCreateMcpBearerToken(userId)
-  const toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list')
+export async function getCompareMCPTools(userId: number, options: McpDiagnosticsOptions = {}) {
+  const bearerToken = await getOrCreateMcpBearerToken(userId, options)
+  const toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list', undefined, options)
+  const mcpTools = toolsList?.tools || []
+  const toolNames = mcpTools.map((tool) => tool.name)
 
-  if (!toolsList?.tools?.length) {
+  if (!toolNames.length) {
+    logMcpInfo('mcp-tools-empty', {
+      requestId: options.requestId,
+      userId,
+    })
+
     return undefined
   }
 
   const tools: ToolSet = {}
 
-  for (const mcpTool of toolsList.tools) {
+  for (const mcpTool of mcpTools) {
     tools[mcpTool.name] = dynamicTool({
       description: mcpTool.description,
       inputSchema: jsonSchema(getInputSchema(mcpTool.inputSchema)),
@@ -201,15 +356,27 @@ export async function getCompareMCPTools(userId: number) {
       },
       title: mcpTool.title || mcpTool.name,
       execute: async (input) => {
-        const result = await callMcp<MCPToolCallResult>(bearerToken, 'tools/call', {
-          arguments: input as Record<string, unknown>,
-          name: mcpTool.name,
-        })
+        const result = await callMcp<MCPToolCallResult>(
+          bearerToken,
+          'tools/call',
+          {
+            arguments: input as Record<string, unknown>,
+            name: mcpTool.name,
+          },
+          options,
+        )
 
         return getToolText(result)
       },
     })
   }
+
+  logMcpInfo('mcp-tools-ready', {
+    requestId: options.requestId,
+    toolCount: toolNames.length,
+    toolNames,
+    userId,
+  })
 
   return tools
 }

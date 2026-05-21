@@ -30,11 +30,19 @@ type CitationActorDoc = {
   shortName?: null | string
 }
 
+type CitationActorRelation = {
+  relationTo?: string
+  value?: CitationActorDoc | number | string | null
+} | null
+
+type CitationActorMetadata = {
+  color: null | string
+  name: null | string
+  type: null | string
+}
+
 type CitationClaimDoc = {
-  actor?: {
-    relationTo?: string
-    value?: CitationActorDoc | number | string | null
-  } | null
+  actor?: CitationActorRelation
   claimText?: null | string
   evidenceQuote?: null | string
   id: number
@@ -47,6 +55,13 @@ type CitationEvidenceDoc = {
   quote?: null | string
   source?: CitationSourceDoc | number | string | null
   sourceUrl?: null | string
+}
+
+type CitationProgramDoc = {
+  actor?: CitationActorRelation
+  sources?: Array<{
+    source?: CitationSourceDoc | number | string | null
+  }> | null
 }
 
 function getIds(searchParams: URLSearchParams, name: string) {
@@ -80,7 +95,7 @@ function getSourceLabel(source: CitationSourceDoc | null | undefined) {
   return source?.title || reference?.label || 'Source'
 }
 
-function getActorName(actor: CitationClaimDoc['actor']) {
+function getActorName(actor: CitationActorRelation | undefined) {
   const value = actor?.value
 
   if (!value || typeof value !== 'object') {
@@ -90,7 +105,7 @@ function getActorName(actor: CitationClaimDoc['actor']) {
   return value.displayName || value.name || value.shortName || null
 }
 
-function getActorColor(actor: CitationClaimDoc['actor']) {
+function getActorColor(actor: CitationActorRelation | undefined) {
   const value = actor?.value
 
   if (!value || typeof value !== 'object') {
@@ -110,12 +125,28 @@ function getActorColor(actor: CitationClaimDoc['actor']) {
   return null
 }
 
-function toSourceCitation(source: CitationSourceDoc | null | undefined) {
+function getActorMetadata(actor: CitationActorRelation | undefined): CitationActorMetadata | null {
+  if (!actor) {
+    return null
+  }
+
+  return {
+    color: getActorColor(actor),
+    name: getActorName(actor),
+    type: actor.relationTo || null,
+  }
+}
+
+function toSourceCitation(
+  source: CitationSourceDoc | null | undefined,
+  actor?: CitationActorMetadata | null,
+) {
   if (!source) {
     return null
   }
 
   return {
+    actor: actor || null,
     id: source.id,
     platform: source.platform || null,
     publishedAt: source.publishedAt || null,
@@ -128,6 +159,46 @@ function toSourceCitation(source: CitationSourceDoc | null | undefined) {
 
 function getSourceDoc(value: CitationSourceDoc | number | string | null | undefined) {
   return value && typeof value === 'object' ? value : null
+}
+
+function getRelationId(value: CitationSourceDoc | number | string | null | undefined) {
+  if (!value) {
+    return null
+  }
+
+  if (typeof value === 'number') {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const id = Number(value)
+
+    return Number.isInteger(id) && id > 0 ? id : null
+  }
+
+  return value.id
+}
+
+function getProgramActorsBySource(programs: CitationProgramDoc[]) {
+  const actorsBySource = new Map<number, CitationActorMetadata>()
+
+  for (const program of programs) {
+    const actor = getActorMetadata(program.actor)
+
+    if (!actor) {
+      continue
+    }
+
+    for (const entry of program.sources || []) {
+      const sourceId = getRelationId(entry.source)
+
+      if (sourceId && !actorsBySource.has(sourceId)) {
+        actorsBySource.set(sourceId, actor)
+      }
+    }
+  }
+
+  return actorsBySource
 }
 
 export async function GET(request: Request) {
@@ -167,6 +238,19 @@ export async function GET(request: Request) {
         },
       })
     : { docs: [] }
+  const sourceProgramsResult = sourceIds.length
+    ? await payload.find({
+        collection: 'programs',
+        depth: 3,
+        pagination: false,
+        where: {
+          and: [publishedOnly, { 'sources.source': { in: sourceIds } }],
+        },
+      })
+    : { docs: [] }
+  const programActorsBySource = getProgramActorsBySource(
+    sourceProgramsResult.docs as CitationProgramDoc[],
+  )
 
   const claims = await Promise.all(
     claimsResult.docs.map(async (claim) => {
@@ -205,7 +289,11 @@ export async function GET(request: Request) {
     }),
   )
   const sources = directSourcesResult.docs
-    .map((source) => toSourceCitation(source as CitationSourceDoc))
+    .map((source) => {
+      const typedSource = source as CitationSourceDoc
+
+      return toSourceCitation(typedSource, programActorsBySource.get(typedSource.id))
+    })
     .filter(Boolean)
 
   return Response.json({ claims, sources })

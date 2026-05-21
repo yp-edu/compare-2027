@@ -57,6 +57,8 @@ type TopicContext = {
 }
 
 type ExtractedClaim = {
+  charEnd?: number | null
+  charStart?: number | null
   candidateId?: PayloadId | null
   title?: string | null
   claimText?: string | null
@@ -71,6 +73,31 @@ type ExtractedClaim = {
 type SourceExtraction = {
   summary?: string | null
   claims?: ExtractedClaim[] | null
+}
+
+type CreatedChunk = {
+  charEnd: number
+  charStart: number
+  id: PayloadId
+  text: string
+}
+
+type SourceProcessingResult = {
+  contentHash: string
+  createdClaimsCount: number
+  discoveredSourceIds: PayloadId[]
+  fetchedAt: string
+  modelName?: string
+  results: Array<{
+    canonicalUrl: string
+    contentHash: string
+    createdClaimsCount: number
+    discoveredUrls: string[]
+    extraction: SourceExtraction
+    fetchedAt: string
+    modelName?: string
+    referenceUrl: string
+  }>
 }
 
 const maxContentLength = 120_000
@@ -121,6 +148,7 @@ const sourcePlatforms = new Set([
   'institution',
   'other',
 ])
+const inputReferenceKinds = new Set(['url', 'file', 'archive', 'institution_id', 'manual', 'other'])
 type ClaimType =
   | 'program'
   | 'public_position'
@@ -145,6 +173,12 @@ function getNumericId(value: unknown): PayloadId | null {
   const id = Number(value)
 
   return Number.isInteger(id) && id > 0 ? id : null
+}
+
+function getNonNegativeInteger(value: unknown) {
+  const number = Number(value)
+
+  return Number.isInteger(number) && number >= 0 ? number : null
 }
 
 function getRelationId(value: RelationValue | null | undefined): PayloadId | null {
@@ -360,6 +394,12 @@ function getSourcePlatformForCreate(value: string | null | undefined) {
     : 'other'
 }
 
+function getInputReferenceKind(value: string | null | undefined) {
+  return inputReferenceKinds.has(value || '')
+    ? (value as 'url' | 'file' | 'archive' | 'institution_id' | 'manual' | 'other')
+    : 'url'
+}
+
 function getSlug(value: string) {
   return value
     .normalize('NFD')
@@ -529,14 +569,16 @@ Retourne uniquement du JSON valide au format:
       "claimText": "affirmation complète",
       "claimType": "program|public_position|vote|promise|factual_record|biography|criticism|other",
       "stance": "proposes|supports|opposes|mixed|vote_for|vote_against|abstention|unclear|not_applicable",
-      "topicTitles": ["titres exacts des thèmes autorisés"],
-      "quote": "citation source courte qui justifie l'affirmation",
-      "confidence": 0.0,
-      "positionDate": "date ISO si disponible"
-    }
+       "topicTitles": ["titres exacts des thèmes autorisés"],
+       "quote": "citation source courte qui justifie l'affirmation",
+       "charStart": 0,
+       "charEnd": 120,
+       "confidence": 0.0,
+       "positionDate": "date ISO si disponible"
+     }
   ]
 }
-N'invente rien. Si la source ne contient pas d'affirmation rattachable à un candidat et à un thème autorisés, retourne claims: [].`,
+charStart et charEnd sont les positions approximatives dans le texte source fourni. N'invente rien. Si la source ne contient pas d'affirmation rattachable à un candidat et à un thème autorisés, retourne claims: [].`,
     temperature: 0.1,
   })
 
@@ -568,14 +610,14 @@ async function createChunks(args: {
     })
   }
 
-  await Promise.all(
-    chunks.map((chunk, index) =>
-      req.payload.create({
+  return Promise.all(
+    chunks.map(async (chunk, index): Promise<CreatedChunk> => {
+      const createdChunk = await req.payload.create({
         collection: 'document-chunks',
         context: { skipSourceProcessing: true },
         data: {
           ...chunk,
-          _status: 'draft',
+          _status: 'published',
           chunkIndex: index,
           document: documentId,
           embeddingStatus: 'pending',
@@ -583,14 +625,19 @@ async function createChunks(args: {
           snapshot: snapshotId,
           title: `${source.title || 'Source'} - chunk ${index + 1}`,
         },
-        draft: true,
         req,
-      }),
-    ),
+      })
+
+      return {
+        ...chunk,
+        id: createdChunk.id,
+      }
+    }),
   )
 }
 
 async function createClaims(args: {
+  chunk?: CreatedChunk
   documentId: PayloadId
   extraction: SourceExtraction
   candidates: CandidateContext[]
@@ -600,7 +647,17 @@ async function createClaims(args: {
   source: SourceForProcessing
   topics: TopicContext[]
 }) {
-  const { candidates, documentId, extraction, referenceUrl, req, snapshotId, source, topics } = args
+  const {
+    candidates,
+    chunk,
+    documentId,
+    extraction,
+    referenceUrl,
+    req,
+    snapshotId,
+    source,
+    topics,
+  } = args
   const allowedCandidateIds = new Set(candidates.map((candidate) => String(candidate.id)))
   const topicsByLookup = new Map(topics.map((topic) => [topic.lookup, topic]))
   let createdClaimsCount = 0
@@ -622,6 +679,14 @@ async function createClaims(args: {
 
     const title = claim.title || claim.claimText.slice(0, 90)
     const quote = claim.quote || claim.claimText
+    const relativeCharStart = getNonNegativeInteger(claim.charStart) ?? undefined
+    const relativeCharEnd = getNonNegativeInteger(claim.charEnd) ?? undefined
+    const charStart =
+      typeof relativeCharStart === 'number' && chunk
+        ? chunk.charStart + relativeCharStart
+        : undefined
+    const charEnd =
+      typeof relativeCharEnd === 'number' && chunk ? chunk.charStart + relativeCharEnd : undefined
     const createdClaim = await req.payload.create({
       collection: 'claims',
       context: { skipSourceProcessing: true },
@@ -656,6 +721,9 @@ async function createClaims(args: {
       data: {
         _status: 'draft',
         claim: createdClaim.id,
+        charEnd,
+        charStart,
+        chunk: chunk?.id,
         confidence: getConfidence(claim.confidence),
         document: documentId,
         quote,
@@ -704,7 +772,6 @@ async function createDiscoveredSources(args: {
 
     const createdSource = await req.payload.create({
       collection: 'sources',
-      context: { skipSourceProcessing: true },
       data: {
         _status: 'draft',
         fetchStatus: 'not_fetched',
@@ -808,7 +875,7 @@ async function processUrlReference(args: {
     collection: 'source-documents',
     context: { skipSourceProcessing: true },
     data: {
-      _status: 'draft',
+      _status: 'published',
       content,
       language: 'fr',
       metadata: {
@@ -822,32 +889,61 @@ async function processUrlReference(args: {
       title: `${source.title || reference.url} - parsed document`,
       wordCount: content.split(/\s+/).filter(Boolean).length,
     },
-    draft: true,
     req,
   })
 
-  await createChunks({ content, documentId: document.id, req, snapshotId: snapshot.id, source })
-
-  const candidateIds = getRelationIds(source.relatedCandidates)
-  const candidates = await getCandidates(req, candidateIds)
-  const topics = await getTopics(req)
-  const { extraction, modelName } = await extractClaimsWithLLM({
-    candidates,
+  const chunks = await createChunks({
     content,
-    referenceUrl: fetchedUrl,
-    source,
-    topics,
-  })
-  const createdClaimsCount = await createClaims({
-    candidates,
     documentId: document.id,
-    extraction,
-    referenceUrl: fetchedUrl,
     req,
     snapshotId: snapshot.id,
     source,
-    topics,
   })
+  const candidateIds = getRelationIds(source.relatedCandidates)
+  const candidates = await getCandidates(req, candidateIds)
+  const topics = await getTopics(req)
+  let createdClaimsCount = 0
+  let modelName: string | undefined
+  const chunkExtractions: Array<SourceExtraction & { chunkId: PayloadId; chunkIndex: number }> = []
+
+  if (candidates.length > 0 && topics.length > 0) {
+    for (const [chunkIndex, chunk] of chunks.entries()) {
+      const result = await extractClaimsWithLLM({
+        candidates,
+        content: chunk.text,
+        referenceUrl: fetchedUrl,
+        source,
+        topics,
+      })
+
+      modelName = result.modelName
+      chunkExtractions.push({
+        ...result.extraction,
+        chunkId: chunk.id,
+        chunkIndex,
+      })
+      createdClaimsCount += await createClaims({
+        candidates,
+        chunk,
+        documentId: document.id,
+        extraction: result.extraction,
+        referenceUrl: fetchedUrl,
+        req,
+        snapshotId: snapshot.id,
+        source,
+        topics,
+      })
+    }
+  }
+
+  const extraction: SourceExtraction = {
+    claims: chunkExtractions.flatMap((chunkExtraction) => chunkExtraction.claims || []),
+    summary: chunkExtractions
+      .map((chunkExtraction) => chunkExtraction.summary)
+      .filter(Boolean)
+      .join('\n')
+      .slice(0, 4000),
+  }
 
   await req.payload.update({
     collection: 'source-documents',
@@ -857,6 +953,7 @@ async function processUrlReference(args: {
         contentHash,
         createdClaimsCount,
         extraction,
+        chunkExtractions,
         llmModel: modelName,
         sourceProcessing: true,
       },
@@ -878,7 +975,10 @@ async function processUrlReference(args: {
   }
 }
 
-async function processSourceReferences(source: SourceForProcessing, req: PayloadRequest) {
+async function processSourceReferences(
+  source: SourceForProcessing,
+  req: PayloadRequest,
+): Promise<SourceProcessingResult> {
   const references = getUrlReferences(source)
 
   if (references.length === 0) {
@@ -918,17 +1018,18 @@ async function processSourceReferences(source: SourceForProcessing, req: Payload
   }
 }
 
-export const processSourceAfterChange: CollectionAfterChangeHook = async ({
-  context,
-  doc,
-  req,
-}) => {
-  const source = doc as SourceForProcessing
-  const shouldSkip = Boolean((context as Record<string, unknown> | undefined)?.skipSourceProcessing)
-
-  if (shouldSkip || source.processingStatus !== 'queued') {
-    return doc
-  }
+export async function startSourceIngestion(args: {
+  reason?: string | null
+  req: PayloadRequest
+  sourceID: PayloadId
+}) {
+  const { reason, req, sourceID } = args
+  const source = (await req.payload.findByID({
+    collection: 'sources',
+    depth: 0,
+    id: sourceID,
+    req,
+  })) as SourceForProcessing
 
   await req.payload.update({
     collection: 'sources',
@@ -941,48 +1042,174 @@ export const processSourceAfterChange: CollectionAfterChangeHook = async ({
     req,
   })
 
-  try {
-    const result = await processSourceReferences(source, req)
+  const ingestionJob = await req.payload.create({
+    collection: 'ingestion-jobs',
+    data: {
+      attempts: 1,
+      inputReferences: (source.references || []).map((reference) => ({
+        externalId: reference.externalId || undefined,
+        kind: getInputReferenceKind(reference.kind),
+        url: reference.url || reference.canonicalUrl || undefined,
+      })),
+      jobType: 'url',
+      lastRunAt: new Date().toISOString(),
+      metadata: {
+        reason: reason || 'sourceCreated',
+      },
+      priority: 0,
+      source: source.id,
+      status: 'running',
+      title: `Ingest ${source.title || `source ${source.id}`}`,
+    },
+    req,
+  })
 
-    await req.payload.update({
-      collection: 'sources',
-      context: { skipSourceProcessing: true },
-      data: {
-        contentHash: result.contentHash,
-        fetchStatus: 'fetched',
-        lastFetchedAt: result.fetchedAt,
-        llmModel: result.modelName,
-        processedAt: new Date().toISOString(),
-        processingError: null,
-        processingStatus: 'completed',
-        rawMetadata: {
-          ...getRawMetadata(source.rawMetadata),
-          sourceProcessing: {
-            createdClaimsCount: result.createdClaimsCount,
-            discoveredSourceIds: result.discoveredSourceIds,
-            references: result.results,
-            processedAt: new Date().toISOString(),
-          },
+  return {
+    ingestionJobID: ingestionJob.id,
+    sourceID: source.id,
+  }
+}
+
+export async function runSourceIngestion(args: { req: PayloadRequest; sourceID: PayloadId }) {
+  const { req, sourceID } = args
+  const source = (await req.payload.findByID({
+    collection: 'sources',
+    depth: 0,
+    id: sourceID,
+    req,
+  })) as SourceForProcessing
+
+  return processSourceReferences(source, req)
+}
+
+export async function completeSourceIngestion(args: {
+  ingestionJobID?: PayloadId | null
+  req: PayloadRequest
+  result: SourceProcessingResult
+  sourceID: PayloadId
+}) {
+  const { ingestionJobID, req, result, sourceID } = args
+  const source = (await req.payload.findByID({
+    collection: 'sources',
+    depth: 0,
+    id: sourceID,
+    req,
+  })) as SourceForProcessing
+  const processedAt = new Date().toISOString()
+
+  await req.payload.update({
+    collection: 'sources',
+    context: { skipSourceProcessing: true },
+    data: {
+      contentHash: result.contentHash,
+      fetchStatus: 'fetched',
+      lastFetchedAt: result.fetchedAt,
+      llmModel: result.modelName,
+      processedAt,
+      processingError: null,
+      processingStatus: 'completed',
+      rawMetadata: {
+        ...getRawMetadata(source.rawMetadata),
+        sourceProcessing: {
+          createdClaimsCount: result.createdClaimsCount,
+          discoveredSourceIds: result.discoveredSourceIds,
+          references: result.results,
+          processedAt,
         },
-        retrievedAt: result.fetchedAt,
       },
-      id: source.id,
-      req,
-    })
-  } catch (error) {
+      retrievedAt: result.fetchedAt,
+    },
+    id: source.id,
+    req,
+  })
+
+  if (ingestionJobID) {
     await req.payload.update({
-      collection: 'sources',
-      context: { skipSourceProcessing: true },
+      collection: 'ingestion-jobs',
       data: {
-        processedAt: new Date().toISOString(),
-        processingError:
-          error instanceof Error ? error.message : 'Unknown source processing error.',
-        processingStatus: 'failed',
+        completedAt: processedAt,
+        errorMessage: null,
+        metadata: {
+          contentHash: result.contentHash,
+          createdClaimsCount: result.createdClaimsCount,
+          discoveredSourceIds: result.discoveredSourceIds,
+          llmModel: result.modelName,
+          references: result.results,
+        },
+        status: 'completed',
       },
-      id: source.id,
+      id: ingestionJobID,
       req,
     })
   }
+}
+
+export async function failSourceIngestion(args: {
+  error: unknown
+  ingestionJobID?: PayloadId | null
+  req: PayloadRequest
+  sourceID?: PayloadId | null
+}) {
+  const { error, ingestionJobID, req, sourceID } = args
+  const errorMessage = error instanceof Error ? error.message : 'Unknown source processing error.'
+  const processedAt = new Date().toISOString()
+
+  if (sourceID) {
+    await req.payload.update({
+      collection: 'sources',
+      context: { skipSourceProcessing: true },
+      data: {
+        processedAt,
+        processingError: errorMessage,
+        processingStatus: 'failed',
+      },
+      id: sourceID,
+      req,
+    })
+  }
+
+  if (ingestionJobID) {
+    await req.payload.update({
+      collection: 'ingestion-jobs',
+      data: {
+        completedAt: processedAt,
+        errorMessage,
+        status: 'failed',
+      },
+      id: ingestionJobID,
+      req,
+    })
+  }
+}
+
+export const queueSourceIngestionAfterChange: CollectionAfterChangeHook = async ({
+  context,
+  doc,
+  operation,
+  previousDoc,
+  req,
+}) => {
+  const source = doc as SourceForProcessing
+  const previousSource = previousDoc as SourceForProcessing | undefined
+  const shouldSkip = Boolean((context as Record<string, unknown> | undefined)?.skipSourceProcessing)
+
+  if (
+    shouldSkip ||
+    source.processingStatus !== 'queued' ||
+    (operation === 'update' && previousSource?.processingStatus === 'queued')
+  ) {
+    return doc
+  }
+
+  await req.payload.jobs.queue({
+    input: {
+      reason: operation === 'create' ? 'sourceCreated' : 'sourceQueued',
+      sourceID: source.id,
+    } as never,
+    queue: 'ingestion',
+    req,
+    workflow: 'ingestSource' as never,
+  })
 
   return doc
 }

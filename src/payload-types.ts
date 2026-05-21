@@ -94,6 +94,7 @@ export interface Config {
     search: Search
     'payload-mcp-api-keys': PayloadMcpApiKey
     'payload-kv': PayloadKv
+    'payload-jobs': PayloadJob
     'payload-locked-documents': PayloadLockedDocument
     'payload-preferences': PayloadPreference
     'payload-migrations': PayloadMigration
@@ -131,6 +132,7 @@ export interface Config {
     search: SearchSelect<false> | SearchSelect<true>
     'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>
     'payload-locked-documents':
       | PayloadLockedDocumentsSelect<false>
       | PayloadLockedDocumentsSelect<true>
@@ -153,8 +155,18 @@ export interface Config {
   }
   user: User | PayloadMcpApiKey
   jobs: {
-    tasks: unknown
-    workflows: unknown
+    tasks: {
+      startSourceIngestion: TaskStartSourceIngestion
+      processSourceIngestion: TaskProcessSourceIngestion
+      completeSourceIngestion: TaskCompleteSourceIngestion
+      inline: {
+        input: unknown
+        output: unknown
+      }
+    }
+    workflows: {
+      ingestSource: WorkflowIngestSource
+    }
   }
 }
 export interface UserAuthOperations {
@@ -220,7 +232,7 @@ export interface User {
   /**
    * The role/ roles of the user
    */
-  role?: ('admin' | 'editor' | 'user')[] | null
+  role?: ('admin' | 'user' | 'editor')[] | null
   /**
    * Whether the user is banned from the platform
    */
@@ -393,7 +405,7 @@ export interface TwoFactor {
  */
 export interface AdminInvitation {
   id: number
-  role: 'admin' | 'editor' | 'user'
+  role: 'admin' | 'user' | 'editor'
   token: string
   url?: string | null
   updatedAt: string
@@ -1141,6 +1153,120 @@ export interface PayloadKv {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: number
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  taskStatus?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  completedAt?: string | null
+  totalTried?: number | null
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string
+        completedAt: string
+        taskSlug:
+          | 'inline'
+          | 'startSourceIngestion'
+          | 'processSourceIngestion'
+          | 'completeSourceIngestion'
+        taskID: string
+        input?:
+          | {
+              [k: string]: unknown
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null
+        output?:
+          | {
+              [k: string]: unknown
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null
+        state: 'failed' | 'succeeded'
+        error?:
+          | {
+              [k: string]: unknown
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null
+        parent?: {
+          taskSlug?:
+            | (
+                | 'inline'
+                | 'startSourceIngestion'
+                | 'processSourceIngestion'
+                | 'completeSourceIngestion'
+              )
+            | null
+          taskID?: string | null
+        }
+        id?: string | null
+      }[]
+    | null
+  workflowSlug?: 'ingestSource' | null
+  taskSlug?:
+    | ('inline' | 'startSourceIngestion' | 'processSourceIngestion' | 'completeSourceIngestion')
+    | null
+  queue?: string | null
+  waitUntil?: string | null
+  processing?: boolean | null
+  /**
+   * Used for concurrency control. Jobs with the same key are subject to exclusive/supersedes rules.
+   */
+  concurrencyKey?: string | null
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -1849,6 +1975,45 @@ export interface PayloadKvSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T
+  taskStatus?: T
+  completedAt?: T
+  totalTried?: T
+  hasError?: T
+  error?: T
+  log?:
+    | T
+    | {
+        executedAt?: T
+        completedAt?: T
+        taskSlug?: T
+        taskID?: T
+        input?: T
+        output?: T
+        state?: T
+        error?: T
+        parent?:
+          | T
+          | {
+              taskSlug?: T
+              taskID?: T
+            }
+        id?: T
+      }
+  workflowSlug?: T
+  taskSlug?: T
+  queue?: T
+  waitUntil?: T
+  processing?: T
+  concurrencyKey?: T
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
@@ -1908,6 +2073,88 @@ export interface CollectionsWidget {
     [k: string]: unknown
   }
   width: 'full'
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskStartSourceIngestion".
+ */
+export interface TaskStartSourceIngestion {
+  input: {
+    sourceID: number
+    reason?: string | null
+  }
+  output: {
+    sourceID: number
+    ingestionJobID: number
+  }
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskProcessSourceIngestion".
+ */
+export interface TaskProcessSourceIngestion {
+  input: {
+    sourceID: number
+    ingestionJobID: number
+    reason?: string | null
+  }
+  output: {
+    contentHash: string
+    createdClaimsCount: number
+    discoveredSourceIds?:
+      | {
+          [k: string]: unknown
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null
+    fetchedAt: string
+    modelName?: string | null
+    results?:
+      | {
+          [k: string]: unknown
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null
+  }
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskCompleteSourceIngestion".
+ */
+export interface TaskCompleteSourceIngestion {
+  input: {
+    sourceID: number
+    ingestionJobID: number
+    result:
+      | {
+          [k: string]: unknown
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null
+    reason?: string | null
+  }
+  output: {
+    completed: boolean
+  }
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "WorkflowIngestSource".
+ */
+export interface WorkflowIngestSource {
+  input: {
+    sourceID: number
+    reason?: string | null
+  }
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

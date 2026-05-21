@@ -7,6 +7,11 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 
 import { collections } from './collections'
+import { endpoints } from './endpoints'
+import {
+  sourceIngestionTasks,
+  sourceIngestionWorkflows,
+} from './features/sources/server/ingestion-workflow'
 import { globals } from './globals'
 import { getAllowedOrigins, getServerURL } from './lib/server-urls'
 import { plugins } from './plugins'
@@ -31,12 +36,19 @@ export default buildConfig({
   cors: allowedOrigins,
   csrf: allowedOrigins,
   editor: lexicalEditor(),
+  endpoints,
   email: resendAdapter({
     defaultFromAddress: 'noreply@compare2027.fr',
     defaultFromName: 'Compare 2027',
     apiKey: process.env.RESEND_API_KEY || '',
   }),
   serverURL,
+  jobs: {
+    addParentToTaskLog: true,
+    enableConcurrencyControl: true,
+    tasks: sourceIngestionTasks,
+    workflows: sourceIngestionWorkflows,
+  },
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

@@ -8,7 +8,6 @@ type AdminUser = {
 }
 
 type SeedResponse = {
-  adminUserCreated?: boolean
   error?: string
   ok?: boolean
 }
@@ -38,7 +37,7 @@ export function SeedButton() {
     }
 
     const confirmed = window.confirm(
-      'Run the full seed now? This will create the seed admin user if needed and upsert campaign content.',
+      'Run the campaign seed now? This will upsert campaign content. Source ingestion jobs are queued by source creation hooks.',
     )
 
     if (!confirmed) {
@@ -62,9 +61,7 @@ export function SeedButton() {
         throw new Error(data.error || 'Seed failed')
       }
 
-      const message = data.adminUserCreated
-        ? 'Full seed completed. Check server logs for generated seed credentials.'
-        : 'Full seed completed.'
+      const message = 'Campaign seed completed.'
 
       setStatus(message)
       toast.success(message)
@@ -95,7 +92,7 @@ export function SeedButton() {
         <div>
           <h2 style={{ margin: 0 }}>Seed database</h2>
           <p style={{ margin: '6px 0 0' }}>
-            Run the full seed script: admin seed checks and campaign content upserts.
+            Upsert campaign content. Newly created sources queue ingestion workflows automatically.
           </p>
           {status ? <p style={{ margin: '8px 0 0' }}>{status}</p> : null}
         </div>
