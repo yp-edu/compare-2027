@@ -44,6 +44,8 @@ type ChatErrorPayload = {
 }
 
 type CompareMCPAccessStatus = {
+  error?: string
+  requestId?: string
   status: 'checking' | 'connected' | 'disconnected' | 'unknown'
   toolCount?: number
 }
@@ -104,6 +106,8 @@ function logClientChatError(stage: string, error: unknown, context?: Record<stri
 
 async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
   const response = await fetch(input, init)
+  const chatRequestId = response.headers.get('x-chat-request-id') || undefined
+  const mcpError = response.headers.get('x-compare-mcp-error') || undefined
   const mcpStatus = response.headers.get('x-compare-mcp-status')
   const mcpToolCount = Number(response.headers.get('x-compare-mcp-tool-count') || 0)
   let didDispatchMcpStatus = false
@@ -116,6 +120,8 @@ async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
     window.dispatchEvent(
       new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
         detail: {
+          ...(chatRequestId ? { requestId: chatRequestId } : {}),
+          ...(mcpError ? { error: mcpError } : {}),
           status: mcpStatus,
           toolCount: Number.isFinite(mcpToolCount) ? mcpToolCount : 0,
         },
@@ -134,7 +140,11 @@ async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
     if (typeof window !== 'undefined' && !didDispatchMcpStatus) {
       window.dispatchEvent(
         new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
-          detail: { status: 'disconnected', toolCount: 0 },
+          detail: {
+            ...(chatRequestId ? { requestId: chatRequestId } : {}),
+            status: 'disconnected',
+            toolCount: 0,
+          },
         }),
       )
     }
@@ -772,13 +782,18 @@ function McpStatusBadge({ status }: { status: CompareMCPAccessStatus }) {
         : status.status === 'disconnected'
           ? 'MCP absent'
           : 'MCP non testé'
-  const title = isConnected
-    ? `Dernier appel: le modèle a reçu ${status.toolCount || 0} outils MCP.`
-    : status.status === 'disconnected'
-      ? "Dernier appel: le modèle n'a pas reçu d'outils MCP."
-      : status.status === 'checking'
-        ? 'Vérification MCP sur la requête en cours.'
-        : 'Envoyez un message pour vérifier si le modèle reçoit les outils MCP.'
+  const titleLines = [
+    isConnected
+      ? `Dernier appel: le modèle a reçu ${status.toolCount || 0} outils MCP.`
+      : status.status === 'disconnected'
+        ? "Dernier appel: le modèle n'a pas reçu d'outils MCP."
+        : status.status === 'checking'
+          ? 'Vérification MCP sur la requête en cours.'
+          : 'Envoyez un message pour vérifier si le modèle reçoit les outils MCP.',
+    status.requestId ? `Request: ${status.requestId}` : null,
+    status.error ? `Erreur MCP: ${status.error}` : null,
+  ].filter(Boolean)
+  const title = titleLines.join('\n')
 
   return (
     <span

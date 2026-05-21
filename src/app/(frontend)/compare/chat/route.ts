@@ -84,6 +84,14 @@ function getStreamErrorMessage(requestId: string, stage: ChatErrorStage, error: 
   return `Erreur du chat (${stage}, ${requestId}). Consultez les logs serveur avec cette référence.`
 }
 
+function hasAdminRole(role: unknown) {
+  if (Array.isArray(role)) {
+    return role.includes('admin')
+  }
+
+  return role === 'admin'
+}
+
 function isUIMessageArray(value: unknown): value is UIMessage[] {
   return (
     Array.isArray(value) &&
@@ -188,13 +196,19 @@ export async function POST(request: Request) {
 
   try {
     const { mcp, result } = await streamCompareAnswer({ messages, requestId, userId })
+    const headers: Record<string, string> = {
+      'x-chat-request-id': requestId,
+      'x-compare-mcp-status': mcp.status,
+      'x-compare-mcp-tool-count': String(mcp.toolCount),
+    }
+    const exposeMcpDiagnostics = hasAdminRole((session.user as { role?: unknown }).role)
+
+    if ((exposeMcpDiagnostics || process.env.CHAT_DEBUG === '1') && mcp.error) {
+      headers['x-compare-mcp-error'] = mcp.error
+    }
 
     return result.toUIMessageStreamResponse({
-      headers: {
-        'x-chat-request-id': requestId,
-        'x-compare-mcp-status': mcp.status,
-        'x-compare-mcp-tool-count': String(mcp.toolCount),
-      },
+      headers,
       onError: (error) => {
         logChatError(requestId, 'stream-response', error, {
           messageCount: messages.length,

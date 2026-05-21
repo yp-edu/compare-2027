@@ -65,6 +65,13 @@ function logMcpError(stage: string, error: unknown, context?: Record<string, unk
   })
 }
 
+function logMcpInfo(stage: string, context?: Record<string, unknown>) {
+  console.info('[compare-chat]', {
+    ...context,
+    stage,
+  })
+}
+
 function getBodyPreview(text: string) {
   return text.length > 500 ? `${text.slice(0, 500)}...` : text
 }
@@ -73,7 +80,23 @@ function generateMcpApiKey() {
   return randomBytes(32).toString('base64url')
 }
 
-async function getOrCreateMcpBearerToken(userId: number, options: McpDiagnosticsOptions = {}) {
+function getEnabledPermissionCount(value: Record<string, unknown>) {
+  return Object.keys(getCompareMcpApiKeyPermissions()).filter((field) => {
+    const permission = value[field]
+
+    return Boolean(
+      permission &&
+        typeof permission === 'object' &&
+        'find' in permission &&
+        (permission as { find?: unknown }).find === true,
+    )
+  }).length
+}
+
+async function getOrCreateMcpBearerToken(
+  userId: number,
+  options: McpDiagnosticsOptions = {},
+) {
   try {
     const payload = await getPayload({ config })
     const { docs } = await payload.find({
@@ -92,6 +115,19 @@ async function getOrCreateMcpBearerToken(userId: number, options: McpDiagnostics
     const existingKey = docs[0]
 
     if (existingKey?.enableAPIKey && existingKey.apiKey) {
+      const enabledPermissionCount = getEnabledPermissionCount(
+        existingKey as unknown as Record<string, unknown>,
+      )
+
+      logMcpInfo('mcp-api-key-selected', {
+        enabledPermissionCount,
+        keyAction: 'reused',
+        keyId: existingKey.id,
+        keyLabel: existingKey.label,
+        requestId: options.requestId,
+        userId,
+      })
+
       return existingKey.apiKey
     }
 
@@ -288,14 +324,21 @@ function getToolText(result: MCPToolCallResult) {
 export async function getCompareMCPTools(userId: number, options: McpDiagnosticsOptions = {}) {
   const bearerToken = await getOrCreateMcpBearerToken(userId, options)
   const toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list', undefined, options)
+  const mcpTools = toolsList?.tools || []
+  const toolNames = mcpTools.map((tool) => tool.name)
 
-  if (!toolsList?.tools?.length) {
+  if (!toolNames.length) {
+    logMcpInfo('mcp-tools-empty', {
+      requestId: options.requestId,
+      userId,
+    })
+
     return undefined
   }
 
   const tools: ToolSet = {}
 
-  for (const mcpTool of toolsList.tools) {
+  for (const mcpTool of mcpTools) {
     tools[mcpTool.name] = dynamicTool({
       description: mcpTool.description,
       inputSchema: jsonSchema(getInputSchema(mcpTool.inputSchema)),
@@ -318,6 +361,13 @@ export async function getCompareMCPTools(userId: number, options: McpDiagnostics
       },
     })
   }
+
+  logMcpInfo('mcp-tools-ready', {
+    requestId: options.requestId,
+    toolCount: toolNames.length,
+    toolNames,
+    userId,
+  })
 
   return tools
 }
