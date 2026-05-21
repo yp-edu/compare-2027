@@ -17,20 +17,8 @@ export default async function ComparePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <main className="px-5 py-10 sm:px-8 lg:py-14">
+      <main className="px-5 py-6 sm:px-8 lg:py-8">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-8 max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.25em] text-primary">
-              Comparateur conversationnel
-            </p>
-            <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-6xl">
-              Posez une question politique. Obtenez une comparaison lisible.
-            </h1>
-            <p className="mt-5 text-lg leading-8 text-muted-foreground">
-              Le chat s’appuie sur les contenus éditoriaux de Compare 2027 et doit signaler les
-              sources, les divergences et les manques de données.
-            </p>
-          </div>
           <CompareChat feedbackEnabled={feedbackEnabled} />
         </div>
       </main>
