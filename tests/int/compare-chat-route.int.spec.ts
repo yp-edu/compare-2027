@@ -121,8 +121,8 @@ describe('compare chat route', () => {
   })
 
   it('sanitizes MCP diagnostics before adding them to response headers', async () => {
-    const toUIMessageStreamResponse = vi.fn(({ headers }: { headers: HeadersInit }) =>
-      new Response(null, { headers, status: 200 }),
+    const toUIMessageStreamResponse = vi.fn(
+      ({ headers }: { headers: HeadersInit }) => new Response(null, { headers, status: 200 }),
     )
 
     process.env.CHAT_DEBUG = '1'
