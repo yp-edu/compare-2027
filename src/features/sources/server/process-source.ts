@@ -1186,18 +1186,24 @@ export const queueSourceIngestionAfterChange: CollectionAfterChangeHook = async 
   context,
   doc,
   operation,
+  previousDoc,
   req,
 }) => {
   const source = doc as SourceForProcessing
+  const previousSource = previousDoc as SourceForProcessing | undefined
   const shouldSkip = Boolean((context as Record<string, unknown> | undefined)?.skipSourceProcessing)
 
-  if (shouldSkip || operation !== 'create' || source.processingStatus !== 'queued') {
+  if (
+    shouldSkip ||
+    source.processingStatus !== 'queued' ||
+    (operation === 'update' && previousSource?.processingStatus === 'queued')
+  ) {
     return doc
   }
 
   await req.payload.jobs.queue({
     input: {
-      reason: 'sourceCreated',
+      reason: operation === 'create' ? 'sourceCreated' : 'sourceQueued',
       sourceID: source.id,
     } as never,
     queue: 'ingestion',

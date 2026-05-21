@@ -58,6 +58,12 @@ describe('compare citations route', () => {
 
     const response = await GET(new Request('http://localhost/compare/citations?sources=10'))
 
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'programs',
+        pagination: false,
+      }),
+    )
     await expect(response.json()).resolves.toEqual({
       claims: [],
       sources: [

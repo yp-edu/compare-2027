@@ -36,7 +36,17 @@ function hasAllowedOrigin(request: PayloadRequest) {
     return true
   }
 
-  return new Set([new URL(request.url || '').origin, ...getAllowedOrigins()]).has(origin)
+  let requestOrigin: string | undefined
+
+  if (request.url) {
+    try {
+      requestOrigin = new URL(request.url).origin
+    } catch {
+      requestOrigin = undefined
+    }
+  }
+
+  return new Set([requestOrigin, ...getAllowedOrigins()]).has(origin)
 }
 
 async function getAdminUser(req: PayloadRequest) {

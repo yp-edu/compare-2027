@@ -242,7 +242,7 @@ export async function GET(request: Request) {
     ? await payload.find({
         collection: 'programs',
         depth: 3,
-        limit: maxCitationIds * 5,
+        pagination: false,
         where: {
           and: [publishedOnly, { 'sources.source': { in: sourceIds } }],
         },

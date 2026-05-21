@@ -121,6 +121,13 @@ async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
         },
       }),
     )
+  } else if (typeof window !== 'undefined' && response.ok) {
+    didDispatchMcpStatus = true
+    window.dispatchEvent(
+      new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
+        detail: { status: 'unknown' },
+      }),
+    )
   }
 
   if (!response.ok) {

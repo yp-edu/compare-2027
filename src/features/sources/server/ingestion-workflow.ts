@@ -95,21 +95,9 @@ export const sourceIngestionTasks: TaskConfig<SourceIngestionTask>[] = [
     handler: async ({ input, req }) => {
       const sourceInput = getSourceIngestionInput(input)
 
-      try {
-        const output = await runSourceIngestion({ req, sourceID: sourceInput.sourceID })
+      const output = await runSourceIngestion({ req, sourceID: sourceInput.sourceID })
 
-        return { output }
-      } catch (error) {
-        const ingestionJobID = getNumber((input as Record<string, unknown>).ingestionJobID)
-
-        await failSourceIngestion({
-          error,
-          ingestionJobID,
-          req,
-          sourceID: sourceInput.sourceID,
-        })
-        throw error
-      }
+      return { output }
     },
     inputSchema: [
       { name: 'sourceID', type: 'number', required: true },

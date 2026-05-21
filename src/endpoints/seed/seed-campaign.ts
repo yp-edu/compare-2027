@@ -149,7 +149,6 @@ async function upsertSource(payload: BasePayload, source: CampaignSourceSeed) {
       url: reference.url,
     })),
     notes: source.notes,
-    processingStatus: 'queued' as const,
     retrievedAt: seedRetrievedAt,
     slug: source.slug,
     sourceRole: source.sourceRole || ('other' as const),
@@ -170,7 +169,10 @@ async function upsertSource(payload: BasePayload, source: CampaignSourceSeed) {
 
   return payload.create({
     collection: 'sources',
-    data,
+    data: {
+      ...data,
+      processingStatus: 'queued' as const,
+    },
   })
 }
 
