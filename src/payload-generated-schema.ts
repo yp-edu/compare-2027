@@ -23,11 +23,11 @@ import {
   pgEnum,
 } from '@payloadcms/db-vercel-postgres/drizzle/pg-core'
 import { sql, relations } from '@payloadcms/db-vercel-postgres/drizzle'
-export const enum_users_role = pgEnum('enum_users_role', ['admin', 'editor', 'user'])
+export const enum_users_role = pgEnum('enum_users_role', ['admin', 'user', 'editor'])
 export const enum_admin_invitations_role = pgEnum('enum_admin_invitations_role', [
   'admin',
-  'editor',
   'user',
+  'editor',
 ])
 export const enum_sources_references_kind = pgEnum('enum_sources_references_kind', [
   'url',
