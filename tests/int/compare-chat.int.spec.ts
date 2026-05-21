@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  getCitationMetadataUrl,
   getCitationPopupPosition,
   getSafeSourceUrl,
   getToolDisplayName,
@@ -33,33 +34,39 @@ describe('compare chat tool display names', () => {
 })
 
 describe('compare chat citation popup positioning', () => {
-  it('anchors the popup below the clicked badge', () => {
-    expect(
-      getCitationPopupPosition(
-        { bottom: 0, left: 100, top: 20 },
-        { bottom: 60, left: 180, top: 40 },
-        1200,
-      ),
-    ).toEqual({ left: 80, top: 48 })
+  it('anchors the fixed popup below the clicked badge', () => {
+    expect(getCitationPopupPosition({ bottom: 60, left: 180 }, 1200)).toEqual({
+      left: 180,
+      top: 68,
+    })
   })
 
   it('keeps the popup inside the viewport near the right edge', () => {
-    expect(
-      getCitationPopupPosition(
-        { bottom: 0, left: 100, top: 20 },
-        { bottom: 80, left: 1000, top: 60 },
-        1100,
-      ),
-    ).toEqual({ left: 560, top: 68 })
+    expect(getCitationPopupPosition({ bottom: 80, left: 1000 }, 1100)).toEqual({
+      left: 660,
+      top: 88,
+    })
   })
 
-  it('allows negative parent-relative offsets for right-aligned bubbles', () => {
+  it('keeps the popup inside the viewport near the left edge', () => {
+    expect(getCitationPopupPosition({ bottom: 80, left: 4 }, 1100)).toEqual({
+      left: 24,
+      top: 88,
+    })
+  })
+})
+
+describe('compare chat citation metadata URL', () => {
+  it('deduplicates and sorts citation ids for stable SWR cache keys', () => {
     expect(
-      getCitationPopupPosition(
-        { bottom: 0, left: 800, top: 20 },
-        { bottom: 80, left: 1000, top: 60 },
-        1100,
-      ),
-    ).toEqual({ left: -140, top: 68 })
+      getCitationMetadataUrl([
+        'Source [B](claim:2), source [A](claim:1), doublon [B](claim:2).',
+        'Sources directes [programme](source:10) puis [discours](source:5).',
+      ]),
+    ).toBe('/compare/citations?claims=1%2C2&sources=5%2C10')
+  })
+
+  it('returns null when there are no citations', () => {
+    expect(getCitationMetadataUrl(['Réponse sans citation.'])).toBeNull()
   })
 })

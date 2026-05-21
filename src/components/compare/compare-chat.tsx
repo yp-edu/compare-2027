@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from 'react'
+import { useState, type FormEvent, type KeyboardEvent, type MouseEvent } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { useChat } from '@ai-sdk/react'
 import { ExternalLink, LockKeyhole, Search, SendHorizontal, Sparkles, X } from 'lucide-react'
 import { marked } from 'marked'
+import useSWR from 'swr'
 import xss, { getDefaultWhiteList } from 'xss'
 
 import { Button } from '@/components/ui/button'
@@ -182,7 +184,7 @@ type CitationResponse = {
   sources?: SourceCitation[]
 }
 
-type RectLike = Pick<DOMRect, 'bottom' | 'left' | 'top'>
+type RectLike = Pick<DOMRect, 'bottom' | 'left'>
 
 type CitationPopupPosition = {
   left: number
@@ -192,11 +194,14 @@ type CitationPopupPosition = {
 type MarkdownMessageProps = {
   answer?: string
   canSubmitClaimFeedback?: boolean
+  citationMetadata: CitationMetadata
   isUser: boolean
   messageId?: string
   question?: string
   text: string
 }
+
+const emptyCitationMetadata: CitationMetadata = { claims: {}, sources: {} }
 
 function getHexColor(color?: null | string) {
   return color && /^#[\dA-F]{6}$/i.test(color) ? color : null
@@ -255,6 +260,69 @@ function getCitationIds(text: string) {
   }
 
   return { claims: Array.from(claims), sources: Array.from(sources) }
+}
+
+function sortCitationIds(ids: Iterable<string>) {
+  return Array.from(ids).sort((left, right) => Number(left) - Number(right))
+}
+
+export function getCitationMetadataUrl(texts: string[]) {
+  const claims = new Set<string>()
+  const sources = new Set<string>()
+
+  for (const text of texts) {
+    const citationIds = getCitationIds(text)
+
+    for (const id of citationIds.claims) {
+      claims.add(id)
+    }
+
+    for (const id of citationIds.sources) {
+      sources.add(id)
+    }
+  }
+
+  if (claims.size === 0 && sources.size === 0) {
+    return null
+  }
+
+  const params = new URLSearchParams()
+  const sortedClaims = sortCitationIds(claims)
+  const sortedSources = sortCitationIds(sources)
+
+  if (sortedClaims.length > 0) {
+    params.set('claims', sortedClaims.join(','))
+  }
+
+  if (sortedSources.length > 0) {
+    params.set('sources', sortedSources.join(','))
+  }
+
+  return `/compare/citations?${params.toString()}`
+}
+
+function getMessageTexts(messages: UIMessage[]) {
+  return messages.flatMap((message) =>
+    message.parts.filter((part) => part.type === 'text').map((part) => part.text),
+  )
+}
+
+async function fetchCitationMetadata(url: string): Promise<CitationMetadata> {
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    return emptyCitationMetadata
+  }
+
+  return toCitationMetadata((await response.json()) as CitationResponse)
+}
+
+function useCitationMetadata(url: null | string) {
+  const { data } = useSWR<CitationMetadata>(url, fetchCitationMetadata, {
+    fallbackData: emptyCitationMetadata,
+  })
+
+  return data || emptyCitationMetadata
 }
 
 function getCitationColor(citation: CitationTarget, metadata: CitationMetadata) {
@@ -320,7 +388,6 @@ function toCitationMetadata(response: CitationResponse): CitationMetadata {
 }
 
 export function getCitationPopupPosition(
-  containerRect: RectLike,
   linkRect: RectLike,
   viewportWidth: number,
 ): CitationPopupPosition {
@@ -331,8 +398,8 @@ export function getCitationPopupPosition(
   const viewportLeft = Math.min(Math.max(linkRect.left, minViewportLeft), maxViewportLeft)
 
   return {
-    left: viewportLeft - containerRect.left,
-    top: linkRect.bottom - containerRect.top + 8,
+    left: viewportLeft,
+    top: linkRect.bottom + 8,
   }
 }
 
@@ -363,7 +430,7 @@ function CitationDetails({
 
   return (
     <div
-      className="absolute z-20 w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
+      className="fixed z-[100] w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
       style={{
         left: position.left,
         top: position.top,
@@ -441,51 +508,15 @@ function CitationDetails({
 function MarkdownMessage({
   answer,
   canSubmitClaimFeedback,
+  citationMetadata,
   isUser,
   messageId,
   question,
   text,
 }: MarkdownMessageProps) {
-  const markdownRef = useRef<HTMLDivElement>(null)
-  const [citationMetadata, setCitationMetadata] = useState<CitationMetadata>({
-    claims: {},
-    sources: {},
-  })
   const [selectedCitation, setSelectedCitation] = useState<CitationTarget | null>(null)
   const [citationPosition, setCitationPosition] = useState<CitationPopupPosition | null>(null)
   const html = renderMarkdown(text, citationMetadata)
-
-  useEffect(() => {
-    const citationIds = getCitationIds(text)
-
-    if (citationIds.claims.length === 0 && citationIds.sources.length === 0) {
-      return
-    }
-
-    const params = new URLSearchParams()
-    const controller = new AbortController()
-
-    if (citationIds.claims.length > 0) {
-      params.set('claims', citationIds.claims.join(','))
-    }
-
-    if (citationIds.sources.length > 0) {
-      params.set('sources', citationIds.sources.join(','))
-    }
-
-    fetch(`/compare/citations?${params.toString()}`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : { claims: [], sources: [] }))
-      .then((response: CitationResponse) => setCitationMetadata(toCitationMetadata(response)))
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return
-        }
-
-        setCitationMetadata({ claims: {}, sources: {} })
-      })
-
-    return () => controller.abort()
-  }, [text])
 
   function handleCitationClick(event: MouseEvent<HTMLDivElement>) {
     const target = event.target instanceof Element ? event.target : null
@@ -503,23 +534,30 @@ function MarkdownMessage({
     }
 
     event.preventDefault()
-    const container = markdownRef.current
-
-    if (container) {
-      setCitationPosition(
-        getCitationPopupPosition(
-          container.getBoundingClientRect(),
-          link.getBoundingClientRect(),
-          window.innerWidth,
-        ),
-      )
-    }
+    setCitationPosition(getCitationPopupPosition(link.getBoundingClientRect(), window.innerWidth))
 
     setSelectedCitation({ id, kind, label: link.textContent?.trim() || 'Citation' })
   }
 
+  const citationPopup =
+    selectedCitation && citationPosition && typeof document !== 'undefined'
+      ? createPortal(
+          <CitationDetails
+            answer={answer}
+            canSubmitClaimFeedback={canSubmitClaimFeedback}
+            citation={selectedCitation}
+            metadata={citationMetadata}
+            messageId={messageId}
+            onClose={() => setSelectedCitation(null)}
+            position={citationPosition}
+            question={question}
+          />,
+          document.body,
+        )
+      : null
+
   return (
-    <div className="relative">
+    <>
       <div
         className={cn(
           'break-words leading-7',
@@ -545,21 +583,9 @@ function MarkdownMessage({
         )}
         dangerouslySetInnerHTML={{ __html: html }}
         onClick={handleCitationClick}
-        ref={markdownRef}
       />
-      {selectedCitation && citationPosition ? (
-        <CitationDetails
-          answer={answer}
-          canSubmitClaimFeedback={canSubmitClaimFeedback}
-          citation={selectedCitation}
-          metadata={citationMetadata}
-          messageId={messageId}
-          onClose={() => setSelectedCitation(null)}
-          position={citationPosition}
-          question={question}
-        />
-      ) : null}
-    </div>
+      {citationPopup}
+    </>
   )
 }
 
@@ -661,6 +687,9 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     isWorking &&
     (!lastMessage || lastMessage.role !== 'assistant' || !getMessageText(lastMessage).trim())
   const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking || isOffline
+  const citationMetadataUrl =
+    isAuthenticated && hasLegalConsent ? getCitationMetadataUrl(getMessageTexts(messages)) : null
+  const citationMetadata = useCitationMetadata(citationMetadataUrl)
 
   async function submitQuestion(question: string) {
     const text = question.trim()
@@ -674,6 +703,15 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await submitQuestion(input)
+  }
+
+  async function handleTextareaKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) {
+      return
+    }
+
     event.preventDefault()
     await submitQuestion(input)
   }
@@ -765,6 +803,7 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                         <MarkdownMessage
                           answer={text}
                           canSubmitClaimFeedback={canSubmitClaimFeedback}
+                          citationMetadata={citationMetadata}
                           isUser={message.role === 'user'}
                           key={`${message.id}-text-${partIndex}`}
                           messageId={message.id}
@@ -812,6 +851,7 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
                 className="min-h-24 flex-1 resize-none rounded-xl border border-input bg-background/85 px-4 py-3 text-base outline-none transition placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isDisabled}
                 onChange={(event) => setInput(event.target.value)}
+                onKeyDown={handleTextareaKeyDown}
                 placeholder={
                   isOffline
                     ? 'Reconnectez-vous pour poser une question.'
