@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { useChat } from '@ai-sdk/react'
-import { ExternalLink, LockKeyhole, Search, SendHorizontal, Sparkles, X } from 'lucide-react'
+import { ExternalLink, LockKeyhole, RotateCcw, Search, SendHorizontal, Sparkles, X } from 'lucide-react'
 import { marked } from 'marked'
 import useSWR from 'swr'
 import xss, { getDefaultWhiteList } from 'xss'
@@ -660,7 +660,7 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const { data: session, isPending } = authClient.useSession()
   const { isOffline } = useOnlineStatus()
   const [input, setInput] = useState('')
-  const { error, messages, sendMessage, status } = useChat({
+  const { clearError, error, messages, sendMessage, setMessages, status, stop } = useChat({
     onError: (chatError) => logClientChatError('client-chat', chatError),
     onFinish: ({ finishReason, isAbort, isDisconnect, isError, messages }) => {
       if (!isAbort && !isDisconnect && !isError) {
@@ -687,9 +687,24 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     isWorking &&
     (!lastMessage || lastMessage.role !== 'assistant' || !getMessageText(lastMessage).trim())
   const isDisabled = !isAuthenticated || !hasLegalConsent || isPending || isWorking || isOffline
+  const canStartNewConversation = messages.length > 0 || Boolean(input) || Boolean(error) || isWorking
   const citationMetadataUrl =
     isAuthenticated && hasLegalConsent ? getCitationMetadataUrl(getMessageTexts(messages)) : null
   const citationMetadata = useCitationMetadata(citationMetadataUrl)
+
+  function handleNewConversation() {
+    if (!canStartNewConversation) {
+      return
+    }
+
+    if (isWorking) {
+      stop()
+    }
+
+    clearError()
+    setMessages([])
+    setInput('')
+  }
 
   async function submitQuestion(question: string) {
     const text = question.trim()
@@ -719,11 +734,22 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-[0.72fr_0.28fr]">
       <Card className="min-h-[36rem] border-primary/15 bg-card/90 shadow-2xl shadow-primary/10 backdrop-blur">
-        <CardHeader className="border-b border-border/70">
+        <CardHeader className="flex flex-col gap-3 space-y-0 border-b border-border/70 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-3 text-2xl">
             <Sparkles className="size-5 text-primary" aria-hidden="true" />
             Chat comparatif
           </CardTitle>
+          <Button
+            aria-label="Commencer une nouvelle conversation"
+            disabled={!canStartNewConversation}
+            onClick={handleNewConversation}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <RotateCcw aria-hidden="true" />
+            Nouvelle conversation
+          </Button>
         </CardHeader>
         <CardContent className="flex min-h-[31rem] flex-col p-0">
           <div className="flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
