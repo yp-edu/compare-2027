@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { getPayload } from 'payload'
 
 import { requireChatSession } from '@/features/ai/server'
+import { inferSourcePlatformFromUrl } from '@/features/sources/platform'
+import { getSafeSourceUrl } from '@/features/sources/server/source-url'
 import config from '@/payload.config'
 
 const maxCandidateNameLength = 160
@@ -30,26 +32,6 @@ function getOptionalString(value: unknown, maxLength: number) {
   return getString(value, maxLength) ?? undefined
 }
 
-function getUrl(value: unknown) {
-  const text = getString(value, 2048)
-
-  if (!text) {
-    return null
-  }
-
-  try {
-    const url = new URL(text)
-
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      return null
-    }
-
-    return url.toString()
-  } catch {
-    return null
-  }
-}
-
 function getCandidateId(value: unknown) {
   if (value === undefined || value === null || value === '') {
     return null
@@ -58,20 +40,6 @@ function getCandidateId(value: unknown) {
   const id = Number(value)
 
   return Number.isInteger(id) && id > 0 ? id : null
-}
-
-function inferPlatform(url: string) {
-  const hostname = new URL(url).hostname.replace(/^www\./, '')
-
-  if (hostname === 'x.com' || hostname === 'twitter.com') {
-    return 'x'
-  }
-
-  if (hostname.endsWith('datan.fr')) {
-    return 'datan'
-  }
-
-  return 'other'
 }
 
 export async function POST(request: Request) {
@@ -100,7 +68,7 @@ export async function POST(request: Request) {
   }
 
   const candidateName = getString(body.candidateName, maxCandidateNameLength)
-  const declarationUrl = getUrl(body.declarationUrl)
+  const declarationUrl = await getSafeSourceUrl(body.declarationUrl)
   const matchedCandidate = getCandidateId(body.matchedCandidate)
 
   if (!candidateName || !declarationUrl) {
@@ -130,7 +98,7 @@ export async function POST(request: Request) {
     collection: 'sources',
     data: {
       _status: 'draft',
-      platform: inferPlatform(declarationUrl),
+      platform: inferSourcePlatformFromUrl(declarationUrl),
       processingStatus: 'queued',
       references: [
         {

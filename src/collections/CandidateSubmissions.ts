@@ -17,8 +17,13 @@ export const CandidateSubmissions: CollectionConfig = {
   hooks: {
     beforeValidate: [
       ({ data, operation, req }) => {
-        if (operation === 'create' && req.user && data) {
-          data.submittedBy = req.user.id
+        if (operation === 'create' && data) {
+          data.status = 'pending'
+          delete data.reviewNotes
+
+          if (req.user) {
+            data.submittedBy = req.user.id
+          }
         }
 
         return data

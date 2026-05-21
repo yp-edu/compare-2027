@@ -7,6 +7,7 @@ import { getComparisonContext } from './get-comparison-context'
 
 type StreamCompareAnswerArgs = {
   messages: UIMessage[]
+  userId: number
 }
 
 function getAzureOpenAIModel() {
@@ -26,8 +27,11 @@ function getAzureOpenAIModel() {
   return azure(deployment)
 }
 
-export async function streamCompareAnswer({ messages }: StreamCompareAnswerArgs) {
-  const [context, mcpTools] = await Promise.all([getComparisonContext(), getCompareMCPTools()])
+export async function streamCompareAnswer({ messages, userId }: StreamCompareAnswerArgs) {
+  const [context, mcpTools] = await Promise.all([
+    getComparisonContext(),
+    getCompareMCPTools(userId),
+  ])
 
   return streamText({
     maxOutputTokens: 900,

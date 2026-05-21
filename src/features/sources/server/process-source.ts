@@ -4,6 +4,10 @@ import { createAzure } from '@ai-sdk/azure'
 import { generateText } from 'ai'
 import type { CollectionAfterChangeHook, PayloadRequest } from 'payload'
 
+import { fetchSourceUrl } from './source-url'
+
+export { validateOutboundFetchUrl } from './source-url'
+
 type PayloadId = number
 
 type RelationValue =
@@ -70,6 +74,7 @@ type SourceExtraction = {
 }
 
 const maxContentLength = 120_000
+const maxResponseSizeBytes = 1_000_000
 const maxPromptContentLength = 30_000
 const maxChunkLength = 4_000
 const maxChunks = 20
@@ -193,6 +198,58 @@ function getExtractableRawContent(rawContent: string) {
 
 function getContentHash(content: string) {
   return createHash('sha256').update(content).digest('hex')
+}
+
+async function readResponseTextWithLimit(response: Response) {
+  const contentLength = response.headers.get('content-length')
+  const contentLengthBytes = contentLength ? Number(contentLength) : null
+
+  if (
+    contentLengthBytes !== null &&
+    Number.isFinite(contentLengthBytes) &&
+    contentLengthBytes > maxResponseSizeBytes
+  ) {
+    await response.body?.cancel()
+    throw new Error(`Source fetch response exceeds ${maxResponseSizeBytes} bytes.`)
+  }
+
+  if (!response.body) {
+    return ''
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  const chunks: string[] = []
+  let receivedBytes = 0
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+
+      if (done) {
+        break
+      }
+
+      if (!value) {
+        continue
+      }
+
+      receivedBytes += value.byteLength
+
+      if (receivedBytes > maxResponseSizeBytes) {
+        await reader.cancel()
+        throw new Error(`Source fetch response exceeds ${maxResponseSizeBytes} bytes.`)
+      }
+
+      chunks.push(decoder.decode(value, { stream: true }))
+    }
+
+    chunks.push(decoder.decode())
+
+    return chunks.join('')
+  } finally {
+    reader.releaseLock()
+  }
 }
 
 function getLookup(value: string) {
@@ -705,19 +762,15 @@ async function processUrlReference(args: {
   source: SourceForProcessing
 }) {
   const { reference, req, source } = args
-  const response = await fetch(reference.url, {
-    headers: {
-      'User-Agent': 'Compare2027Bot/0.1 (+https://compare2027.fr)',
-    },
-  })
-  const rawContent = await response.text()
+  const { response, url: fetchedUrl } = await fetchSourceUrl(reference.url)
+  const rawContent = await readResponseTextWithLimit(response)
   const contentType = response.headers.get('content-type')
   const extractableRawContent = getExtractableRawContent(rawContent)
   const content = cleanFetchedText(extractableRawContent)
   const contentHash = getContentHash(content || rawContent)
   const fetchedAt = new Date().toISOString()
   const discoveredUrls = discoverCrawlUrls({
-    baseUrl: response.url,
+    baseUrl: fetchedUrl,
     rawContent: extractableRawContent,
     rawMetadata: source.rawMetadata,
   })
@@ -726,7 +779,7 @@ async function processUrlReference(args: {
     collection: 'source-snapshots',
     context: { skipSourceProcessing: true },
     data: {
-      canonicalUrl: response.url,
+      canonicalUrl: fetchedUrl,
       contentHash,
       contentType,
       fetchedAt,
@@ -781,7 +834,7 @@ async function processUrlReference(args: {
   const { extraction, modelName } = await extractClaimsWithLLM({
     candidates,
     content,
-    referenceUrl: response.url,
+    referenceUrl: fetchedUrl,
     source,
     topics,
   })
@@ -789,7 +842,7 @@ async function processUrlReference(args: {
     candidates,
     documentId: document.id,
     extraction,
-    referenceUrl: response.url,
+    referenceUrl: fetchedUrl,
     req,
     snapshotId: snapshot.id,
     source,
@@ -814,7 +867,7 @@ async function processUrlReference(args: {
   })
 
   return {
-    canonicalUrl: response.url,
+    canonicalUrl: fetchedUrl,
     contentHash,
     createdClaimsCount,
     extraction,

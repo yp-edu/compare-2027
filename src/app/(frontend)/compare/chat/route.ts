@@ -49,7 +49,13 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Invalid chat payload' }, { status: 400 })
   }
 
-  const result = await streamCompareAnswer({ messages: body.messages })
+  const userId = Number(session.user.id)
+
+  if (!Number.isInteger(userId)) {
+    return Response.json({ error: 'Invalid authenticated user' }, { status: 401 })
+  }
+
+  const result = await streamCompareAnswer({ messages: body.messages, userId })
 
   return result.toUIMessageStreamResponse()
 }

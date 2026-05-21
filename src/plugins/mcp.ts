@@ -1,6 +1,4 @@
-import { mcpPlugin, type MCPAccessSettings } from '@payloadcms/plugin-mcp'
-import { timingSafeEqual } from 'crypto'
-import type { TypedUser } from 'payload'
+import { mcpPlugin } from '@payloadcms/plugin-mcp'
 
 const readOnly = {
   create: false,
@@ -61,36 +59,14 @@ function toCamelCase(value: string) {
   return value.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase())
 }
 
-function getInternalMcpSecret() {
-  return process.env.PAYLOAD_SECRET
-}
-
-function getBearerToken(authorization: string | null) {
-  return authorization?.startsWith('Bearer ') ? authorization.replace('Bearer ', '').trim() : null
-}
-
-function secretsMatch(left: string, right: string) {
-  const leftBuffer = Buffer.from(left)
-  const rightBuffer = Buffer.from(right)
-
-  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer)
-}
-
-function getInternalMcpAccessSettings(): MCPAccessSettings {
-  const user = {
-    id: 'compare-mcp-internal',
-    collection: 'users',
-    email: 'mcp-internal@compare2027.local',
-    role: 'admin',
-    _strategy: 'compare-mcp-internal',
-  } as unknown as TypedUser
-  const settings: MCPAccessSettings = { user }
+export function getCompareMcpApiKeyPermissions() {
+  const permissions: Record<string, { find: true }> = {}
 
   for (const collection of Object.keys(mcpCollections)) {
-    settings[toCamelCase(collection)] = { find: true }
+    permissions[toCamelCase(collection)] = { find: true }
   }
 
-  return settings
+  return permissions
 }
 
 export const mcp = () =>
@@ -103,15 +79,5 @@ export const mcp = () =>
           version: '1.0.0',
         },
       },
-    },
-    overrideAuth: (req, getDefaultMcpAccessSettings) => {
-      const internalSecret = getInternalMcpSecret()
-      const bearerToken = getBearerToken(req.headers.get('Authorization'))
-
-      if (internalSecret && bearerToken && secretsMatch(bearerToken, internalSecret)) {
-        return getInternalMcpAccessSettings()
-      }
-
-      return getDefaultMcpAccessSettings()
     },
   })

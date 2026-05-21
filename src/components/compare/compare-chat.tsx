@@ -101,6 +101,20 @@ function getHexColor(color?: null | string) {
   return color && /^#[\dA-F]{6}$/i.test(color) ? color : null
 }
 
+export function getSafeSourceUrl(value?: null | string) {
+  if (!value) {
+    return null
+  }
+
+  try {
+    const url = new URL(value)
+
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null
+  } catch {
+    return null
+  }
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
@@ -214,7 +228,7 @@ function CitationDetails({
 }) {
   const claim = citation.kind === 'claim' ? metadata.claims[citation.id] : undefined
   const source = citation.kind === 'source' ? metadata.sources[citation.id] : claim?.source
-  const sourceUrl = claim?.sourceUrl || source?.url
+  const sourceUrl = getSafeSourceUrl(claim?.sourceUrl) || getSafeSourceUrl(source?.url)
   const color = getCitationColor(citation, metadata)
 
   return (

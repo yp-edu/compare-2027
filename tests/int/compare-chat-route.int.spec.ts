@@ -4,7 +4,7 @@ import { POST } from '@/app/(frontend)/compare/chat/route'
 import { streamCompareAnswer } from '@/features/ai/server'
 
 vi.mock('@/features/ai/server', () => ({
-  requireChatSession: vi.fn(async () => ({ user: { id: 'user' } })),
+  requireChatSession: vi.fn(async () => ({ user: { id: '123' } })),
   streamCompareAnswer: vi.fn(),
 }))
 
@@ -51,5 +51,23 @@ describe('compare chat route', () => {
     expect(response.status).toBe(400)
     await expect(response.json()).resolves.toEqual({ error: 'Malformed JSON payload' })
     expect(streamCompareAnswer).not.toHaveBeenCalled()
+  })
+
+  it('passes the authenticated user ID into the AI stream', async () => {
+    vi.mocked(streamCompareAnswer).mockResolvedValueOnce({
+      toUIMessageStreamResponse: () => new Response(null, { status: 200 }),
+    } as Awaited<ReturnType<typeof streamCompareAnswer>>)
+
+    const messages = [{ id: 'message-1', parts: [], role: 'user' }]
+    const response = await POST(
+      new Request('http://localhost/compare/chat', {
+        body: JSON.stringify({ messages }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(200)
+    expect(streamCompareAnswer).toHaveBeenCalledWith({ messages, userId: 123 })
   })
 })

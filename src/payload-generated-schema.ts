@@ -698,7 +698,7 @@ export const sources = pgTable(
       onDelete: 'set null',
     }),
     submissionStatus: enum_sources_submission_status('submission_status').default('internal'),
-    processingStatus: enum_sources_processing_status('processing_status').default('queued'),
+    processingStatus: enum_sources_processing_status('processing_status').default('skipped'),
     processedAt: timestamp('processed_at', { mode: 'string', withTimezone: true, precision: 3 }),
     processingError: varchar('processing_error'),
     llmModel: varchar('llm_model'),
@@ -824,7 +824,7 @@ export const _sources_v = pgTable(
     ).default('internal'),
     version_processingStatus: enum__sources_v_version_processing_status(
       'version_processing_status',
-    ).default('queued'),
+    ).default('skipped'),
     version_processedAt: timestamp('version_processed_at', {
       mode: 'string',
       withTimezone: true,

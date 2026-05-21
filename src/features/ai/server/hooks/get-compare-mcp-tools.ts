@@ -1,7 +1,10 @@
-import { randomUUID } from 'crypto'
+import { randomBytes, randomUUID } from 'crypto'
 import { dynamicTool, jsonSchema, type ToolSet } from 'ai'
+import { getPayload } from 'payload'
 
 import { getServerURL } from '@/lib/server-urls'
+import config from '@/payload.config'
+import { getCompareMcpApiKeyPermissions } from '@/plugins/mcp'
 
 type JsonRpcResponse<T> = {
   error?: {
@@ -35,10 +38,57 @@ type MCPToolCallResult = {
 
 type JsonSchemaInput = Parameters<typeof jsonSchema>[0]
 
-function getMcpBearerToken() {
-  return (
-    process.env.PAYLOAD_SECRET || process.env.COMPARE_MCP_API_KEY || process.env.PAYLOAD_MCP_API_KEY
-  )
+function generateMcpApiKey() {
+  return randomBytes(32).toString('base64url')
+}
+
+async function getOrCreateMcpBearerToken(userId: number) {
+  const payload = await getPayload({ config })
+  const { docs } = await payload.find({
+    collection: 'payload-mcp-api-keys',
+    depth: 0,
+    limit: 1,
+    pagination: false,
+    sort: '-updatedAt',
+    where: {
+      user: {
+        equals: userId,
+      },
+    },
+  })
+
+  const existingKey = docs[0]
+
+  if (existingKey?.enableAPIKey && existingKey.apiKey) {
+    return existingKey.apiKey
+  }
+
+  const apiKey = generateMcpApiKey()
+  const data = {
+    ...getCompareMcpApiKeyPermissions(),
+    apiKey,
+    description: 'Automatically managed key for Compare chat MCP calls.',
+    enableAPIKey: true,
+    label: 'Compare chat MCP',
+    user: userId,
+  }
+
+  if (existingKey) {
+    await payload.update({
+      collection: 'payload-mcp-api-keys',
+      data,
+      id: existingKey.id,
+    })
+
+    return apiKey
+  }
+
+  await payload.create({
+    collection: 'payload-mcp-api-keys',
+    data,
+  })
+
+  return apiKey
 }
 
 function getMcpEndpointURL() {
@@ -82,13 +132,7 @@ async function parseMcpResponse<T>(response: Response) {
   return payload.result as T
 }
 
-async function callMcp<T>(method: string, params?: Record<string, unknown>) {
-  const bearerToken = getMcpBearerToken()
-
-  if (!bearerToken) {
-    return undefined
-  }
-
+async function callMcp<T>(bearerToken: string, method: string, params?: Record<string, unknown>) {
   const response = await fetch(getMcpEndpointURL(), {
     body: JSON.stringify({
       id: randomUUID(),
@@ -138,8 +182,9 @@ function getToolText(result: MCPToolCallResult) {
   return text
 }
 
-export async function getCompareMCPTools() {
-  const toolsList = await callMcp<MCPToolsListResult>('tools/list')
+export async function getCompareMCPTools(userId: number) {
+  const bearerToken = await getOrCreateMcpBearerToken(userId)
+  const toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list')
 
   if (!toolsList?.tools?.length) {
     return undefined
@@ -156,14 +201,10 @@ export async function getCompareMCPTools() {
       },
       title: mcpTool.title || mcpTool.name,
       execute: async (input) => {
-        const result = await callMcp<MCPToolCallResult>('tools/call', {
+        const result = await callMcp<MCPToolCallResult>(bearerToken, 'tools/call', {
           arguments: input as Record<string, unknown>,
           name: mcpTool.name,
         })
-
-        if (!result) {
-          return 'MCP is not configured for this environment.'
-        }
 
         return getToolText(result)
       },

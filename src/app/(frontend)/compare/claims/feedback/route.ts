@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { getPayload } from 'payload'
 
 import { requireChatSession } from '@/features/ai/server'
+import { inferSourcePlatformFromUrl } from '@/features/sources/platform'
+import { getSafeSourceUrl } from '@/features/sources/server/source-url'
 import config from '@/payload.config'
 
 const maxQuestionLength = 2000
@@ -31,27 +33,13 @@ function getOptionalString(value: unknown, maxLength: number) {
   return getString(value, maxLength) ?? undefined
 }
 
-function getUrl(value: unknown) {
-  const text = getString(value, 2048)
+function getClaimId(value: unknown) {
+  const id = Number(value)
 
-  if (!text) {
-    return null
-  }
-
-  try {
-    const url = new URL(text)
-
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      return null
-    }
-
-    return url.toString()
-  } catch {
-    return null
-  }
+  return Number.isInteger(id) && id > 0 ? id : null
 }
 
-function getClaimId(value: unknown) {
+function getUserId(value: unknown) {
   const id = Number(value)
 
   return Number.isInteger(id) && id > 0 ? id : null
@@ -85,24 +73,16 @@ function getCandidateActorId(actor: unknown) {
   return null
 }
 
-function inferPlatform(url: string) {
-  const hostname = new URL(url).hostname.replace(/^www\./, '')
-
-  if (hostname === 'x.com' || hostname === 'twitter.com') {
-    return 'x'
-  }
-
-  if (hostname.endsWith('datan.fr')) {
-    return 'datan'
-  }
-
-  return 'other'
-}
-
 export async function POST(request: Request) {
   const session = await requireChatSession(request)
 
   if (!session) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
+  const userId = getUserId(session.user.id)
+
+  if (!userId) {
     return Response.json({ error: 'Authentication required' }, { status: 401 })
   }
 
@@ -125,7 +105,7 @@ export async function POST(request: Request) {
   }
 
   const claimId = getClaimId(body.claimId)
-  const invalidatingSourceUrl = getUrl(body.sourceUrl)
+  const invalidatingSourceUrl = await getSafeSourceUrl(body.sourceUrl)
 
   if (!claimId || !invalidatingSourceUrl) {
     return Response.json(
@@ -146,13 +126,12 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Claim not found' }, { status: 404 })
   }
 
-  const userId = Number(session.user.id)
   const actorCandidateId = getCandidateActorId(claim.actor)
   const source = await payload.create({
     collection: 'sources',
     data: {
       _status: 'draft',
-      platform: inferPlatform(invalidatingSourceUrl),
+      platform: inferSourcePlatformFromUrl(invalidatingSourceUrl),
       processingStatus: 'queued',
       references: [
         {

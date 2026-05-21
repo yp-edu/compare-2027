@@ -1,7 +1,64 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, FieldHook } from 'payload'
 
 import { authenticatedReadPublished, isAdmin, isAdminField } from '@/access'
 import { processSourceAfterChange } from '@/features/sources/server/process-source'
+
+type SourceSiblingData = {
+  processingStatus?: unknown
+  references?: unknown
+}
+
+function isProcessableUrl(value: unknown) {
+  if (typeof value !== 'string') {
+    return false
+  }
+
+  try {
+    const url = new URL(value.trim())
+
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function hasProcessableUrlReference(references: unknown) {
+  if (!Array.isArray(references)) {
+    return false
+  }
+
+  return references.some((reference) => {
+    if (!reference || typeof reference !== 'object') {
+      return false
+    }
+
+    const { kind, url } = reference as { kind?: unknown; url?: unknown }
+
+    return kind === 'url' && isProcessableUrl(url)
+  })
+}
+
+const queueProcessableSources: FieldHook = ({
+  operation,
+  previousSiblingDoc,
+  siblingData,
+  value,
+}) => {
+  const current = siblingData as SourceSiblingData
+  const previous = previousSiblingDoc as SourceSiblingData | undefined
+  const references = Array.isArray(current.references) ? current.references : previous?.references
+  const hasProcessableReference = hasProcessableUrlReference(references)
+
+  if (value === 'queued' && !hasProcessableReference) {
+    return 'skipped'
+  }
+
+  if (operation === 'create' && typeof current.processingStatus === 'undefined') {
+    return hasProcessableReference ? 'queued' : 'skipped'
+  }
+
+  return value
+}
 
 export const Sources: CollectionConfig = {
   slug: 'sources',
@@ -196,7 +253,10 @@ export const Sources: CollectionConfig = {
     {
       name: 'processingStatus',
       type: 'select',
-      defaultValue: 'queued',
+      defaultValue: 'skipped',
+      hooks: {
+        beforeValidate: [queueProcessableSources],
+      },
       index: true,
       options: [
         { label: 'Queued', value: 'queued' },

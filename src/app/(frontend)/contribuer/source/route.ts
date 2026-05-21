@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { getPayload } from 'payload'
 
 import { requireChatSession } from '@/features/ai/server'
+import { getSafeSourceUrl } from '@/features/sources/server/source-url'
 import config from '@/payload.config'
 
 const maxTitleLength = 180
@@ -56,34 +57,15 @@ function getOptionalString(value: unknown, maxLength: number) {
   return getString(value, maxLength) ?? undefined
 }
 
-function getUrl(value: unknown) {
-  const text = getString(value, 2048)
-
-  if (!text) {
-    return null
-  }
-
-  try {
-    const url = new URL(text)
-
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-      return null
-    }
-
-    return url.toString()
-  } catch {
-    return null
-  }
-}
-
-function getUrls(value: unknown) {
+async function getUrls(value: unknown) {
   const values = Array.isArray(value)
     ? value
     : typeof value === 'string'
       ? value.split(/\r?\n/)
       : []
+  const urls = await Promise.all(values.map(getSafeSourceUrl))
 
-  return Array.from(new Set(values.map(getUrl).filter(Boolean))) as string[]
+  return Array.from(new Set(urls.filter(Boolean))) as string[]
 }
 
 function getCandidateId(value: unknown) {
@@ -128,7 +110,7 @@ export async function POST(request: Request) {
   }
 
   const candidateId = getCandidateId(body.candidateId)
-  const urls = getUrls(body.references ?? body.urls ?? body.url)
+  const urls = await getUrls(body.references ?? body.urls ?? body.url)
 
   if (!candidateId || urls.length === 0) {
     return Response.json(
