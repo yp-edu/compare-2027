@@ -58,21 +58,29 @@ export function SubmissionForms({ candidates }: SubmissionFormsProps) {
     setSourceStatus('submitting')
     setSourceError('')
 
+    let response: Response
+
     const formData = new FormData(event.currentTarget)
-    const response = await fetch('/contribuer/source', {
-      body: JSON.stringify({
-        candidateId: getFormValue(formData, 'candidateId'),
-        platform: getFormValue(formData, 'platform'),
-        publisher: getFormValue(formData, 'publisher'),
-        title: getFormValue(formData, 'title'),
-        type: getFormValue(formData, 'type'),
-        references: getFormValue(formData, 'references'),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+    try {
+      response = await fetch('/contribuer/source', {
+        body: JSON.stringify({
+          candidateId: getFormValue(formData, 'candidateId'),
+          platform: getFormValue(formData, 'platform'),
+          publisher: getFormValue(formData, 'publisher'),
+          title: getFormValue(formData, 'title'),
+          type: getFormValue(formData, 'type'),
+          references: getFormValue(formData, 'references'),
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+    } catch {
+      setSourceStatus('error')
+      setSourceError('La source n’a pas pu être envoyée. Vérifiez le lien et le candidat choisi.')
+      return
+    }
 
     if (!response.ok) {
       setSourceStatus('error')
@@ -89,19 +97,27 @@ export function SubmissionForms({ candidates }: SubmissionFormsProps) {
     setCandidateStatus('submitting')
     setCandidateError('')
 
+    let response: Response
+
     const formData = new FormData(event.currentTarget)
-    const response = await fetch('/contribuer/candidate', {
-      body: JSON.stringify({
-        candidateDetails: getFormValue(formData, 'candidateDetails'),
-        candidateName: getFormValue(formData, 'candidateName'),
-        declarationUrl: getFormValue(formData, 'declarationUrl'),
-        matchedCandidate: getFormValue(formData, 'matchedCandidate'),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+    try {
+      response = await fetch('/contribuer/candidate', {
+        body: JSON.stringify({
+          candidateDetails: getFormValue(formData, 'candidateDetails'),
+          candidateName: getFormValue(formData, 'candidateName'),
+          declarationUrl: getFormValue(formData, 'declarationUrl'),
+          matchedCandidate: getFormValue(formData, 'matchedCandidate'),
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+    } catch {
+      setCandidateStatus('error')
+      setCandidateError('La suggestion n’a pas pu être envoyée. Réessayez plus tard.')
+      return
+    }
 
     if (!response.ok) {
       setCandidateStatus('error')

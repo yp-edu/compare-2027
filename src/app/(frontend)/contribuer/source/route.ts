@@ -8,6 +8,7 @@ import config from '@/payload.config'
 
 const maxTitleLength = 180
 const maxPublisherLength = 120
+const maxReferenceCount = 10
 
 const sourceTypes = [
   'official_program',
@@ -59,9 +60,9 @@ function getOptionalString(value: unknown, maxLength: number) {
 
 async function getUrls(value: unknown) {
   const values = Array.isArray(value)
-    ? value
+    ? value.slice(0, maxReferenceCount)
     : typeof value === 'string'
-      ? value.split(/\r?\n/)
+      ? value.split(/\r?\n/, maxReferenceCount)
       : []
   const urls = await Promise.all(values.map(getSafeSourceUrl))
 

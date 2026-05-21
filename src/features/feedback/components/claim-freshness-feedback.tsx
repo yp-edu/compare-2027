@@ -26,21 +26,28 @@ export function ClaimFreshnessFeedback({
     event.preventDefault()
     setStatus('submitting')
 
+    let response: Response
+
     const formData = new FormData(event.currentTarget)
-    const response = await fetch('/compare/claims/feedback', {
-      body: JSON.stringify({
-        answer,
-        claimId,
-        comment: String(formData.get('comment') || '').trim(),
-        messageId,
-        question,
-        sourceUrl: String(formData.get('sourceUrl') || '').trim(),
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      method: 'POST',
-    })
+    try {
+      response = await fetch('/compare/claims/feedback', {
+        body: JSON.stringify({
+          answer,
+          claimId,
+          comment: String(formData.get('comment') || '').trim(),
+          messageId,
+          question,
+          sourceUrl: String(formData.get('sourceUrl') || '').trim(),
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+    } catch {
+      setStatus('error')
+      return
+    }
 
     setStatus(response.ok ? 'submitted' : 'error')
   }

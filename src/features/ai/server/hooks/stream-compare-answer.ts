@@ -30,7 +30,7 @@ function getAzureOpenAIModel() {
 export async function streamCompareAnswer({ messages, userId }: StreamCompareAnswerArgs) {
   const [context, mcpTools] = await Promise.all([
     getComparisonContext(),
-    getCompareMCPTools(userId),
+    getCompareMCPTools(userId).catch(() => undefined),
   ])
 
   return streamText({

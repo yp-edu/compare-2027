@@ -1,12 +1,23 @@
+import type { LookupAddress } from 'node:dns'
 import { lookup as dnsLookup } from 'node:dns/promises'
-import { BlockList, isIP } from 'node:net'
+import { request as httpRequest } from 'node:http'
+import { request as httpsRequest } from 'node:https'
+import { BlockList, isIP, type LookupFunction } from 'node:net'
+import { Readable } from 'node:stream'
 
 type IPAddressType = 'ipv4' | 'ipv6'
 type BlockedIPSubnet = readonly [address: string, prefix: number, type: IPAddressType]
+type ValidatedOutboundFetchTarget = {
+  resolvedAddresses?: LookupAddress[]
+  url: URL
+}
 
 const maxSourceUrlLength = 2048
 const maxFetchRedirects = 5
 const redirectStatuses = new Set([301, 302, 303, 307, 308])
+const sourceFetchHeaders = {
+  'User-Agent': 'Compare2027Bot/0.1 (+https://compare2027.fr)',
+}
 const blockedIPAddresses = new BlockList()
 const blockedIPSubnets: BlockedIPSubnet[] = [
   ['0.0.0.0', 8, 'ipv4'],
@@ -92,7 +103,9 @@ function isBlockedIPAddress(address: string) {
   return version === 0 || blockedIPAddresses.check(address, version === 4 ? 'ipv4' : 'ipv6')
 }
 
-export async function validateOutboundFetchUrl(value: string | URL) {
+async function getValidatedOutboundFetchTarget(
+  value: string | URL,
+): Promise<ValidatedOutboundFetchTarget> {
   let url: URL
 
   try {
@@ -122,10 +135,10 @@ export async function validateOutboundFetchUrl(value: string | URL) {
       throw new Error('Source URL host must resolve to a public IP address.')
     }
 
-    return url
+    return { url }
   }
 
-  let resolvedAddresses: Array<{ address: string }>
+  let resolvedAddresses: LookupAddress[]
 
   try {
     resolvedAddresses = await dnsLookup(hostname, { all: true })
@@ -141,7 +154,11 @@ export async function validateOutboundFetchUrl(value: string | URL) {
     throw new Error('Source URL host must resolve only to public IP addresses.')
   }
 
-  return url
+  return { resolvedAddresses, url }
+}
+
+export async function validateOutboundFetchUrl(value: string | URL) {
+  return (await getValidatedOutboundFetchTarget(value)).url
 }
 
 export async function getSafeSourceUrl(value: unknown) {
@@ -159,15 +176,11 @@ export async function getSafeSourceUrl(value: unknown) {
 }
 
 export async function fetchSourceUrl(value: string | URL) {
-  let url = await validateOutboundFetchUrl(value)
+  let target = await getValidatedOutboundFetchTarget(value)
 
   for (let redirectCount = 0; redirectCount <= maxFetchRedirects; redirectCount += 1) {
-    const response = await fetch(url.toString(), {
-      headers: {
-        'User-Agent': 'Compare2027Bot/0.1 (+https://compare2027.fr)',
-      },
-      redirect: 'manual',
-    })
+    const { url } = target
+    const response = await fetchValidatedOutboundUrl(target)
 
     if (!redirectStatuses.has(response.status)) {
       return { response, url: url.toString() }
@@ -194,8 +207,102 @@ export async function fetchSourceUrl(value: string | URL) {
     }
 
     await response.body?.cancel()
-    url = await validateOutboundFetchUrl(redirectUrl)
+    target = await getValidatedOutboundFetchTarget(redirectUrl)
   }
 
   throw new Error('Source fetch exceeded the redirect limit.')
+}
+
+function createBoundLookup(hostname: string, resolvedAddresses: LookupAddress[]): LookupFunction {
+  return (lookupHostname, options, callback) => {
+    if (lookupHostname.toLowerCase() !== hostname.toLowerCase()) {
+      const error = new Error('Source URL host could not be resolved.') as NodeJS.ErrnoException
+      error.code = 'ENOTFOUND'
+      callback(error, [], undefined)
+      return
+    }
+
+    const family =
+      options.family === 4 || options.family === 'IPv4'
+        ? 4
+        : options.family === 6 || options.family === 'IPv6'
+          ? 6
+          : 0
+    const addresses = family
+      ? resolvedAddresses.filter((address) => address.family === family)
+      : resolvedAddresses
+
+    if (addresses.length === 0) {
+      const error = new Error('Source URL host could not be resolved.') as NodeJS.ErrnoException
+      error.code = 'ENOTFOUND'
+      callback(error, [], family || undefined)
+      return
+    }
+
+    if (options.all) {
+      callback(null, addresses)
+      return
+    }
+
+    const [address] = addresses
+
+    callback(null, address.address, address.family)
+  }
+}
+
+function getResponseHeaders(headers: Record<string, string | string[] | undefined>) {
+  const responseHeaders = new Headers()
+
+  for (const [name, value] of Object.entries(headers)) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        responseHeaders.append(name, item)
+      }
+    } else if (value !== undefined) {
+      responseHeaders.set(name, value)
+    }
+  }
+
+  return responseHeaders
+}
+
+async function fetchValidatedOutboundUrl(target: ValidatedOutboundFetchTarget) {
+  const { resolvedAddresses, url } = target
+  const request = url.protocol === 'https:' ? httpsRequest : httpRequest
+
+  return new Promise<Response>((resolve, reject) => {
+    const outboundRequest = request(
+      url,
+      {
+        headers: sourceFetchHeaders,
+        lookup: resolvedAddresses
+          ? createBoundLookup(getAddressCheckHostname(url), resolvedAddresses)
+          : undefined,
+      },
+      (incomingResponse) => {
+        const status = incomingResponse.statusCode
+
+        if (!status || status < 200 || status > 599) {
+          incomingResponse.destroy()
+          reject(new Error('Source fetch returned an invalid HTTP status.'))
+          return
+        }
+
+        const body = [204, 205, 304].includes(status)
+          ? null
+          : (Readable.toWeb(incomingResponse) as unknown as ReadableStream<Uint8Array>)
+
+        resolve(
+          new Response(body, {
+            headers: getResponseHeaders(incomingResponse.headers),
+            status,
+            statusText: incomingResponse.statusMessage,
+          }),
+        )
+      },
+    )
+
+    outboundRequest.on('error', reject)
+    outboundRequest.end()
+  })
 }
