@@ -34,7 +34,7 @@ describe('compare chat tool display names', () => {
 })
 
 describe('compare chat citation popup positioning', () => {
-  it('anchors the fixed popup below the clicked badge', () => {
+  it('anchors the absolute popup below the clicked badge', () => {
     expect(getCitationPopupPosition({ bottom: 60, left: 180 }, 1200)).toEqual({
       left: 180,
       top: 68,
@@ -52,6 +52,13 @@ describe('compare chat citation popup positioning', () => {
     expect(getCitationPopupPosition({ bottom: 80, left: 4 }, 1100)).toEqual({
       left: 24,
       top: 88,
+    })
+  })
+
+  it('uses document coordinates when the viewport is scrolled', () => {
+    expect(getCitationPopupPosition({ bottom: 60, left: 180 }, 1200, 12, 320)).toEqual({
+      left: 192,
+      top: 388,
     })
   })
 })

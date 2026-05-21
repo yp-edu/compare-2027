@@ -1,6 +1,13 @@
 'use client'
 
-import { useEffect, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { DefaultChatTransport, type UIMessage } from 'ai'
@@ -440,6 +447,8 @@ function toCitationMetadata(response: CitationResponse): CitationMetadata {
 export function getCitationPopupPosition(
   linkRect: RectLike,
   viewportWidth: number,
+  scrollX = 0,
+  scrollY = 0,
 ): CitationPopupPosition {
   const gutter = 24
   const popupWidth = Math.min(416, Math.max(0, viewportWidth - gutter * 2))
@@ -448,8 +457,8 @@ export function getCitationPopupPosition(
   const viewportLeft = Math.min(Math.max(linkRect.left, minViewportLeft), maxViewportLeft)
 
   return {
-    left: viewportLeft,
-    top: linkRect.bottom + 8,
+    left: viewportLeft + scrollX,
+    top: linkRect.bottom + scrollY + 8,
   }
 }
 
@@ -480,7 +489,7 @@ function CitationDetails({
 
   return (
     <div
-      className="fixed z-[100] w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
+      className="absolute z-[100] w-[min(26rem,calc(100vw-3rem))] rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-2xl"
       style={{
         left: position.left,
         top: position.top,
@@ -566,7 +575,50 @@ function MarkdownMessage({
 }: MarkdownMessageProps) {
   const [selectedCitation, setSelectedCitation] = useState<CitationTarget | null>(null)
   const [citationPosition, setCitationPosition] = useState<CitationPopupPosition | null>(null)
+  const selectedCitationLinkRef = useRef<HTMLAnchorElement | null>(null)
   const html = renderMarkdown(text, citationMetadata)
+
+  function clearSelectedCitation() {
+    selectedCitationLinkRef.current = null
+    setSelectedCitation(null)
+    setCitationPosition(null)
+  }
+
+  function updateCitationPosition(link: HTMLAnchorElement) {
+    setCitationPosition(
+      getCitationPopupPosition(
+        link.getBoundingClientRect(),
+        window.innerWidth,
+        window.scrollX,
+        window.scrollY,
+      ),
+    )
+  }
+
+  useEffect(() => {
+    if (!selectedCitation) {
+      return
+    }
+
+    function syncCitationPosition() {
+      const link = selectedCitationLinkRef.current
+
+      if (!link?.isConnected) {
+        clearSelectedCitation()
+        return
+      }
+
+      updateCitationPosition(link)
+    }
+
+    window.addEventListener('scroll', syncCitationPosition, true)
+    window.addEventListener('resize', syncCitationPosition)
+
+    return () => {
+      window.removeEventListener('scroll', syncCitationPosition, true)
+      window.removeEventListener('resize', syncCitationPosition)
+    }
+  }, [selectedCitation])
 
   function handleCitationClick(event: MouseEvent<HTMLDivElement>) {
     const target = event.target instanceof Element ? event.target : null
@@ -584,7 +636,8 @@ function MarkdownMessage({
     }
 
     event.preventDefault()
-    setCitationPosition(getCitationPopupPosition(link.getBoundingClientRect(), window.innerWidth))
+    selectedCitationLinkRef.current = link
+    updateCitationPosition(link)
 
     setSelectedCitation({ id, kind, label: link.textContent?.trim() || 'Citation' })
   }
@@ -598,7 +651,7 @@ function MarkdownMessage({
             citation={selectedCitation}
             metadata={citationMetadata}
             messageId={messageId}
-            onClose={() => setSelectedCitation(null)}
+            onClose={clearSelectedCitation}
             position={citationPosition}
             question={question}
           />,
