@@ -12,10 +12,13 @@ function mockPayloadRequest(url: string) {
 }
 
 describe('seed endpoint', () => {
-  it.each(['', '/api/admin/seed'])('rejects untrusted origins without throwing for url %j', async (url) => {
-    const response = await seedEndpoint.handler(mockPayloadRequest(url))
+  it.each(['', '/api/admin/seed'])(
+    'rejects untrusted origins without throwing for url %j',
+    async (url) => {
+      const response = await seedEndpoint.handler(mockPayloadRequest(url))
 
-    expect(response.status).toBe(403)
-    await expect(response.json()).resolves.toEqual({ error: 'Forbidden' })
-  })
+      expect(response.status).toBe(403)
+      await expect(response.json()).resolves.toEqual({ error: 'Forbidden' })
+    },
+  )
 })
