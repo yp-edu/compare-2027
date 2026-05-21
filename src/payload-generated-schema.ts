@@ -422,6 +422,29 @@ export const enum_response_feedback_rating = pgEnum('enum_response_feedback_rati
   'helpful',
   'not_helpful',
 ])
+export const enum_payload_jobs_log_task_slug = pgEnum('enum_payload_jobs_log_task_slug', [
+  'inline',
+  'startSourceIngestion',
+  'processSourceIngestion',
+  'completeSourceIngestion',
+])
+export const enum_payload_jobs_log_state = pgEnum('enum_payload_jobs_log_state', [
+  'failed',
+  'succeeded',
+])
+export const enum_payload_jobs_log_parent_task_slug = pgEnum(
+  'enum_payload_jobs_log_parent_task_slug',
+  ['inline', 'startSourceIngestion', 'processSourceIngestion', 'completeSourceIngestion'],
+)
+export const enum_payload_jobs_workflow_slug = pgEnum('enum_payload_jobs_workflow_slug', [
+  'ingestSource',
+])
+export const enum_payload_jobs_task_slug = pgEnum('enum_payload_jobs_task_slug', [
+  'inline',
+  'startSourceIngestion',
+  'processSourceIngestion',
+  'completeSourceIngestion',
+])
 
 export const users_role = pgTable(
   'users_role',
@@ -2774,6 +2797,79 @@ export const payload_kv = pgTable(
   (columns) => [uniqueIndex('payload_kv_key_idx').on(columns.key)],
 )
 
+export const payload_jobs_log = pgTable(
+  'payload_jobs_log',
+  {
+    _order: integer('_order').notNull(),
+    _parentID: integer('_parent_id').notNull(),
+    id: varchar('id').primaryKey(),
+    executedAt: timestamp('executed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    completedAt: timestamp('completed_at', {
+      mode: 'string',
+      withTimezone: true,
+      precision: 3,
+    }).notNull(),
+    taskSlug: enum_payload_jobs_log_task_slug('task_slug').notNull(),
+    taskID: varchar('task_i_d').notNull(),
+    input: jsonb('input'),
+    output: jsonb('output'),
+    state: enum_payload_jobs_log_state('state').notNull(),
+    error: jsonb('error'),
+    parent_taskSlug: enum_payload_jobs_log_parent_task_slug('parent_task_slug'),
+    parent_taskID: varchar('parent_task_i_d'),
+  },
+  (columns) => [
+    index('payload_jobs_log_order_idx').on(columns._order),
+    index('payload_jobs_log_parent_id_idx').on(columns._parentID),
+    foreignKey({
+      columns: [columns['_parentID']],
+      foreignColumns: [payload_jobs.id],
+      name: 'payload_jobs_log_parent_id_fk',
+    }).onDelete('cascade'),
+  ],
+)
+
+export const payload_jobs = pgTable(
+  'payload_jobs',
+  {
+    id: serial('id').primaryKey(),
+    input: jsonb('input'),
+    completedAt: timestamp('completed_at', { mode: 'string', withTimezone: true, precision: 3 }),
+    totalTried: numeric('total_tried', { mode: 'number' }).default(0),
+    hasError: boolean('has_error').default(false),
+    error: jsonb('error'),
+    workflowSlug: enum_payload_jobs_workflow_slug('workflow_slug'),
+    taskSlug: enum_payload_jobs_task_slug('task_slug'),
+    queue: varchar('queue').default('default'),
+    waitUntil: timestamp('wait_until', { mode: 'string', withTimezone: true, precision: 3 }),
+    processing: boolean('processing').default(false),
+    concurrencyKey: varchar('concurrency_key'),
+    updatedAt: timestamp('updated_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { mode: 'string', withTimezone: true, precision: 3 })
+      .defaultNow()
+      .notNull(),
+  },
+  (columns) => [
+    index('payload_jobs_completed_at_idx').on(columns.completedAt),
+    index('payload_jobs_total_tried_idx').on(columns.totalTried),
+    index('payload_jobs_has_error_idx').on(columns.hasError),
+    index('payload_jobs_workflow_slug_idx').on(columns.workflowSlug),
+    index('payload_jobs_task_slug_idx').on(columns.taskSlug),
+    index('payload_jobs_queue_idx').on(columns.queue),
+    index('payload_jobs_wait_until_idx').on(columns.waitUntil),
+    index('payload_jobs_processing_idx').on(columns.processing),
+    index('payload_jobs_concurrency_key_idx').on(columns.concurrencyKey),
+    index('payload_jobs_updated_at_idx').on(columns.updatedAt),
+    index('payload_jobs_created_at_idx').on(columns.createdAt),
+  ],
+)
+
 export const payload_locked_documents = pgTable(
   'payload_locked_documents',
   {
@@ -3936,6 +4032,18 @@ export const relations_payload_mcp_api_keys = relations(payload_mcp_api_keys, ({
   }),
 }))
 export const relations_payload_kv = relations(payload_kv, () => ({}))
+export const relations_payload_jobs_log = relations(payload_jobs_log, ({ one }) => ({
+  _parentID: one(payload_jobs, {
+    fields: [payload_jobs_log._parentID],
+    references: [payload_jobs.id],
+    relationName: 'log',
+  }),
+}))
+export const relations_payload_jobs = relations(payload_jobs, ({ many }) => ({
+  log: many(payload_jobs_log, {
+    relationName: 'log',
+  }),
+}))
 export const relations_payload_locked_documents_rels = relations(
   payload_locked_documents_rels,
   ({ one }) => ({
@@ -4179,6 +4287,11 @@ type DatabaseSchema = {
   enum__public_positions_v_version_stance: typeof enum__public_positions_v_version_stance
   enum__public_positions_v_version_status: typeof enum__public_positions_v_version_status
   enum_response_feedback_rating: typeof enum_response_feedback_rating
+  enum_payload_jobs_log_task_slug: typeof enum_payload_jobs_log_task_slug
+  enum_payload_jobs_log_state: typeof enum_payload_jobs_log_state
+  enum_payload_jobs_log_parent_task_slug: typeof enum_payload_jobs_log_parent_task_slug
+  enum_payload_jobs_workflow_slug: typeof enum_payload_jobs_workflow_slug
+  enum_payload_jobs_task_slug: typeof enum_payload_jobs_task_slug
   users_role: typeof users_role
   users: typeof users
   sessions: typeof sessions
@@ -4237,6 +4350,8 @@ type DatabaseSchema = {
   search_rels: typeof search_rels
   payload_mcp_api_keys: typeof payload_mcp_api_keys
   payload_kv: typeof payload_kv
+  payload_jobs_log: typeof payload_jobs_log
+  payload_jobs: typeof payload_jobs
   payload_locked_documents: typeof payload_locked_documents
   payload_locked_documents_rels: typeof payload_locked_documents_rels
   payload_preferences: typeof payload_preferences
@@ -4301,6 +4416,8 @@ type DatabaseSchema = {
   relations_search: typeof relations_search
   relations_payload_mcp_api_keys: typeof relations_payload_mcp_api_keys
   relations_payload_kv: typeof relations_payload_kv
+  relations_payload_jobs_log: typeof relations_payload_jobs_log
+  relations_payload_jobs: typeof relations_payload_jobs
   relations_payload_locked_documents_rels: typeof relations_payload_locked_documents_rels
   relations_payload_locked_documents: typeof relations_payload_locked_documents
   relations_payload_preferences_rels: typeof relations_payload_preferences_rels

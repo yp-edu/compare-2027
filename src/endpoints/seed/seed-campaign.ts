@@ -1,14 +1,4 @@
-import { randomUUID } from 'node:crypto'
-import path from 'node:path'
-import process from 'node:process'
-import { fileURLToPath } from 'node:url'
-
-import { hashPassword } from 'better-auth/crypto'
-import { getPayload, type BasePayload, type Payload } from 'payload'
-
-import type { User } from '@/payload-types'
-
-import config from '../payload.config'
+import type { BasePayload } from 'payload'
 
 import {
   campaignCandidates,
@@ -19,21 +9,57 @@ import {
   type CampaignPartySeed,
   type CampaignProgramSeed,
   type CampaignSourceSeed,
-} from './campaign-2027'
-
-type SeedUser = Pick<User, 'email' | 'name'> & {
-  role: NonNullable<User['role']>
-}
+} from '@/scripts/campaign-2027'
 
 type SeedData = Record<string, unknown>
 
-const seedUser: SeedUser = {
-  email: 'yoann.poupart@ens-lyon.org',
-  name: 'Yoann Poupart',
-  role: ['admin'],
+type CampaignTopicSeed = {
+  color?: string
+  description?: string
+  order: number
+  slug: string
+  title: string
 }
 
 const seedRetrievedAt = '2026-05-21T00:00:00.000Z'
+
+const campaignTopics: CampaignTopicSeed[] = [
+  {
+    color: '#2563eb',
+    description: 'Institutions, démocratie, libertés publiques et organisation de l’État.',
+    order: 10,
+    slug: 'institutions-democratie',
+    title: 'Institutions et démocratie',
+  },
+  {
+    color: '#16a34a',
+    description: 'Climat, biodiversité, énergie, agriculture et planification écologique.',
+    order: 20,
+    slug: 'ecologie-energie',
+    title: 'Écologie et énergie',
+  },
+  {
+    color: '#dc2626',
+    description: 'Travail, salaires, fiscalité, entreprises, industrie et pouvoir d’achat.',
+    order: 30,
+    slug: 'economie-travail',
+    title: 'Économie et travail',
+  },
+  {
+    color: '#9333ea',
+    description: 'Santé, éducation, protection sociale, logement et services publics.',
+    order: 40,
+    slug: 'solidarites-services-publics',
+    title: 'Solidarités et services publics',
+  },
+  {
+    color: '#ea580c',
+    description: 'Europe, relations internationales, défense, paix et commerce mondial.',
+    order: 50,
+    slug: 'international-europe-defense',
+    title: 'International, Europe et défense',
+  },
+]
 
 function isSeedDataCurrent(doc: unknown, data: SeedData) {
   const record = doc as Record<string, unknown>
@@ -54,19 +80,42 @@ function isSeedDataCurrent(doc: unknown, data: SeedData) {
   })
 }
 
-async function createCredentialAccount(payload: BasePayload, userID: User['id'], password: string) {
-  const now = new Date().toISOString()
-
-  await payload.create({
-    collection: 'accounts',
-    data: {
-      accountId: String(userID),
-      providerId: 'credential',
-      user: userID,
-      password: await hashPassword(password),
-      createdAt: now,
-      updatedAt: now,
+async function upsertTopic(payload: BasePayload, topic: CampaignTopicSeed) {
+  const existingTopic = await payload.find({
+    collection: 'topics',
+    depth: 0,
+    limit: 1,
+    where: {
+      slug: {
+        equals: topic.slug,
+      },
     },
+  })
+
+  const data = {
+    color: topic.color,
+    description: topic.description,
+    order: topic.order,
+    slug: topic.slug,
+    title: topic.title,
+    _status: 'published' as const,
+  }
+
+  if (existingTopic.docs[0]) {
+    if (isSeedDataCurrent(existingTopic.docs[0], data)) {
+      return existingTopic.docs[0]
+    }
+
+    return payload.update({
+      collection: 'topics',
+      data,
+      id: existingTopic.docs[0].id,
+    })
+  }
+
+  return payload.create({
+    collection: 'topics',
+    data,
   })
 }
 
@@ -100,7 +149,7 @@ async function upsertSource(payload: BasePayload, source: CampaignSourceSeed) {
       url: reference.url,
     })),
     notes: source.notes,
-    processingStatus: 'skipped' as const,
+    processingStatus: 'queued' as const,
     retrievedAt: seedRetrievedAt,
     slug: source.slug,
     sourceRole: source.sourceRole || ('other' as const),
@@ -329,10 +378,14 @@ async function upsertProgram(
   })
 }
 
-async function seedCampaignContent(payload: BasePayload) {
+export async function seedCampaignContent(payload: BasePayload) {
   const partyIDsBySlug = new Map<string, number>()
   const sourceIDsBySlug = new Map<string, number>()
   const candidateIDsBySlug = new Map<string, number>()
+
+  for (const topic of campaignTopics) {
+    await upsertTopic(payload, topic)
+  }
 
   for (const party of campaignParties) {
     const partyDoc = await upsertParty(payload, party)
@@ -373,136 +426,5 @@ async function seedCampaignContent(payload: BasePayload) {
     await upsertProgram(payload, program, actorIDsBySlug, sourceIDsBySlug)
   }
 
-  payload.logger.info('Seeded campaign content: 2027 candidates, sources, and programmes')
-}
-
-async function seedAdminUser(payload: BasePayload) {
-  const database = await payload.findGlobal({
-    slug: 'database',
-  })
-
-  if (database.seeded !== false) {
-    payload.logger.info('Database has already been seeded')
-
-    return {
-      created: false,
-      password: null,
-      user: null,
-    }
-  }
-
-  const existingUser = await payload.find({
-    collection: 'users',
-    depth: 0,
-    limit: 1,
-    where: {
-      email: {
-        equals: seedUser.email,
-      },
-    },
-  })
-
-  const existingUserDoc = existingUser.docs[0]
-
-  if (existingUserDoc) {
-    const existingAccount = await payload.find({
-      collection: 'accounts',
-      depth: 0,
-      limit: 1,
-      where: {
-        and: [
-          {
-            user: {
-              equals: existingUserDoc.id,
-            },
-          },
-          {
-            providerId: {
-              equals: 'credential',
-            },
-          },
-        ],
-      },
-    })
-
-    const password = existingAccount.docs[0] ? null : randomUUID()
-
-    if (password) {
-      await createCredentialAccount(payload, existingUserDoc.id, password)
-      payload.logger.info(`Seeded credential account for existing user: ${seedUser.email}`)
-      payload.logger.info(`Seed user password: ${password}`)
-    }
-
-    await payload.updateGlobal({
-      slug: 'database',
-      data: {
-        seeded: true,
-      },
-    })
-
-    payload.logger.info(`Seed user already exists: ${seedUser.email}`)
-
-    return {
-      created: Boolean(password),
-      password,
-      user: existingUserDoc,
-    }
-  }
-
-  const password = randomUUID()
-  const createdUser = await payload.create({
-    collection: 'users',
-    data: {
-      ...seedUser,
-      emailVerified: false,
-    },
-  })
-
-  await createCredentialAccount(payload, createdUser.id, password)
-
-  payload.logger.info(`Seeded user: ${seedUser.email}`)
-  payload.logger.info(`Seed user password: ${password}`)
-
-  await payload.updateGlobal({
-    slug: 'database',
-    data: {
-      seeded: true,
-    },
-  })
-
-  return {
-    created: true,
-    password,
-    user: createdUser,
-  }
-}
-
-export async function seed(payload: BasePayload) {
-  const adminResult = await seedAdminUser(payload)
-
-  await seedCampaignContent(payload)
-
-  return adminResult
-}
-
-async function runSeedScript() {
-  let payload: Payload | undefined
-
-  try {
-    const payloadConfig = await config
-    payload = await getPayload({ config: payloadConfig })
-
-    await seed(payload)
-  } finally {
-    await payload?.destroy()
-  }
-}
-
-const scriptPath = fileURLToPath(import.meta.url)
-
-if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
-  runSeedScript().catch((error: unknown) => {
-    console.error(error)
-    process.exitCode = 1
-  })
+  payload.logger.info('Seeded campaign content: 2027 topics, candidates, sources, and programmes')
 }
