@@ -11,6 +11,12 @@ type StreamCompareAnswerArgs = {
   userId: number
 }
 
+export type CompareMCPAccess = {
+  error?: string
+  status: 'connected' | 'disconnected'
+  toolCount: number
+}
+
 function getErrorDetails(error: unknown) {
   if (error instanceof Error) {
     return {
@@ -56,9 +62,11 @@ export async function streamCompareAnswer({
   requestId,
   userId,
 }: StreamCompareAnswerArgs) {
+  let mcpError: string | undefined
   const [context, mcpTools] = await Promise.all([
     getComparisonContext(),
     getCompareMCPTools(userId, { requestId }).catch((error) => {
+      mcpError = getErrorDetails(error).message
       logAIWarning('mcp-tools', error, {
         requestId,
         userId,
@@ -67,13 +75,21 @@ export async function streamCompareAnswer({
       return undefined
     }),
   ])
+  const mcpToolCount = mcpTools ? Object.keys(mcpTools).length : 0
 
-  return streamText({
-    maxOutputTokens: 900,
-    messages: await convertToModelMessages(messages),
-    model: getAzureOpenAIModel(),
-    ...(mcpTools ? { stopWhen: stepCountIs(4), tools: mcpTools } : {}),
-    system: getCompareSystemPrompt(context),
-    temperature: 0.2,
-  })
+  return {
+    mcp: {
+      ...(mcpError ? { error: mcpError } : {}),
+      status: mcpToolCount > 0 ? 'connected' : 'disconnected',
+      toolCount: mcpToolCount,
+    } satisfies CompareMCPAccess,
+    result: streamText({
+      maxOutputTokens: 900,
+      messages: await convertToModelMessages(messages),
+      model: getAzureOpenAIModel(),
+      ...(mcpTools ? { stopWhen: stepCountIs(4), tools: mcpTools } : {}),
+      system: getCompareSystemPrompt(context),
+      temperature: 0.2,
+    }),
+  }
 }

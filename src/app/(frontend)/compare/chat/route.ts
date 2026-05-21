@@ -187,10 +187,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await streamCompareAnswer({ messages, requestId, userId })
+    const { mcp, result } = await streamCompareAnswer({ messages, requestId, userId })
 
     return result.toUIMessageStreamResponse({
-      headers: { 'x-chat-request-id': requestId },
+      headers: {
+        'x-chat-request-id': requestId,
+        'x-compare-mcp-status': mcp.status,
+        'x-compare-mcp-tool-count': String(mcp.toolCount),
+      },
       onError: (error) => {
         logChatError(requestId, 'stream-response', error, {
           messageCount: messages.length,

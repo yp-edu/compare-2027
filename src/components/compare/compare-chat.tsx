@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type FormEvent, type KeyboardEvent, type MouseEvent } from 'react'
+import { useEffect, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { DefaultChatTransport, type UIMessage } from 'ai'
@@ -26,6 +26,13 @@ type ChatErrorPayload = {
   requestId?: unknown
   stage?: unknown
 }
+
+type CompareMCPAccessStatus = {
+  status: 'checking' | 'connected' | 'disconnected' | 'unknown'
+  toolCount?: number
+}
+
+const mcpStatusEventType = 'compare-chat:mcp-status'
 
 function parseChatErrorPayload(value: string): ChatErrorPayload | null {
   try {
@@ -58,6 +65,14 @@ function getReadableChatErrorMessage(error: Error) {
   return suffix ? `${message} (${suffix})` : message
 }
 
+function hasAdminRole(role: unknown) {
+  if (Array.isArray(role)) {
+    return role.includes('admin')
+  }
+
+  return role === 'admin'
+}
+
 function logClientChatError(stage: string, error: unknown, context?: Record<string, unknown>) {
   const message = error instanceof Error ? error.message : String(error)
   const payload = parseChatErrorPayload(message)
@@ -73,8 +88,34 @@ function logClientChatError(stage: string, error: unknown, context?: Record<stri
 
 async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
   const response = await fetch(input, init)
+  const mcpStatus = response.headers.get('x-compare-mcp-status')
+  const mcpToolCount = Number(response.headers.get('x-compare-mcp-tool-count') || 0)
+  let didDispatchMcpStatus = false
+
+  if (
+    typeof window !== 'undefined' &&
+    (mcpStatus === 'connected' || mcpStatus === 'disconnected')
+  ) {
+    didDispatchMcpStatus = true
+    window.dispatchEvent(
+      new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
+        detail: {
+          status: mcpStatus,
+          toolCount: Number.isFinite(mcpToolCount) ? mcpToolCount : 0,
+        },
+      }),
+    )
+  }
 
   if (!response.ok) {
+    if (typeof window !== 'undefined' && !didDispatchMcpStatus) {
+      window.dispatchEvent(
+        new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
+          detail: { status: 'disconnected', toolCount: 0 },
+        }),
+      )
+    }
+
     const body = await response
       .clone()
       .text()
@@ -652,6 +693,55 @@ function ThinkingIndicator() {
   )
 }
 
+function McpStatusBadge({
+  status,
+}: {
+  status: CompareMCPAccessStatus
+}) {
+  const isConnected = status.status === 'connected'
+  const label = status.status === 'checking'
+    ? 'MCP...'
+    : isConnected
+      ? `MCP actif (${status.toolCount || 0})`
+      : status.status === 'disconnected'
+        ? 'MCP absent'
+        : 'MCP non testé'
+  const title = isConnected
+    ? `Dernier appel: le modèle a reçu ${status.toolCount || 0} outils MCP.`
+    : status.status === 'disconnected'
+      ? "Dernier appel: le modèle n'a pas reçu d'outils MCP."
+      : status.status === 'checking'
+        ? 'Vérification MCP sur la requête en cours.'
+        : 'Envoyez un message pour vérifier si le modèle reçoit les outils MCP.'
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold',
+        status.status === 'checking' || status.status === 'unknown'
+          ? 'border-border bg-secondary text-muted-foreground'
+          : isConnected
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+            : 'border-destructive/30 bg-destructive/10 text-destructive',
+      )}
+      title={title}
+    >
+      <span
+        className={cn(
+          'size-2 rounded-full',
+          status.status === 'checking' || status.status === 'unknown'
+            ? 'bg-muted-foreground'
+            : isConnected
+              ? 'bg-emerald-500'
+              : 'bg-destructive',
+        )}
+        aria-hidden="true"
+      />
+      {label}
+    </span>
+  )
+}
+
 type CompareChatProps = {
   feedbackEnabled?: boolean
 }
@@ -679,6 +769,9 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     },
     transport: chatTransport,
   })
+  const role = (session?.user as { role?: unknown } | undefined)?.role
+  const isAdmin = hasAdminRole(role)
+  const [mcpAccess, setMcpAccess] = useState<CompareMCPAccessStatus>({ status: 'unknown' })
   const isAuthenticated = Boolean(session?.user)
   const hasLegalConsent = isLegalConsentCurrent(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
@@ -691,6 +784,24 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const citationMetadataUrl =
     isAuthenticated && hasLegalConsent ? getCitationMetadataUrl(getMessageTexts(messages)) : null
   const citationMetadata = useCitationMetadata(citationMetadataUrl)
+
+  useEffect(() => {
+    if (!isAdmin) {
+      return
+    }
+
+    function handleMcpStatus(event: Event) {
+      const detail = (event as CustomEvent<CompareMCPAccessStatus>).detail
+
+      if (detail?.status) {
+        setMcpAccess(detail)
+      }
+    }
+
+    window.addEventListener(mcpStatusEventType, handleMcpStatus)
+
+    return () => window.removeEventListener(mcpStatusEventType, handleMcpStatus)
+  }, [isAdmin])
 
   function handleNewConversation() {
     if (!canStartNewConversation) {
@@ -714,6 +825,9 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     }
 
     setInput('')
+    if (isAdmin) {
+      setMcpAccess({ status: 'checking' })
+    }
     await sendMessage({ text })
   }
 
@@ -735,9 +849,10 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
     <div className="grid gap-6 lg:grid-cols-[0.72fr_0.28fr]">
       <Card className="min-h-[36rem] border-primary/15 bg-card/90 shadow-2xl shadow-primary/10 backdrop-blur">
         <CardHeader className="flex flex-col gap-3 space-y-0 border-b border-border/70 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-3 text-2xl">
+          <CardTitle className="flex flex-wrap items-center gap-3 text-2xl">
             <Sparkles className="size-5 text-primary" aria-hidden="true" />
             Chat comparatif
+            {isAdmin ? <McpStatusBadge status={mcpAccess} /> : null}
           </CardTitle>
           <Button
             aria-label="Commencer une nouvelle conversation"
