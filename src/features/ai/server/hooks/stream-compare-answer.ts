@@ -7,7 +7,31 @@ import { getComparisonContext } from './get-comparison-context'
 
 type StreamCompareAnswerArgs = {
   messages: UIMessage[]
+  requestId?: string
   userId: number
+}
+
+function getErrorDetails(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+    }
+  }
+
+  return {
+    message: String(error),
+    name: typeof error,
+  }
+}
+
+function logAIWarning(stage: string, error: unknown, context?: Record<string, unknown>) {
+  console.warn('[compare-chat]', {
+    ...context,
+    stage,
+    ...getErrorDetails(error),
+  })
 }
 
 function getAzureOpenAIModel() {
@@ -27,10 +51,21 @@ function getAzureOpenAIModel() {
   return azure(deployment)
 }
 
-export async function streamCompareAnswer({ messages, userId }: StreamCompareAnswerArgs) {
+export async function streamCompareAnswer({
+  messages,
+  requestId,
+  userId,
+}: StreamCompareAnswerArgs) {
   const [context, mcpTools] = await Promise.all([
     getComparisonContext(),
-    getCompareMCPTools(userId).catch(() => undefined),
+    getCompareMCPTools(userId, { requestId }).catch((error) => {
+      logAIWarning('mcp-tools', error, {
+        requestId,
+        userId,
+      })
+
+      return undefined
+    }),
   ])
 
   return streamText({

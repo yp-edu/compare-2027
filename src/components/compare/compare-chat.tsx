@@ -18,7 +18,82 @@ import { authClient } from '@/lib/auth-client'
 import { isLegalConsentCurrent } from '@/lib/legal'
 import { cn } from '@/lib/utils'
 
-const chatTransport = new DefaultChatTransport({ api: '/compare/chat' })
+type ChatErrorPayload = {
+  details?: unknown
+  error?: unknown
+  requestId?: unknown
+  stage?: unknown
+}
+
+function parseChatErrorPayload(value: string): ChatErrorPayload | null {
+  try {
+    const parsed = JSON.parse(value) as unknown
+
+    return parsed && typeof parsed === 'object' && 'error' in parsed ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function getDebugValue(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
+
+function getReadableChatErrorMessage(error: Error) {
+  const payload = parseChatErrorPayload(error.message)
+
+  if (!payload) {
+    return error.message || 'La réponse n’a pas pu être générée.'
+  }
+
+  const message = getDebugValue(payload.error) || 'La réponse n’a pas pu être générée.'
+  const stage = getDebugValue(payload.stage)
+  const requestId = getDebugValue(payload.requestId)
+  const suffix = [stage ? `étape: ${stage}` : null, requestId ? `référence: ${requestId}` : null]
+    .filter(Boolean)
+    .join(' · ')
+
+  return suffix ? `${message} (${suffix})` : message
+}
+
+function logClientChatError(stage: string, error: unknown, context?: Record<string, unknown>) {
+  const message = error instanceof Error ? error.message : String(error)
+  const payload = parseChatErrorPayload(message)
+
+  console.error('[compare-chat]', {
+    ...context,
+    details: payload?.details,
+    error: payload?.error || message,
+    requestId: payload?.requestId,
+    stage: payload?.stage || stage,
+  })
+}
+
+async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const response = await fetch(input, init)
+
+  if (!response.ok) {
+    const body = await response
+      .clone()
+      .text()
+      .catch(() => '')
+    const payload = parseChatErrorPayload(body)
+
+    console.error('[compare-chat]', {
+      body: payload ? undefined : body,
+      details: payload?.details,
+      error: payload?.error || response.statusText,
+      requestId: payload?.requestId,
+      stage: payload?.stage || 'http-response',
+      status: response.status,
+      url: input instanceof Request ? input.url : input.toString(),
+    })
+  }
+
+  return response
+}
+
+const chatTransport = new DefaultChatTransport({ api: '/compare/chat', fetch: debugChatFetch })
 
 const suggestedQuestions = [
   'Compare les positions sur le pouvoir d’achat.',
@@ -559,7 +634,25 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const { data: session, isPending } = authClient.useSession()
   const { isOffline } = useOnlineStatus()
   const [input, setInput] = useState('')
-  const { error, messages, sendMessage, status } = useChat({ transport: chatTransport })
+  const { error, messages, sendMessage, status } = useChat({
+    onError: (chatError) => logClientChatError('client-chat', chatError),
+    onFinish: ({ finishReason, isAbort, isDisconnect, isError, messages }) => {
+      if (!isAbort && !isDisconnect && !isError) {
+        return
+      }
+
+      console.warn('[compare-chat]', {
+        finishReason,
+        isAbort,
+        isDisconnect,
+        isError,
+        lastRole: messages.at(-1)?.role,
+        messageCount: messages.length,
+        stage: 'client-finish',
+      })
+    },
+    transport: chatTransport,
+  })
   const isAuthenticated = Boolean(session?.user)
   const hasLegalConsent = isLegalConsentCurrent(session?.user)
   const isWorking = status === 'submitted' || status === 'streaming'
@@ -709,7 +802,7 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
             {isAwaitingAssistantResponse ? <ThinkingIndicator /> : null}
             {error ? (
               <p className="max-w-2xl rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-semibold text-destructive">
-                {error.message || 'La réponse n’a pas pu être générée.'}
+                {getReadableChatErrorMessage(error)}
               </p>
             ) : null}
           </div>

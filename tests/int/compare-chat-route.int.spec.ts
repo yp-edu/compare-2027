@@ -26,13 +26,17 @@ function restoreEnv(name: keyof typeof originalAzureEnv) {
 }
 
 describe('compare chat route', () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     process.env.AZURE_OPENAI_API_KEY = 'test-key'
     process.env.AZURE_OPENAI_DEPLOYMENT = 'test-deployment'
     process.env.AZURE_OPENAI_RESOURCE_NAME = 'test-resource'
   })
 
   afterEach(() => {
+    consoleErrorSpy.mockRestore()
     vi.clearAllMocks()
     restoreEnv('AZURE_OPENAI_API_KEY')
     restoreEnv('AZURE_OPENAI_DEPLOYMENT')
@@ -49,14 +53,39 @@ describe('compare chat route', () => {
     )
 
     expect(response.status).toBe(400)
-    await expect(response.json()).resolves.toEqual({ error: 'Malformed JSON payload' })
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Malformed JSON payload',
+      requestId: expect.any(String),
+      stage: 'parse-json',
+    })
+    expect(streamCompareAnswer).not.toHaveBeenCalled()
+  })
+
+  it('returns a debuggable client error for invalid chat payloads', async () => {
+    const response = await POST(
+      new Request('http://localhost/compare/chat', {
+        body: JSON.stringify({ messages: 'not messages' }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Invalid chat payload',
+      requestId: expect.any(String),
+      stage: 'validate-payload',
+    })
+    expect(response.headers.get('x-chat-request-id')).toEqual(expect.any(String))
     expect(streamCompareAnswer).not.toHaveBeenCalled()
   })
 
   it('passes the authenticated user ID into the AI stream', async () => {
+    const toUIMessageStreamResponse = vi.fn(() => new Response(null, { status: 200 }))
+
     vi.mocked(streamCompareAnswer).mockResolvedValueOnce({
-      toUIMessageStreamResponse: () => new Response(null, { status: 200 }),
-    } as Awaited<ReturnType<typeof streamCompareAnswer>>)
+      toUIMessageStreamResponse,
+    } as unknown as Awaited<ReturnType<typeof streamCompareAnswer>>)
 
     const messages = [{ id: 'message-1', parts: [], role: 'user' }]
     const response = await POST(
@@ -68,6 +97,34 @@ describe('compare chat route', () => {
     )
 
     expect(response.status).toBe(200)
-    expect(streamCompareAnswer).toHaveBeenCalledWith({ messages, userId: 123 })
+    expect(streamCompareAnswer).toHaveBeenCalledWith({
+      messages,
+      requestId: expect.any(String),
+      userId: 123,
+    })
+    expect(toUIMessageStreamResponse).toHaveBeenCalledWith({
+      headers: { 'x-chat-request-id': expect.any(String) },
+      onError: expect.any(Function),
+    })
+  })
+
+  it('returns a debuggable server error when the AI stream cannot start', async () => {
+    vi.mocked(streamCompareAnswer).mockRejectedValueOnce(new Error('context failed'))
+
+    const response = await POST(
+      new Request('http://localhost/compare/chat', {
+        body: JSON.stringify({ messages: [{ id: 'message-1', parts: [], role: 'user' }] }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    )
+
+    expect(response.status).toBe(500)
+    await expect(response.json()).resolves.toMatchObject({
+      details: 'context failed',
+      error: 'Chat stream could not be started',
+      requestId: expect.any(String),
+      stage: 'stream-start',
+    })
   })
 })
