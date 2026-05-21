@@ -59,198 +59,200 @@ export type SupportedTimezones =
   | 'Pacific/Guam'
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
-  | 'Pacific/Fiji';
+  | 'Pacific/Fiji'
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
-    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations;
-  };
-  blocks: {};
+    users: UserAuthOperations
+    'payload-mcp-api-keys': PayloadMcpApiKeyAuthOperations
+  }
+  blocks: {}
   collections: {
-    users: User;
-    sessions: Session;
-    accounts: Account;
-    verifications: Verification;
-    twoFactors: TwoFactor;
-    'admin-invitations': AdminInvitation;
-    media: Media;
-    sources: Source;
-    'source-snapshots': SourceSnapshot;
-    'source-documents': SourceDocument;
-    'document-chunks': DocumentChunk;
-    'ingestion-jobs': IngestionJob;
-    parties: Party;
-    candidates: Candidate;
-    'candidate-submissions': CandidateSubmission;
-    topics: Topic;
-    claims: Claim;
-    'claim-evidence': ClaimEvidence;
-    'claim-feedback': ClaimFeedback;
-    programs: Program;
-    proposals: Proposal;
-    'public-positions': PublicPosition;
-    'response-feedback': ResponseFeedback;
-    search: Search;
-    'payload-mcp-api-keys': PayloadMcpApiKey;
-    'payload-kv': PayloadKv;
-    'payload-locked-documents': PayloadLockedDocument;
-    'payload-preferences': PayloadPreference;
-    'payload-migrations': PayloadMigration;
-  };
+    users: User
+    sessions: Session
+    accounts: Account
+    verifications: Verification
+    twoFactors: TwoFactor
+    'admin-invitations': AdminInvitation
+    media: Media
+    sources: Source
+    'source-snapshots': SourceSnapshot
+    'source-documents': SourceDocument
+    'document-chunks': DocumentChunk
+    'ingestion-jobs': IngestionJob
+    parties: Party
+    candidates: Candidate
+    'candidate-submissions': CandidateSubmission
+    topics: Topic
+    claims: Claim
+    'claim-evidence': ClaimEvidence
+    'claim-feedback': ClaimFeedback
+    programs: Program
+    proposals: Proposal
+    'public-positions': PublicPosition
+    'response-feedback': ResponseFeedback
+    search: Search
+    'payload-mcp-api-keys': PayloadMcpApiKey
+    'payload-kv': PayloadKv
+    'payload-locked-documents': PayloadLockedDocument
+    'payload-preferences': PayloadPreference
+    'payload-migrations': PayloadMigration
+  }
   collectionsJoins: {
     users: {
-      account: 'accounts';
-      session: 'sessions';
-    };
-  };
+      account: 'accounts'
+      session: 'sessions'
+    }
+  }
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
-    sessions: SessionsSelect<false> | SessionsSelect<true>;
-    accounts: AccountsSelect<false> | AccountsSelect<true>;
-    verifications: VerificationsSelect<false> | VerificationsSelect<true>;
-    twoFactors: TwoFactorsSelect<false> | TwoFactorsSelect<true>;
-    'admin-invitations': AdminInvitationsSelect<false> | AdminInvitationsSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
-    sources: SourcesSelect<false> | SourcesSelect<true>;
-    'source-snapshots': SourceSnapshotsSelect<false> | SourceSnapshotsSelect<true>;
-    'source-documents': SourceDocumentsSelect<false> | SourceDocumentsSelect<true>;
-    'document-chunks': DocumentChunksSelect<false> | DocumentChunksSelect<true>;
-    'ingestion-jobs': IngestionJobsSelect<false> | IngestionJobsSelect<true>;
-    parties: PartiesSelect<false> | PartiesSelect<true>;
-    candidates: CandidatesSelect<false> | CandidatesSelect<true>;
-    'candidate-submissions': CandidateSubmissionsSelect<false> | CandidateSubmissionsSelect<true>;
-    topics: TopicsSelect<false> | TopicsSelect<true>;
-    claims: ClaimsSelect<false> | ClaimsSelect<true>;
-    'claim-evidence': ClaimEvidenceSelect<false> | ClaimEvidenceSelect<true>;
-    'claim-feedback': ClaimFeedbackSelect<false> | ClaimFeedbackSelect<true>;
-    programs: ProgramsSelect<false> | ProgramsSelect<true>;
-    proposals: ProposalsSelect<false> | ProposalsSelect<true>;
-    'public-positions': PublicPositionsSelect<false> | PublicPositionsSelect<true>;
-    'response-feedback': ResponseFeedbackSelect<false> | ResponseFeedbackSelect<true>;
-    search: SearchSelect<false> | SearchSelect<true>;
-    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
-    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
-    'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
-    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
-    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
-  };
+    users: UsersSelect<false> | UsersSelect<true>
+    sessions: SessionsSelect<false> | SessionsSelect<true>
+    accounts: AccountsSelect<false> | AccountsSelect<true>
+    verifications: VerificationsSelect<false> | VerificationsSelect<true>
+    twoFactors: TwoFactorsSelect<false> | TwoFactorsSelect<true>
+    'admin-invitations': AdminInvitationsSelect<false> | AdminInvitationsSelect<true>
+    media: MediaSelect<false> | MediaSelect<true>
+    sources: SourcesSelect<false> | SourcesSelect<true>
+    'source-snapshots': SourceSnapshotsSelect<false> | SourceSnapshotsSelect<true>
+    'source-documents': SourceDocumentsSelect<false> | SourceDocumentsSelect<true>
+    'document-chunks': DocumentChunksSelect<false> | DocumentChunksSelect<true>
+    'ingestion-jobs': IngestionJobsSelect<false> | IngestionJobsSelect<true>
+    parties: PartiesSelect<false> | PartiesSelect<true>
+    candidates: CandidatesSelect<false> | CandidatesSelect<true>
+    'candidate-submissions': CandidateSubmissionsSelect<false> | CandidateSubmissionsSelect<true>
+    topics: TopicsSelect<false> | TopicsSelect<true>
+    claims: ClaimsSelect<false> | ClaimsSelect<true>
+    'claim-evidence': ClaimEvidenceSelect<false> | ClaimEvidenceSelect<true>
+    'claim-feedback': ClaimFeedbackSelect<false> | ClaimFeedbackSelect<true>
+    programs: ProgramsSelect<false> | ProgramsSelect<true>
+    proposals: ProposalsSelect<false> | ProposalsSelect<true>
+    'public-positions': PublicPositionsSelect<false> | PublicPositionsSelect<true>
+    'response-feedback': ResponseFeedbackSelect<false> | ResponseFeedbackSelect<true>
+    search: SearchSelect<false> | SearchSelect<true>
+    'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>
+    'payload-locked-documents':
+      | PayloadLockedDocumentsSelect<false>
+      | PayloadLockedDocumentsSelect<true>
+    'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>
+    'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>
+  }
   db: {
-    defaultIDType: number;
-  };
-  fallbackLocale: null;
+    defaultIDType: number
+  }
+  fallbackLocale: null
   globals: {
-    database: Database;
-  };
+    database: Database
+  }
   globalsSelect: {
-    database: DatabaseSelect<false> | DatabaseSelect<true>;
-  };
-  locale: null;
+    database: DatabaseSelect<false> | DatabaseSelect<true>
+  }
+  locale: null
   widgets: {
-    collections: CollectionsWidget;
-  };
-  user: User | PayloadMcpApiKey;
+    collections: CollectionsWidget
+  }
+  user: User | PayloadMcpApiKey
   jobs: {
-    tasks: unknown;
-    workflows: unknown;
-  };
+    tasks: unknown
+    workflows: unknown
+  }
 }
 export interface UserAuthOperations {
   forgotPassword: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   login: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   registerFirstUser: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   unlock: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
 }
 export interface PayloadMcpApiKeyAuthOperations {
   forgotPassword: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   login: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   registerFirstUser: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
   unlock: {
-    email: string;
-    password: string;
-  };
+    email: string
+    password: string
+  }
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
-  id: number;
+  id: number
   /**
    * Users chosen display name
    */
-  name: string;
+  name: string
   /**
    * The email of the user
    */
-  email: string;
+  email: string
   /**
    * Whether the email of the user has been verified
    */
-  emailVerified: boolean;
+  emailVerified: boolean
   /**
    * The image of the user
    */
-  image?: string | null;
-  createdAt: string;
-  updatedAt: string;
+  image?: string | null
+  createdAt: string
+  updatedAt: string
   /**
    * The role/ roles of the user
    */
-  role?: ('admin' | 'editor' | 'user')[] | null;
+  role?: ('admin' | 'editor' | 'user')[] | null
   /**
    * Whether the user is banned from the platform
    */
-  banned?: boolean | null;
+  banned?: boolean | null
   /**
    * The reason for the ban
    */
-  banReason?: string | null;
+  banReason?: string | null
   /**
    * The date and time when the ban will expire
    */
-  banExpires?: string | null;
+  banExpires?: string | null
   /**
    * Whether the user has two factor authentication enabled
    */
-  twoFactorEnabled?: boolean | null;
-  legalConsentAcceptedAt?: string | null;
-  legalConsentVersion?: string | null;
-  legalConsentIpHash?: string | null;
-  legalConsentUserAgent?: string | null;
-  legalConsentProviderIds?: string | null;
+  twoFactorEnabled?: boolean | null
+  legalConsentAcceptedAt?: string | null
+  legalConsentVersion?: string | null
+  legalConsentIpHash?: string | null
+  legalConsentUserAgent?: string | null
+  legalConsentProviderIds?: string | null
   account?: {
-    docs?: (number | Account)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
+    docs?: (number | Account)[]
+    hasNextPage?: boolean
+    totalDocs?: number
+  }
   session?: {
-    docs?: (number | Session)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
-  collection: 'users';
+    docs?: (number | Session)[]
+    hasNextPage?: boolean
+    totalDocs?: number
+  }
+  collection: 'users'
 }
 /**
  * Accounts are used to store user accounts for authentication providers
@@ -259,49 +261,49 @@ export interface User {
  * via the `definition` "accounts".
  */
 export interface Account {
-  id: number;
+  id: number
   /**
    * The id of the account as provided by the SSO or equal to userId for credential accounts
    */
-  accountId: string;
+  accountId: string
   /**
    * The id of the provider as provided by the SSO
    */
-  providerId: string;
+  providerId: string
   /**
    * The user that the account belongs to
    */
-  user: number | User;
+  user: number | User
   /**
    * The access token of the account. Returned by the provider
    */
-  accessToken?: string | null;
+  accessToken?: string | null
   /**
    * The refresh token of the account. Returned by the provider
    */
-  refreshToken?: string | null;
+  refreshToken?: string | null
   /**
    * The id token for the account. Returned by the provider
    */
-  idToken?: string | null;
+  idToken?: string | null
   /**
    * The date and time when the access token will expire
    */
-  accessTokenExpiresAt?: string | null;
+  accessTokenExpiresAt?: string | null
   /**
    * The date and time when the refresh token will expire
    */
-  refreshTokenExpiresAt?: string | null;
+  refreshTokenExpiresAt?: string | null
   /**
    * The scope of the account. Returned by the provider
    */
-  scope?: string | null;
+  scope?: string | null
   /**
    * The hashed password of the account. Mainly used for email and password authentication
    */
-  password?: string | null;
-  createdAt: string;
-  updatedAt: string;
+  password?: string | null
+  createdAt: string
+  updatedAt: string
 }
 /**
  * Sessions are active sessions for users. They are used to authenticate users with a session token
@@ -310,33 +312,33 @@ export interface Account {
  * via the `definition` "sessions".
  */
 export interface Session {
-  id: number;
+  id: number
   /**
    * The date and time when the session will expire
    */
-  expiresAt: string;
+  expiresAt: string
   /**
    * The unique session token
    */
-  token: string;
-  createdAt: string;
-  updatedAt: string;
+  token: string
+  createdAt: string
+  updatedAt: string
   /**
    * The IP address of the device
    */
-  ipAddress?: string | null;
+  ipAddress?: string | null
   /**
    * The user agent information of the device
    */
-  userAgent?: string | null;
+  userAgent?: string | null
   /**
    * The user that the session belongs to
    */
-  user: number | User;
+  user: number | User
   /**
    * The admin who is impersonating this session
    */
-  impersonatedBy?: (number | null) | User;
+  impersonatedBy?: (number | null) | User
 }
 /**
  * Verifications are used to verify authentication requests
@@ -345,21 +347,21 @@ export interface Session {
  * via the `definition` "verifications".
  */
 export interface Verification {
-  id: number;
+  id: number
   /**
    * The identifier of the verification request
    */
-  identifier: string;
+  identifier: string
   /**
    * The value to be verified
    */
-  value: string;
+  value: string
   /**
    * The date and time when the verification request will expire
    */
-  expiresAt: string;
-  createdAt: string;
-  updatedAt: string;
+  expiresAt: string
+  createdAt: string
+  updatedAt: string
 }
 /**
  * Two factor authentication secrets
@@ -368,61 +370,62 @@ export interface Verification {
  * via the `definition` "twoFactors".
  */
 export interface TwoFactor {
-  id: number;
+  id: number
   /**
    * The secret used to generate the TOTP code.
    */
-  secret: string;
+  secret: string
   /**
    * The backup codes used to recover access to the account if the user loses access to their phone or email
    */
-  backupCodes: string;
+  backupCodes: string
   /**
    * The user that the two factor authentication secret belongs to
    */
-  user: number | User;
-  verified?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
+  user: number | User
+  verified?: boolean | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "admin-invitations".
  */
 export interface AdminInvitation {
-  id: number;
-  role: 'admin' | 'editor' | 'user';
-  token: string;
-  url?: string | null;
-  updatedAt: string;
-  createdAt: string;
+  id: number
+  role: 'admin' | 'editor' | 'user'
+  token: string
+  url?: string | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
+  id: number
+  alt: string
+  updatedAt: string
+  createdAt: string
+  url?: string | null
+  thumbnailURL?: string | null
+  filename?: string | null
+  mimeType?: string | null
+  filesize?: number | null
+  width?: number | null
+  height?: number | null
+  focalX?: number | null
+  focalY?: number | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "sources".
  */
 export interface Source {
-  id: number;
-  title: string;
+  id: number
+  title: string
+  slug: string
   type:
     | 'official_program'
     | 'speech'
@@ -433,286 +436,322 @@ export interface Source {
     | 'vote'
     | 'article'
     | 'report'
-    | 'other';
-  platform: 'party_site' | 'x' | 'assemblee' | 'datan' | 'press' | 'institution' | 'other';
-  url?: string | null;
-  canonicalUrl?: string | null;
-  externalId?: string | null;
+    | 'other'
+  sourceRole:
+    | 'program_index'
+    | 'program_chapter'
+    | 'program_section'
+    | 'manifesto'
+    | 'candidacy_declaration'
+    | 'speech'
+    | 'interview'
+    | 'supporting_document'
+    | 'archive'
+    | 'other'
+  /**
+   * Parent source for structured corpora, such as a programme index.
+   */
+  parentSource?: (number | null) | Source
+  platform: 'party_site' | 'x' | 'assemblee' | 'datan' | 'press' | 'institution' | 'other'
+  /**
+   * Concrete locations or identifiers for this source. A source may combine several URLs, files, archives, or institutional references.
+   */
+  references?:
+    | {
+        kind: 'url' | 'file' | 'archive' | 'institution_id' | 'manual' | 'other'
+        label?: string | null
+        url?: string | null
+        canonicalUrl?: string | null
+        file?: (number | null) | Media
+        externalId?: string | null
+        isPrimary?: boolean | null
+        notes?: string | null
+        id?: string | null
+      }[]
+    | null
   /**
    * Candidates this source is expected to support or invalidate claims for.
    */
-  relatedCandidates?: (number | Candidate)[] | null;
-  submittedBy?: (number | null) | User;
-  submissionStatus: 'internal' | 'submitted' | 'accepted' | 'rejected';
-  processingStatus: 'queued' | 'processing' | 'completed' | 'failed' | 'skipped';
-  processedAt?: string | null;
-  processingError?: string | null;
-  llmModel?: string | null;
-  archivedUrl?: string | null;
-  file?: (number | null) | Media;
-  publisher?: string | null;
-  publishedAt?: string | null;
-  retrievedAt?: string | null;
-  lastFetchedAt?: string | null;
-  contentHash?: string | null;
-  fetchStatus: 'not_fetched' | 'fetched' | 'failed' | 'skipped';
-  fetchError?: string | null;
-  language?: string | null;
-  quote?: string | null;
+  relatedCandidates?: (number | Candidate)[] | null
+  submittedBy?: (number | null) | User
+  submissionStatus: 'internal' | 'submitted' | 'accepted' | 'rejected'
+  processingStatus: 'queued' | 'processing' | 'completed' | 'failed' | 'skipped'
+  processedAt?: string | null
+  processingError?: string | null
+  llmModel?: string | null
+  publisher?: string | null
+  publishedAt?: string | null
+  retrievedAt?: string | null
+  lastFetchedAt?: string | null
+  contentHash?: string | null
+  fetchStatus: 'not_fetched' | 'fetched' | 'failed' | 'skipped'
+  fetchError?: string | null
+  language?: string | null
+  quote?: string | null
   /**
    * Internal notes about verification, context, or caveats.
    */
-  notes?: string | null;
+  notes?: string | null
   rawMetadata?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  verificationStatus: 'pending' | 'verified' | 'disputed' | 'archived';
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+    | null
+  verificationStatus: 'pending' | 'verified' | 'disputed' | 'archived'
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "candidates".
  */
 export interface Candidate {
-  id: number;
-  firstName: string;
-  lastName: string;
-  displayName: string;
-  slug: string;
-  photo?: (number | null) | Media;
-  currentParty?: (number | null) | Party;
-  candidacyStatus: 'declared' | 'expected' | 'exploring' | 'withdrawn' | 'not_candidate';
+  id: number
+  firstName: string
+  lastName: string
+  displayName: string
+  slug: string
+  photo?: (number | null) | Media
+  currentParty?: (number | null) | Party
+  candidacyStatus: 'declared' | 'expected' | 'exploring' | 'withdrawn' | 'not_candidate'
   /**
    * Primary source proving that the candidate has declared or changed status.
    */
-  declarationSource?: (number | null) | Source;
-  declaredAt?: string | null;
-  website?: string | null;
-  bio?: string | null;
-  sources?: (number | Source)[] | null;
-  sortOrder?: number | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+  declarationSource?: (number | null) | Source
+  declaredAt?: string | null
+  website?: string | null
+  bio?: string | null
+  sources?: (number | Source)[] | null
+  sortOrder?: number | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "parties".
  */
 export interface Party {
-  id: number;
-  name: string;
-  slug: string;
-  shortName?: string | null;
-  logo?: (number | null) | Media;
+  id: number
+  name: string
+  slug: string
+  shortName?: string | null
+  logo?: (number | null) | Media
   /**
    * Hex color used for visual grouping, e.g. #123456.
    */
-  color?: string | null;
-  website?: string | null;
-  description?: string | null;
-  sources?: (number | Source)[] | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+  color?: string | null
+  website?: string | null
+  description?: string | null
+  sources?: (number | Source)[] | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "source-snapshots".
  */
 export interface SourceSnapshot {
-  id: number;
-  title: string;
-  source: number | Source;
-  url: string;
-  canonicalUrl?: string | null;
-  externalId?: string | null;
-  contentHash?: string | null;
-  fetchStatus: 'fetched' | 'failed' | 'skipped';
-  httpStatus?: number | null;
-  contentType?: string | null;
-  fetchedAt: string;
+  id: number
+  title: string
+  source: number | Source
+  url: string
+  canonicalUrl?: string | null
+  externalId?: string | null
+  contentHash?: string | null
+  fetchStatus: 'fetched' | 'failed' | 'skipped'
+  httpStatus?: number | null
+  contentType?: string | null
+  fetchedAt: string
   /**
    * Raw fetched text or serialized payload kept for audit and re-parsing.
    */
-  rawContent?: string | null;
+  rawContent?: string | null
   metadata?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "source-documents".
  */
 export interface SourceDocument {
-  id: number;
-  title: string;
-  source: number | Source;
-  snapshot?: (number | null) | SourceSnapshot;
-  parser: 'manual' | 'html' | 'pdf' | 'social_post' | 'vote_import' | 'other';
-  language: string;
-  content: string;
-  summary?: string | null;
-  wordCount?: number | null;
-  parsedAt: string;
+  id: number
+  title: string
+  source: number | Source
+  snapshot?: (number | null) | SourceSnapshot
+  parser: 'manual' | 'html' | 'pdf' | 'social_post' | 'vote_import' | 'other'
+  language: string
+  content: string
+  summary?: string | null
+  wordCount?: number | null
+  parsedAt: string
   metadata?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+    | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "document-chunks".
  */
 export interface DocumentChunk {
-  id: number;
-  title: string;
-  document: number | SourceDocument;
-  source: number | Source;
-  snapshot?: (number | null) | SourceSnapshot;
-  chunkIndex: number;
-  text: string;
-  sectionTitle?: string | null;
-  pageNumber?: number | null;
-  charStart?: number | null;
-  charEnd?: number | null;
-  tokenCount?: number | null;
-  embeddingStatus: 'pending' | 'embedded' | 'failed' | 'skipped';
-  embeddingModel?: string | null;
+  id: number
+  title: string
+  document: number | SourceDocument
+  source: number | Source
+  snapshot?: (number | null) | SourceSnapshot
+  chunkIndex: number
+  text: string
+  sectionTitle?: string | null
+  pageNumber?: number | null
+  charStart?: number | null
+  charEnd?: number | null
+  tokenCount?: number | null
+  embeddingStatus: 'pending' | 'embedded' | 'failed' | 'skipped'
+  embeddingModel?: string | null
   /**
    * Temporary JSON storage until a dedicated vector index is introduced.
    */
   embedding?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
+    | null
   metadata?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+    | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ingestion-jobs".
  */
 export interface IngestionJob {
-  id: number;
-  title: string;
-  jobType: 'url' | 'document' | 'social_post' | 'vote_import' | 'scheduled_crawl';
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
-  inputUrl: string;
-  source?: (number | null) | Source;
-  submittedBy?: (number | null) | User;
-  attempts: number;
-  priority: number;
-  lastRunAt?: string | null;
-  completedAt?: string | null;
-  errorMessage?: string | null;
+  id: number
+  title: string
+  jobType: 'url' | 'document' | 'social_post' | 'vote_import' | 'scheduled_crawl'
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
+  /**
+   * Concrete references to ingest for this job, such as URLs or external IDs.
+   */
+  inputReferences?:
+    | {
+        kind: 'url' | 'file' | 'archive' | 'institution_id' | 'manual' | 'other'
+        url?: string | null
+        externalId?: string | null
+        id?: string | null
+      }[]
+    | null
+  source?: (number | null) | Source
+  submittedBy?: (number | null) | User
+  attempts: number
+  priority: number
+  lastRunAt?: string | null
+  completedAt?: string | null
+  errorMessage?: string | null
   metadata?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "candidate-submissions".
  */
 export interface CandidateSubmission {
-  id: number;
-  candidateName: string;
+  id: number
+  candidateName: string
   /**
    * Optional context supplied by the user for a newly declared candidate.
    */
-  candidateDetails?: string | null;
-  matchedCandidate?: (number | null) | Candidate;
-  declarationSource: number | Source;
-  submittedBy: number | User;
-  status: 'pending' | 'accepted' | 'rejected' | 'duplicate';
-  reviewNotes?: string | null;
-  updatedAt: string;
-  createdAt: string;
+  candidateDetails?: string | null
+  matchedCandidate?: (number | null) | Candidate
+  declarationSource: number | Source
+  submittedBy: number | User
+  status: 'pending' | 'accepted' | 'rejected' | 'duplicate'
+  reviewNotes?: string | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "topics".
  */
 export interface Topic {
-  id: number;
-  title: string;
-  slug: string;
-  description?: string | null;
-  parent?: (number | null) | Topic;
-  order?: number | null;
-  color?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+  id: number
+  title: string
+  slug: string
+  description?: string | null
+  parent?: (number | null) | Topic
+  order?: number | null
+  color?: string | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "claims".
  */
 export interface Claim {
-  id: number;
-  title: string;
-  claimText: string;
+  id: number
+  title: string
+  claimText: string
   actor:
     | {
-        relationTo: 'candidates';
-        value: number | Candidate;
+        relationTo: 'candidates'
+        value: number | Candidate
       }
     | {
-        relationTo: 'parties';
-        value: number | Party;
-      };
-  topics: (number | Topic)[];
-  primarySource: number | Source;
-  sourceSnapshot?: (number | null) | SourceSnapshot;
-  sourceDocument?: (number | null) | SourceDocument;
+        relationTo: 'parties'
+        value: number | Party
+      }
+  topics: (number | Topic)[]
+  primarySource: number | Source
+  sourceSnapshot?: (number | null) | SourceSnapshot
+  sourceDocument?: (number | null) | SourceDocument
   claimType:
     | 'program'
     | 'public_position'
@@ -721,7 +760,7 @@ export interface Claim {
     | 'factual_record'
     | 'biography'
     | 'criticism'
-    | 'other';
+    | 'other'
   stance:
     | 'proposes'
     | 'supports'
@@ -731,183 +770,208 @@ export interface Claim {
     | 'vote_against'
     | 'abstention'
     | 'unclear'
-    | 'not_applicable';
+    | 'not_applicable'
   /**
    * Primary quote used for quick review. Additional spans belong in claim evidence.
    */
-  evidenceQuote?: string | null;
-  positionDate?: string | null;
-  validFrom?: string | null;
-  validUntil?: string | null;
-  retrievedAt?: string | null;
-  reviewStatus: 'pending' | 'reviewed' | 'rejected' | 'disputed';
-  confidence?: number | null;
-  extractionMethod: 'manual' | 'llm' | 'crawler' | 'import' | 'api';
-  lastVerifiedAt?: string | null;
+  evidenceQuote?: string | null
+  positionDate?: string | null
+  validFrom?: string | null
+  validUntil?: string | null
+  retrievedAt?: string | null
+  reviewStatus: 'pending' | 'reviewed' | 'rejected' | 'disputed'
+  confidence?: number | null
+  extractionMethod: 'manual' | 'llm' | 'crawler' | 'import' | 'api'
+  lastVerifiedAt?: string | null
   rawExtraction?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+    | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "claim-evidence".
  */
 export interface ClaimEvidence {
-  id: number;
-  title: string;
-  claim: number | Claim;
-  source: number | Source;
-  snapshot?: (number | null) | SourceSnapshot;
-  document?: (number | null) | SourceDocument;
-  chunk?: (number | null) | DocumentChunk;
-  quote: string;
-  sourceUrl?: string | null;
-  sectionTitle?: string | null;
-  pageNumber?: number | null;
-  charStart?: number | null;
-  charEnd?: number | null;
-  confidence?: number | null;
-  reviewStatus: 'pending' | 'reviewed' | 'rejected' | 'disputed';
-  notes?: string | null;
+  id: number
+  title: string
+  claim: number | Claim
+  source: number | Source
+  snapshot?: (number | null) | SourceSnapshot
+  document?: (number | null) | SourceDocument
+  chunk?: (number | null) | DocumentChunk
+  quote: string
+  sourceUrl?: string | null
+  sectionTitle?: string | null
+  pageNumber?: number | null
+  charStart?: number | null
+  charEnd?: number | null
+  confidence?: number | null
+  reviewStatus: 'pending' | 'reviewed' | 'rejected' | 'disputed'
+  notes?: string | null
   metadata?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+    | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "claim-feedback".
  */
 export interface ClaimFeedback {
-  id: number;
-  claim: number | Claim;
-  invalidatingSourceUrl: string;
-  invalidatingSource?: (number | null) | Source;
-  submittedBy: number | User;
-  messageId?: string | null;
-  question?: string | null;
-  answer?: string | null;
-  comment?: string | null;
-  status: 'pending' | 'accepted' | 'rejected' | 'duplicate';
-  reviewNotes?: string | null;
-  updatedAt: string;
-  createdAt: string;
+  id: number
+  claim: number | Claim
+  invalidatingSourceUrl: string
+  invalidatingSource?: (number | null) | Source
+  submittedBy: number | User
+  messageId?: string | null
+  question?: string | null
+  answer?: string | null
+  comment?: string | null
+  status: 'pending' | 'accepted' | 'rejected' | 'duplicate'
+  reviewNotes?: string | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "programs".
  */
 export interface Program {
-  id: number;
-  title: string;
-  slug: string;
+  id: number
+  title: string
+  slug: string
   actor:
     | {
-        relationTo: 'candidates';
-        value: number | Candidate;
+        relationTo: 'candidates'
+        value: number | Candidate
       }
     | {
-        relationTo: 'parties';
-        value: number | Party;
-      };
-  source?: (number | null) | Source;
-  file?: (number | null) | Media;
-  programDate?: string | null;
-  summary?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+        relationTo: 'parties'
+        value: number | Party
+      }
+  /**
+   * Structured source corpus for this programme. Use precise chapter or section sources when available.
+   */
+  sources?:
+    | {
+        source: number | Source
+        role:
+          | 'index'
+          | 'chapter'
+          | 'section'
+          | 'pdf'
+          | 'manifesto'
+          | 'government_declaration'
+          | 'supporting'
+          | 'archive'
+          | 'other'
+        notes?: string | null
+        id?: string | null
+      }[]
+    | null
+  programDate?: string | null
+  summary?: string | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "proposals".
  */
 export interface Proposal {
-  id: number;
-  title: string;
-  slug: string;
+  id: number
+  title: string
+  slug: string
   actor:
     | {
-        relationTo: 'candidates';
-        value: number | Candidate;
+        relationTo: 'candidates'
+        value: number | Candidate
       }
     | {
-        relationTo: 'parties';
-        value: number | Party;
-      };
-  topics: (number | Topic)[];
-  summary: string;
-  details?: string | null;
-  sources: (number | Source)[];
-  proposalStatus: 'announced' | 'confirmed' | 'changed' | 'withdrawn' | 'unclear';
-  publishedAt?: string | null;
-  lastVerifiedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+        relationTo: 'parties'
+        value: number | Party
+      }
+  topics: (number | Topic)[]
+  summary: string
+  details?: string | null
+  sources: (number | Source)[]
+  proposalStatus: 'announced' | 'confirmed' | 'changed' | 'withdrawn' | 'unclear'
+  publishedAt?: string | null
+  lastVerifiedAt?: string | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "public-positions".
  */
 export interface PublicPosition {
-  id: number;
-  title: string;
-  slug: string;
+  id: number
+  title: string
+  slug: string
   actor:
     | {
-        relationTo: 'candidates';
-        value: number | Candidate;
+        relationTo: 'candidates'
+        value: number | Candidate
       }
     | {
-        relationTo: 'parties';
-        value: number | Party;
-      };
-  topics: (number | Topic)[];
-  source: number | Source;
-  positionDate?: string | null;
-  positionType: 'speech' | 'interview' | 'vote' | 'social_post' | 'press_release' | 'debate' | 'other';
-  quote?: string | null;
-  summary: string;
-  stance: 'supports' | 'opposes' | 'mixed' | 'unclear' | 'not_applicable';
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+        relationTo: 'parties'
+        value: number | Party
+      }
+  topics: (number | Topic)[]
+  source: number | Source
+  positionDate?: string | null
+  positionType:
+    | 'speech'
+    | 'interview'
+    | 'vote'
+    | 'social_post'
+    | 'press_release'
+    | 'debate'
+    | 'other'
+  quote?: string | null
+  summary: string
+  stance: 'supports' | 'opposes' | 'mixed' | 'unclear' | 'not_applicable'
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "response-feedback".
  */
 export interface ResponseFeedback {
-  id: number;
-  rating: 'helpful' | 'not_helpful';
-  user: number | User;
-  messageId?: string | null;
-  question: string;
-  answer: string;
+  id: number
+  rating: 'helpful' | 'not_helpful'
+  user: number | User
+  messageId?: string | null
+  question: string
+  answer: string
   /**
    * Optional free-text feedback for later UI iterations.
    */
-  comment?: string | null;
-  updatedAt: string;
-  createdAt: string;
+  comment?: string | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This is a collection of automatically created search results. These results are used by the global site search and will be updated automatically as documents in the CMS are created or updated.
@@ -916,54 +980,54 @@ export interface ResponseFeedback {
  * via the `definition` "search".
  */
 export interface Search {
-  id: number;
-  title?: string | null;
-  priority?: number | null;
+  id: number
+  title?: string | null
+  priority?: number | null
   doc:
     | {
-        relationTo: 'parties';
-        value: number | Party;
+        relationTo: 'parties'
+        value: number | Party
       }
     | {
-        relationTo: 'candidates';
-        value: number | Candidate;
+        relationTo: 'candidates'
+        value: number | Candidate
       }
     | {
-        relationTo: 'topics';
-        value: number | Topic;
+        relationTo: 'topics'
+        value: number | Topic
       }
     | {
-        relationTo: 'source-documents';
-        value: number | SourceDocument;
+        relationTo: 'source-documents'
+        value: number | SourceDocument
       }
     | {
-        relationTo: 'document-chunks';
-        value: number | DocumentChunk;
+        relationTo: 'document-chunks'
+        value: number | DocumentChunk
       }
     | {
-        relationTo: 'claims';
-        value: number | Claim;
+        relationTo: 'claims'
+        value: number | Claim
       }
     | {
-        relationTo: 'claim-evidence';
-        value: number | ClaimEvidence;
+        relationTo: 'claim-evidence'
+        value: number | ClaimEvidence
       }
     | {
-        relationTo: 'programs';
-        value: number | Program;
+        relationTo: 'programs'
+        value: number | Program
       }
     | {
-        relationTo: 'proposals';
-        value: number | Proposal;
+        relationTo: 'proposals'
+        value: number | Proposal
       }
     | {
-        relationTo: 'public-positions';
-        value: number | PublicPosition;
-      };
-  collectionSlug?: string | null;
-  excerpt?: string | null;
-  updatedAt: string;
-  createdAt: string;
+        relationTo: 'public-positions'
+        value: number | PublicPosition
+      }
+  collectionSlug?: string | null
+  excerpt?: string | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * API keys control which collections, resources, tools, and prompts MCP clients can access
@@ -972,844 +1036,868 @@ export interface Search {
  * via the `definition` "payload-mcp-api-keys".
  */
 export interface PayloadMcpApiKey {
-  id: number;
+  id: number
   /**
    * The user that the API key is associated with.
    */
-  user: number | User;
+  user: number | User
   /**
    * A useful label for the API key.
    */
-  label?: string | null;
+  label?: string | null
   /**
    * The purpose of the API key.
    */
-  description?: string | null;
+  description?: string | null
   candidates?: {
     /**
      * Allow clients to find candidates.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   claimEvidence?: {
     /**
      * Allow clients to find claim-evidence.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   claims?: {
     /**
      * Allow clients to find claims.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   documentChunks?: {
     /**
      * Allow clients to find document-chunks.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   parties?: {
     /**
      * Allow clients to find parties.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   programs?: {
     /**
      * Allow clients to find programs.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   proposals?: {
     /**
      * Allow clients to find proposals.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   publicPositions?: {
     /**
      * Allow clients to find public-positions.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   sourceDocuments?: {
     /**
      * Allow clients to find source-documents.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   sources?: {
     /**
      * Allow clients to find sources.
      */
-    find?: boolean | null;
-  };
+    find?: boolean | null
+  }
   topics?: {
     /**
      * Allow clients to find topics.
      */
-    find?: boolean | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-  enableAPIKey?: boolean | null;
-  apiKey?: string | null;
-  apiKeyIndex?: string | null;
-  collection: 'payload-mcp-api-keys';
+    find?: boolean | null
+  }
+  updatedAt: string
+  createdAt: string
+  enableAPIKey?: boolean | null
+  apiKey?: string | null
+  apiKeyIndex?: string | null
+  collection: 'payload-mcp-api-keys'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number;
-  key: string;
+  id: number
+  key: string
   data:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
+    | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number;
+  id: number
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'users'
+        value: number | User
       } | null)
     | ({
-        relationTo: 'sessions';
-        value: number | Session;
+        relationTo: 'sessions'
+        value: number | Session
       } | null)
     | ({
-        relationTo: 'accounts';
-        value: number | Account;
+        relationTo: 'accounts'
+        value: number | Account
       } | null)
     | ({
-        relationTo: 'verifications';
-        value: number | Verification;
+        relationTo: 'verifications'
+        value: number | Verification
       } | null)
     | ({
-        relationTo: 'twoFactors';
-        value: number | TwoFactor;
+        relationTo: 'twoFactors'
+        value: number | TwoFactor
       } | null)
     | ({
-        relationTo: 'admin-invitations';
-        value: number | AdminInvitation;
+        relationTo: 'admin-invitations'
+        value: number | AdminInvitation
       } | null)
     | ({
-        relationTo: 'media';
-        value: number | Media;
+        relationTo: 'media'
+        value: number | Media
       } | null)
     | ({
-        relationTo: 'sources';
-        value: number | Source;
+        relationTo: 'sources'
+        value: number | Source
       } | null)
     | ({
-        relationTo: 'source-snapshots';
-        value: number | SourceSnapshot;
+        relationTo: 'source-snapshots'
+        value: number | SourceSnapshot
       } | null)
     | ({
-        relationTo: 'source-documents';
-        value: number | SourceDocument;
+        relationTo: 'source-documents'
+        value: number | SourceDocument
       } | null)
     | ({
-        relationTo: 'document-chunks';
-        value: number | DocumentChunk;
+        relationTo: 'document-chunks'
+        value: number | DocumentChunk
       } | null)
     | ({
-        relationTo: 'ingestion-jobs';
-        value: number | IngestionJob;
+        relationTo: 'ingestion-jobs'
+        value: number | IngestionJob
       } | null)
     | ({
-        relationTo: 'parties';
-        value: number | Party;
+        relationTo: 'parties'
+        value: number | Party
       } | null)
     | ({
-        relationTo: 'candidates';
-        value: number | Candidate;
+        relationTo: 'candidates'
+        value: number | Candidate
       } | null)
     | ({
-        relationTo: 'candidate-submissions';
-        value: number | CandidateSubmission;
+        relationTo: 'candidate-submissions'
+        value: number | CandidateSubmission
       } | null)
     | ({
-        relationTo: 'topics';
-        value: number | Topic;
+        relationTo: 'topics'
+        value: number | Topic
       } | null)
     | ({
-        relationTo: 'claims';
-        value: number | Claim;
+        relationTo: 'claims'
+        value: number | Claim
       } | null)
     | ({
-        relationTo: 'claim-evidence';
-        value: number | ClaimEvidence;
+        relationTo: 'claim-evidence'
+        value: number | ClaimEvidence
       } | null)
     | ({
-        relationTo: 'claim-feedback';
-        value: number | ClaimFeedback;
+        relationTo: 'claim-feedback'
+        value: number | ClaimFeedback
       } | null)
     | ({
-        relationTo: 'programs';
-        value: number | Program;
+        relationTo: 'programs'
+        value: number | Program
       } | null)
     | ({
-        relationTo: 'proposals';
-        value: number | Proposal;
+        relationTo: 'proposals'
+        value: number | Proposal
       } | null)
     | ({
-        relationTo: 'public-positions';
-        value: number | PublicPosition;
+        relationTo: 'public-positions'
+        value: number | PublicPosition
       } | null)
     | ({
-        relationTo: 'response-feedback';
-        value: number | ResponseFeedback;
+        relationTo: 'response-feedback'
+        value: number | ResponseFeedback
       } | null)
     | ({
-        relationTo: 'search';
-        value: number | Search;
+        relationTo: 'search'
+        value: number | Search
       } | null)
     | ({
-        relationTo: 'payload-mcp-api-keys';
-        value: number | PayloadMcpApiKey;
-      } | null);
-  globalSlug?: string | null;
+        relationTo: 'payload-mcp-api-keys'
+        value: number | PayloadMcpApiKey
+      } | null)
+  globalSlug?: string | null
   user:
     | {
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'users'
+        value: number | User
       }
     | {
-        relationTo: 'payload-mcp-api-keys';
-        value: number | PayloadMcpApiKey;
-      };
-  updatedAt: string;
-  createdAt: string;
+        relationTo: 'payload-mcp-api-keys'
+        value: number | PayloadMcpApiKey
+      }
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number;
+  id: number
   user:
     | {
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'users'
+        value: number | User
       }
     | {
-        relationTo: 'payload-mcp-api-keys';
-        value: number | PayloadMcpApiKey;
-      };
-  key?: string | null;
+        relationTo: 'payload-mcp-api-keys'
+        value: number | PayloadMcpApiKey
+      }
+  key?: string | null
   value?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number;
-  name?: string | null;
-  batch?: number | null;
-  updatedAt: string;
-  createdAt: string;
+  id: number
+  name?: string | null
+  batch?: number | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  email?: T;
-  emailVerified?: T;
-  image?: T;
-  createdAt?: T;
-  updatedAt?: T;
-  role?: T;
-  banned?: T;
-  banReason?: T;
-  banExpires?: T;
-  twoFactorEnabled?: T;
-  legalConsentAcceptedAt?: T;
-  legalConsentVersion?: T;
-  legalConsentIpHash?: T;
-  legalConsentUserAgent?: T;
-  legalConsentProviderIds?: T;
-  account?: T;
-  session?: T;
+  name?: T
+  email?: T
+  emailVerified?: T
+  image?: T
+  createdAt?: T
+  updatedAt?: T
+  role?: T
+  banned?: T
+  banReason?: T
+  banExpires?: T
+  twoFactorEnabled?: T
+  legalConsentAcceptedAt?: T
+  legalConsentVersion?: T
+  legalConsentIpHash?: T
+  legalConsentUserAgent?: T
+  legalConsentProviderIds?: T
+  account?: T
+  session?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "sessions_select".
  */
 export interface SessionsSelect<T extends boolean = true> {
-  expiresAt?: T;
-  token?: T;
-  createdAt?: T;
-  updatedAt?: T;
-  ipAddress?: T;
-  userAgent?: T;
-  user?: T;
-  impersonatedBy?: T;
+  expiresAt?: T
+  token?: T
+  createdAt?: T
+  updatedAt?: T
+  ipAddress?: T
+  userAgent?: T
+  user?: T
+  impersonatedBy?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "accounts_select".
  */
 export interface AccountsSelect<T extends boolean = true> {
-  accountId?: T;
-  providerId?: T;
-  user?: T;
-  accessToken?: T;
-  refreshToken?: T;
-  idToken?: T;
-  accessTokenExpiresAt?: T;
-  refreshTokenExpiresAt?: T;
-  scope?: T;
-  password?: T;
-  createdAt?: T;
-  updatedAt?: T;
+  accountId?: T
+  providerId?: T
+  user?: T
+  accessToken?: T
+  refreshToken?: T
+  idToken?: T
+  accessTokenExpiresAt?: T
+  refreshTokenExpiresAt?: T
+  scope?: T
+  password?: T
+  createdAt?: T
+  updatedAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "verifications_select".
  */
 export interface VerificationsSelect<T extends boolean = true> {
-  identifier?: T;
-  value?: T;
-  expiresAt?: T;
-  createdAt?: T;
-  updatedAt?: T;
+  identifier?: T
+  value?: T
+  expiresAt?: T
+  createdAt?: T
+  updatedAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "twoFactors_select".
  */
 export interface TwoFactorsSelect<T extends boolean = true> {
-  secret?: T;
-  backupCodes?: T;
-  user?: T;
-  verified?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  secret?: T
+  backupCodes?: T
+  user?: T
+  verified?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "admin-invitations_select".
  */
 export interface AdminInvitationsSelect<T extends boolean = true> {
-  role?: T;
-  token?: T;
-  url?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  role?: T
+  token?: T
+  url?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
+  alt?: T
+  updatedAt?: T
+  createdAt?: T
+  url?: T
+  thumbnailURL?: T
+  filename?: T
+  mimeType?: T
+  filesize?: T
+  width?: T
+  height?: T
+  focalX?: T
+  focalY?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "sources_select".
  */
 export interface SourcesSelect<T extends boolean = true> {
-  title?: T;
-  type?: T;
-  platform?: T;
-  url?: T;
-  canonicalUrl?: T;
-  externalId?: T;
-  relatedCandidates?: T;
-  submittedBy?: T;
-  submissionStatus?: T;
-  processingStatus?: T;
-  processedAt?: T;
-  processingError?: T;
-  llmModel?: T;
-  archivedUrl?: T;
-  file?: T;
-  publisher?: T;
-  publishedAt?: T;
-  retrievedAt?: T;
-  lastFetchedAt?: T;
-  contentHash?: T;
-  fetchStatus?: T;
-  fetchError?: T;
-  language?: T;
-  quote?: T;
-  notes?: T;
-  rawMetadata?: T;
-  verificationStatus?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  slug?: T
+  type?: T
+  sourceRole?: T
+  parentSource?: T
+  platform?: T
+  references?:
+    | T
+    | {
+        kind?: T
+        label?: T
+        url?: T
+        canonicalUrl?: T
+        file?: T
+        externalId?: T
+        isPrimary?: T
+        notes?: T
+        id?: T
+      }
+  relatedCandidates?: T
+  submittedBy?: T
+  submissionStatus?: T
+  processingStatus?: T
+  processedAt?: T
+  processingError?: T
+  llmModel?: T
+  publisher?: T
+  publishedAt?: T
+  retrievedAt?: T
+  lastFetchedAt?: T
+  contentHash?: T
+  fetchStatus?: T
+  fetchError?: T
+  language?: T
+  quote?: T
+  notes?: T
+  rawMetadata?: T
+  verificationStatus?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "source-snapshots_select".
  */
 export interface SourceSnapshotsSelect<T extends boolean = true> {
-  title?: T;
-  source?: T;
-  url?: T;
-  canonicalUrl?: T;
-  externalId?: T;
-  contentHash?: T;
-  fetchStatus?: T;
-  httpStatus?: T;
-  contentType?: T;
-  fetchedAt?: T;
-  rawContent?: T;
-  metadata?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  title?: T
+  source?: T
+  url?: T
+  canonicalUrl?: T
+  externalId?: T
+  contentHash?: T
+  fetchStatus?: T
+  httpStatus?: T
+  contentType?: T
+  fetchedAt?: T
+  rawContent?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "source-documents_select".
  */
 export interface SourceDocumentsSelect<T extends boolean = true> {
-  title?: T;
-  source?: T;
-  snapshot?: T;
-  parser?: T;
-  language?: T;
-  content?: T;
-  summary?: T;
-  wordCount?: T;
-  parsedAt?: T;
-  metadata?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  source?: T
+  snapshot?: T
+  parser?: T
+  language?: T
+  content?: T
+  summary?: T
+  wordCount?: T
+  parsedAt?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "document-chunks_select".
  */
 export interface DocumentChunksSelect<T extends boolean = true> {
-  title?: T;
-  document?: T;
-  source?: T;
-  snapshot?: T;
-  chunkIndex?: T;
-  text?: T;
-  sectionTitle?: T;
-  pageNumber?: T;
-  charStart?: T;
-  charEnd?: T;
-  tokenCount?: T;
-  embeddingStatus?: T;
-  embeddingModel?: T;
-  embedding?: T;
-  metadata?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  document?: T
+  source?: T
+  snapshot?: T
+  chunkIndex?: T
+  text?: T
+  sectionTitle?: T
+  pageNumber?: T
+  charStart?: T
+  charEnd?: T
+  tokenCount?: T
+  embeddingStatus?: T
+  embeddingModel?: T
+  embedding?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "ingestion-jobs_select".
  */
 export interface IngestionJobsSelect<T extends boolean = true> {
-  title?: T;
-  jobType?: T;
-  status?: T;
-  inputUrl?: T;
-  source?: T;
-  submittedBy?: T;
-  attempts?: T;
-  priority?: T;
-  lastRunAt?: T;
-  completedAt?: T;
-  errorMessage?: T;
-  metadata?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  title?: T
+  jobType?: T
+  status?: T
+  inputReferences?:
+    | T
+    | {
+        kind?: T
+        url?: T
+        externalId?: T
+        id?: T
+      }
+  source?: T
+  submittedBy?: T
+  attempts?: T
+  priority?: T
+  lastRunAt?: T
+  completedAt?: T
+  errorMessage?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "parties_select".
  */
 export interface PartiesSelect<T extends boolean = true> {
-  name?: T;
-  slug?: T;
-  shortName?: T;
-  logo?: T;
-  color?: T;
-  website?: T;
-  description?: T;
-  sources?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  name?: T
+  slug?: T
+  shortName?: T
+  logo?: T
+  color?: T
+  website?: T
+  description?: T
+  sources?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "candidates_select".
  */
 export interface CandidatesSelect<T extends boolean = true> {
-  firstName?: T;
-  lastName?: T;
-  displayName?: T;
-  slug?: T;
-  photo?: T;
-  currentParty?: T;
-  candidacyStatus?: T;
-  declarationSource?: T;
-  declaredAt?: T;
-  website?: T;
-  bio?: T;
-  sources?: T;
-  sortOrder?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  firstName?: T
+  lastName?: T
+  displayName?: T
+  slug?: T
+  photo?: T
+  currentParty?: T
+  candidacyStatus?: T
+  declarationSource?: T
+  declaredAt?: T
+  website?: T
+  bio?: T
+  sources?: T
+  sortOrder?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "candidate-submissions_select".
  */
 export interface CandidateSubmissionsSelect<T extends boolean = true> {
-  candidateName?: T;
-  candidateDetails?: T;
-  matchedCandidate?: T;
-  declarationSource?: T;
-  submittedBy?: T;
-  status?: T;
-  reviewNotes?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  candidateName?: T
+  candidateDetails?: T
+  matchedCandidate?: T
+  declarationSource?: T
+  submittedBy?: T
+  status?: T
+  reviewNotes?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "topics_select".
  */
 export interface TopicsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  description?: T;
-  parent?: T;
-  order?: T;
-  color?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  slug?: T
+  description?: T
+  parent?: T
+  order?: T
+  color?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "claims_select".
  */
 export interface ClaimsSelect<T extends boolean = true> {
-  title?: T;
-  claimText?: T;
-  actor?: T;
-  topics?: T;
-  primarySource?: T;
-  sourceSnapshot?: T;
-  sourceDocument?: T;
-  claimType?: T;
-  stance?: T;
-  evidenceQuote?: T;
-  positionDate?: T;
-  validFrom?: T;
-  validUntil?: T;
-  retrievedAt?: T;
-  reviewStatus?: T;
-  confidence?: T;
-  extractionMethod?: T;
-  lastVerifiedAt?: T;
-  rawExtraction?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  claimText?: T
+  actor?: T
+  topics?: T
+  primarySource?: T
+  sourceSnapshot?: T
+  sourceDocument?: T
+  claimType?: T
+  stance?: T
+  evidenceQuote?: T
+  positionDate?: T
+  validFrom?: T
+  validUntil?: T
+  retrievedAt?: T
+  reviewStatus?: T
+  confidence?: T
+  extractionMethod?: T
+  lastVerifiedAt?: T
+  rawExtraction?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "claim-evidence_select".
  */
 export interface ClaimEvidenceSelect<T extends boolean = true> {
-  title?: T;
-  claim?: T;
-  source?: T;
-  snapshot?: T;
-  document?: T;
-  chunk?: T;
-  quote?: T;
-  sourceUrl?: T;
-  sectionTitle?: T;
-  pageNumber?: T;
-  charStart?: T;
-  charEnd?: T;
-  confidence?: T;
-  reviewStatus?: T;
-  notes?: T;
-  metadata?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  claim?: T
+  source?: T
+  snapshot?: T
+  document?: T
+  chunk?: T
+  quote?: T
+  sourceUrl?: T
+  sectionTitle?: T
+  pageNumber?: T
+  charStart?: T
+  charEnd?: T
+  confidence?: T
+  reviewStatus?: T
+  notes?: T
+  metadata?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "claim-feedback_select".
  */
 export interface ClaimFeedbackSelect<T extends boolean = true> {
-  claim?: T;
-  invalidatingSourceUrl?: T;
-  invalidatingSource?: T;
-  submittedBy?: T;
-  messageId?: T;
-  question?: T;
-  answer?: T;
-  comment?: T;
-  status?: T;
-  reviewNotes?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  claim?: T
+  invalidatingSourceUrl?: T
+  invalidatingSource?: T
+  submittedBy?: T
+  messageId?: T
+  question?: T
+  answer?: T
+  comment?: T
+  status?: T
+  reviewNotes?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "programs_select".
  */
 export interface ProgramsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  actor?: T;
-  source?: T;
-  file?: T;
-  programDate?: T;
-  summary?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  slug?: T
+  actor?: T
+  sources?:
+    | T
+    | {
+        source?: T
+        role?: T
+        notes?: T
+        id?: T
+      }
+  programDate?: T
+  summary?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "proposals_select".
  */
 export interface ProposalsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  actor?: T;
-  topics?: T;
-  summary?: T;
-  details?: T;
-  sources?: T;
-  proposalStatus?: T;
-  publishedAt?: T;
-  lastVerifiedAt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  slug?: T
+  actor?: T
+  topics?: T
+  summary?: T
+  details?: T
+  sources?: T
+  proposalStatus?: T
+  publishedAt?: T
+  lastVerifiedAt?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "public-positions_select".
  */
 export interface PublicPositionsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  actor?: T;
-  topics?: T;
-  source?: T;
-  positionDate?: T;
-  positionType?: T;
-  quote?: T;
-  summary?: T;
-  stance?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
+  title?: T
+  slug?: T
+  actor?: T
+  topics?: T
+  source?: T
+  positionDate?: T
+  positionType?: T
+  quote?: T
+  summary?: T
+  stance?: T
+  updatedAt?: T
+  createdAt?: T
+  _status?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "response-feedback_select".
  */
 export interface ResponseFeedbackSelect<T extends boolean = true> {
-  rating?: T;
-  user?: T;
-  messageId?: T;
-  question?: T;
-  answer?: T;
-  comment?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  rating?: T
+  user?: T
+  messageId?: T
+  question?: T
+  answer?: T
+  comment?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "search_select".
  */
 export interface SearchSelect<T extends boolean = true> {
-  title?: T;
-  priority?: T;
-  doc?: T;
-  collectionSlug?: T;
-  excerpt?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  title?: T
+  priority?: T
+  doc?: T
+  collectionSlug?: T
+  excerpt?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-mcp-api-keys_select".
  */
 export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
-  user?: T;
-  label?: T;
-  description?: T;
+  user?: T
+  label?: T
+  description?: T
   candidates?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   claimEvidence?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   claims?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   documentChunks?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   parties?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   programs?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   proposals?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   publicPositions?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   sourceDocuments?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   sources?:
     | T
     | {
-        find?: T;
-      };
+        find?: T
+      }
   topics?:
     | T
     | {
-        find?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  enableAPIKey?: T;
-  apiKey?: T;
-  apiKeyIndex?: T;
+        find?: T
+      }
+  updatedAt?: T
+  createdAt?: T
+  enableAPIKey?: T
+  apiKey?: T
+  apiKeyIndex?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
-  key?: T;
-  data?: T;
+  key?: T
+  data?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
-  document?: T;
-  globalSlug?: T;
-  user?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  document?: T
+  globalSlug?: T
+  user?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences_select".
  */
 export interface PayloadPreferencesSelect<T extends boolean = true> {
-  user?: T;
-  key?: T;
-  value?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  user?: T
+  key?: T
+  value?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations_select".
  */
 export interface PayloadMigrationsSelect<T extends boolean = true> {
-  name?: T;
-  batch?: T;
-  updatedAt?: T;
-  createdAt?: T;
+  name?: T
+  batch?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "database".
  */
 export interface Database {
-  id: number;
-  seeded: boolean;
-  updatedAt?: string | null;
-  createdAt?: string | null;
+  id: number
+  seeded: boolean
+  updatedAt?: string | null
+  createdAt?: string | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "database_select".
  */
 export interface DatabaseSelect<T extends boolean = true> {
-  seeded?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
+  seeded?: T
+  updatedAt?: T
+  createdAt?: T
+  globalType?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1817,18 +1905,17 @@ export interface DatabaseSelect<T extends boolean = true> {
  */
 export interface CollectionsWidget {
   data?: {
-    [k: string]: unknown;
-  };
-  width: 'full';
+    [k: string]: unknown
+  }
+  width: 'full'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {
-  [k: string]: unknown;
+  [k: string]: unknown
 }
-
 
 declare module 'payload' {
   export interface GeneratedTypes extends Config {}

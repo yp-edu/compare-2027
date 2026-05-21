@@ -16,14 +16,29 @@ type RelationValue =
 type SourceForProcessing = {
   id: PayloadId
   title?: string | null
+  slug?: string | null
   type?: string | null
   platform?: string | null
-  url?: string | null
-  canonicalUrl?: string | null
+  publisher?: string | null
   publishedAt?: string | null
   processingStatus?: string | null
   rawMetadata?: unknown
+  references?: SourceReference[] | null
   relatedCandidates?: RelationValue[] | null
+}
+
+type SourceReference = {
+  id?: string | null
+  canonicalUrl?: string | null
+  externalId?: string | null
+  isPrimary?: boolean | null
+  kind?: string | null
+  label?: string | null
+  url?: string | null
+}
+
+type UrlReference = SourceReference & {
+  url: string
 }
 
 type CandidateContext = {
@@ -58,6 +73,7 @@ const maxContentLength = 120_000
 const maxPromptContentLength = 30_000
 const maxChunkLength = 4_000
 const maxChunks = 20
+const maxDiscoveredLinks = 50
 const claimTypes = new Set([
   'program',
   'public_position',
@@ -78,6 +94,27 @@ const stances = new Set([
   'abstention',
   'unclear',
   'not_applicable',
+])
+const sourceTypes = new Set([
+  'official_program',
+  'speech',
+  'interview',
+  'press_release',
+  'candidacy_declaration',
+  'social_post',
+  'vote',
+  'article',
+  'report',
+  'other',
+])
+const sourcePlatforms = new Set([
+  'party_site',
+  'x',
+  'assemblee',
+  'datan',
+  'press',
+  'institution',
+  'other',
 ])
 type ClaimType =
   | 'program'
@@ -148,6 +185,12 @@ function cleanFetchedText(content: string) {
     .slice(0, maxContentLength)
 }
 
+function getExtractableRawContent(rawContent: string) {
+  const main = rawContent.match(/<main\b[\s\S]*?<\/main>/i)?.[0]
+
+  return main || rawContent
+}
+
 function getContentHash(content: string) {
   return createHash('sha256').update(content).digest('hex')
 }
@@ -215,8 +258,106 @@ function getParser(source: SourceForProcessing, contentType: string | null) {
 
 function getRawMetadata(rawMetadata: unknown) {
   return rawMetadata && typeof rawMetadata === 'object' && !Array.isArray(rawMetadata)
-    ? rawMetadata
+    ? (rawMetadata as Record<string, unknown>)
     : {}
+}
+
+function getCrawlConfig(rawMetadata: unknown) {
+  const metadata = getRawMetadata(rawMetadata)
+  const crawl = getRawMetadata(metadata.crawl)
+  const allowedPathPrefixes = Array.isArray(crawl.allowedPathPrefixes)
+    ? crawl.allowedPathPrefixes.filter(
+        (value: unknown): value is string => typeof value === 'string',
+      )
+    : []
+  const depth = typeof crawl.depth === 'number' && crawl.depth >= 0 ? crawl.depth : 0
+  const maxDepth = typeof crawl.maxDepth === 'number' && crawl.maxDepth >= 0 ? crawl.maxDepth : 0
+
+  return {
+    allowedPathPrefixes,
+    depth,
+    enabled: crawl.enabled === true,
+    maxDepth,
+  }
+}
+
+function getSourceTypeForCreate(value: string | null | undefined) {
+  return sourceTypes.has(value || '')
+    ? (value as
+        | 'official_program'
+        | 'speech'
+        | 'interview'
+        | 'press_release'
+        | 'candidacy_declaration'
+        | 'social_post'
+        | 'vote'
+        | 'article'
+        | 'report'
+        | 'other')
+    : 'other'
+}
+
+function getSourcePlatformForCreate(value: string | null | undefined) {
+  return sourcePlatforms.has(value || '')
+    ? (value as 'party_site' | 'x' | 'assemblee' | 'datan' | 'press' | 'institution' | 'other')
+    : 'other'
+}
+
+function getSlug(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120)
+}
+
+function getSlugFromUrl(url: string) {
+  const parsedUrl = new URL(url)
+
+  return getSlug(parsedUrl.pathname || parsedUrl.hostname) || getSlug(parsedUrl.hostname)
+}
+
+function discoverCrawlUrls(args: { baseUrl: string; rawContent: string; rawMetadata: unknown }) {
+  const { baseUrl, rawContent, rawMetadata } = args
+  const config = getCrawlConfig(rawMetadata)
+
+  if (!config.enabled || config.depth >= config.maxDepth) {
+    return []
+  }
+
+  const base = new URL(baseUrl)
+  const urls = new Set<string>()
+  const hrefPattern = /href=["']([^"'#]+)(?:#[^"']*)?["']/gi
+  let match: RegExpExecArray | null
+
+  while ((match = hrefPattern.exec(rawContent)) && urls.size < maxDiscoveredLinks) {
+    try {
+      const url = new URL(match[1], base)
+
+      if (url.origin !== base.origin) {
+        continue
+      }
+
+      const allowed =
+        config.allowedPathPrefixes.length === 0 ||
+        config.allowedPathPrefixes.some((prefix) => url.pathname.startsWith(prefix))
+
+      if (!allowed) {
+        continue
+      }
+
+      url.hash = ''
+      urls.add(url.toString())
+    } catch {
+      // Ignore malformed links from source pages.
+    }
+  }
+
+  urls.delete(base.toString())
+
+  return Array.from(urls)
 }
 
 function getValidDate(value: string | null | undefined) {
@@ -293,10 +434,11 @@ async function getTopics(req: PayloadRequest) {
 async function extractClaimsWithLLM(args: {
   candidates: CandidateContext[]
   content: string
+  referenceUrl: string
   source: SourceForProcessing
   topics: TopicContext[]
 }) {
-  const { candidates, content, source, topics } = args
+  const { candidates, content, referenceUrl, source, topics } = args
   const { model, modelName } = getAzureOpenAIModel()
 
   const candidateLines = candidates.map(
@@ -306,8 +448,8 @@ async function extractClaimsWithLLM(args: {
   const result = await generateText({
     maxOutputTokens: 1800,
     model,
-    prompt: `Source: ${source.title || source.url}
-URL: ${source.url}
+    prompt: `Source: ${source.title || referenceUrl}
+URL: ${referenceUrl}
 Type: ${source.type || 'other'}
 Platform: ${source.platform || 'other'}
 
@@ -395,12 +537,13 @@ async function createClaims(args: {
   documentId: PayloadId
   extraction: SourceExtraction
   candidates: CandidateContext[]
+  referenceUrl: string
   req: PayloadRequest
   snapshotId: PayloadId
   source: SourceForProcessing
   topics: TopicContext[]
 }) {
-  const { candidates, documentId, extraction, req, snapshotId, source, topics } = args
+  const { candidates, documentId, extraction, referenceUrl, req, snapshotId, source, topics } = args
   const allowedCandidateIds = new Set(candidates.map((candidate) => String(candidate.id)))
   const topicsByLookup = new Map(topics.map((topic) => [topic.lookup, topic]))
   let createdClaimsCount = 0
@@ -461,7 +604,7 @@ async function createClaims(args: {
         quote,
         reviewStatus: 'pending',
         source: source.id,
-        sourceUrl: source.url || undefined,
+        sourceUrl: referenceUrl,
         snapshot: snapshotId,
         title: `${title} - evidence`,
       },
@@ -475,21 +618,109 @@ async function createClaims(args: {
   return createdClaimsCount
 }
 
-async function processUrlSource(source: SourceForProcessing, req: PayloadRequest) {
-  if (!source.url) {
-    throw new Error('Only URL-based source processing is supported right now.')
+async function createDiscoveredSources(args: {
+  discoveredUrls: string[]
+  req: PayloadRequest
+  source: SourceForProcessing
+}) {
+  const { discoveredUrls, req, source } = args
+  const crawlConfig = getCrawlConfig(source.rawMetadata)
+  const createdSourceIds = []
+
+  for (const url of discoveredUrls) {
+    const slug = `${source.slug || `source-${source.id}`}-${getSlugFromUrl(url)}`
+    const existingSource = await req.payload.find({
+      collection: 'sources',
+      depth: 0,
+      limit: 1,
+      req,
+      where: {
+        slug: {
+          equals: slug,
+        },
+      },
+    })
+
+    if (existingSource.docs[0]) {
+      continue
+    }
+
+    const createdSource = await req.payload.create({
+      collection: 'sources',
+      context: { skipSourceProcessing: true },
+      data: {
+        _status: 'draft',
+        fetchStatus: 'not_fetched',
+        language: 'fr',
+        parentSource: source.id,
+        platform: getSourcePlatformForCreate(source.platform),
+        processingStatus: 'queued',
+        publisher: source.publisher || undefined,
+        rawMetadata: {
+          crawl: {
+            ...crawlConfig,
+            depth: crawlConfig.depth + 1,
+            enabled: crawlConfig.depth + 1 < crawlConfig.maxDepth,
+          },
+          discoveredFrom: source.id,
+        },
+        references: [
+          {
+            isPrimary: true,
+            kind: 'url',
+            url,
+          },
+        ],
+        relatedCandidates: getRelationIds(source.relatedCandidates),
+        slug,
+        sourceRole: 'program_section',
+        submissionStatus: 'internal',
+        title: `${source.title || 'Source'} - ${new URL(url).pathname}`,
+        type: getSourceTypeForCreate(source.type),
+        verificationStatus: 'pending',
+      },
+      draft: true,
+      req,
+    })
+
+    createdSourceIds.push(createdSource.id)
   }
 
-  const response = await fetch(source.url, {
+  return createdSourceIds
+}
+
+function getUrlReferences(source: SourceForProcessing) {
+  const references = (source.references || [])
+    .filter((reference): reference is UrlReference =>
+      Boolean(reference && reference.kind === 'url' && reference.url),
+    )
+    .sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)))
+
+  return references
+}
+
+async function processUrlReference(args: {
+  reference: UrlReference
+  req: PayloadRequest
+  source: SourceForProcessing
+}) {
+  const { reference, req, source } = args
+  const response = await fetch(reference.url, {
     headers: {
       'User-Agent': 'Compare2027Bot/0.1 (+https://compare2027.fr)',
     },
   })
   const rawContent = await response.text()
   const contentType = response.headers.get('content-type')
-  const content = cleanFetchedText(rawContent)
+  const extractableRawContent = getExtractableRawContent(rawContent)
+  const content = cleanFetchedText(extractableRawContent)
   const contentHash = getContentHash(content || rawContent)
   const fetchedAt = new Date().toISOString()
+  const discoveredUrls = discoverCrawlUrls({
+    baseUrl: response.url,
+    rawContent: extractableRawContent,
+    rawMetadata: source.rawMetadata,
+  })
 
   const snapshot = await req.payload.create({
     collection: 'source-snapshots',
@@ -506,8 +737,8 @@ async function processUrlSource(source: SourceForProcessing, req: PayloadRequest
       },
       rawContent: rawContent.slice(0, maxContentLength),
       source: source.id,
-      title: `${source.title || source.url} - snapshot`,
-      url: source.url,
+      title: `${source.title || reference.url} - snapshot`,
+      url: reference.url,
     },
     req,
   })
@@ -535,7 +766,7 @@ async function processUrlSource(source: SourceForProcessing, req: PayloadRequest
       parser: getParser(source, contentType),
       snapshot: snapshot.id,
       source: source.id,
-      title: `${source.title || source.url} - parsed document`,
+      title: `${source.title || reference.url} - parsed document`,
       wordCount: content.split(/\s+/).filter(Boolean).length,
     },
     draft: true,
@@ -550,6 +781,7 @@ async function processUrlSource(source: SourceForProcessing, req: PayloadRequest
   const { extraction, modelName } = await extractClaimsWithLLM({
     candidates,
     content,
+    referenceUrl: response.url,
     source,
     topics,
   })
@@ -557,6 +789,7 @@ async function processUrlSource(source: SourceForProcessing, req: PayloadRequest
     candidates,
     documentId: document.id,
     extraction,
+    referenceUrl: response.url,
     req,
     snapshotId: snapshot.id,
     source,
@@ -587,6 +820,48 @@ async function processUrlSource(source: SourceForProcessing, req: PayloadRequest
     extraction,
     fetchedAt,
     modelName,
+    referenceUrl: reference.url,
+    discoveredUrls,
+  }
+}
+
+async function processSourceReferences(source: SourceForProcessing, req: PayloadRequest) {
+  const references = getUrlReferences(source)
+
+  if (references.length === 0) {
+    throw new Error('This source has no URL reference to process.')
+  }
+
+  const results = []
+
+  for (const reference of references) {
+    results.push(await processUrlReference({ reference, req, source }))
+  }
+
+  const discoveredSourceIds = []
+
+  for (const result of results) {
+    if (result.discoveredUrls.length > 0) {
+      discoveredSourceIds.push(
+        ...(await createDiscoveredSources({
+          discoveredUrls: result.discoveredUrls,
+          req,
+          source,
+        })),
+      )
+    }
+  }
+
+  const contentHash = getContentHash(results.map((result) => result.contentHash).join('\n'))
+  const lastResult = results[results.length - 1]
+
+  return {
+    contentHash,
+    createdClaimsCount: results.reduce((sum, result) => sum + result.createdClaimsCount, 0),
+    discoveredSourceIds,
+    fetchedAt: lastResult?.fetchedAt || new Date().toISOString(),
+    modelName: lastResult?.modelName,
+    results,
   }
 }
 
@@ -614,13 +889,12 @@ export const processSourceAfterChange: CollectionAfterChangeHook = async ({
   })
 
   try {
-    const result = await processUrlSource(source, req)
+    const result = await processSourceReferences(source, req)
 
     await req.payload.update({
       collection: 'sources',
       context: { skipSourceProcessing: true },
       data: {
-        canonicalUrl: result.canonicalUrl,
         contentHash: result.contentHash,
         fetchStatus: 'fetched',
         lastFetchedAt: result.fetchedAt,
@@ -632,7 +906,8 @@ export const processSourceAfterChange: CollectionAfterChangeHook = async ({
           ...getRawMetadata(source.rawMetadata),
           sourceProcessing: {
             createdClaimsCount: result.createdClaimsCount,
-            extraction: result.extraction,
+            discoveredSourceIds: result.discoveredSourceIds,
+            references: result.results,
             processedAt: new Date().toISOString(),
           },
         },

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 import { getPayload } from 'payload'
 
 import { requireChatSession } from '@/features/ai/server'
@@ -130,12 +132,21 @@ export async function POST(request: Request) {
       _status: 'draft',
       platform: inferPlatform(declarationUrl),
       processingStatus: 'queued',
+      references: [
+        {
+          isPrimary: true,
+          kind: 'url',
+          label: 'Déclaration proposée',
+          url: declarationUrl,
+        },
+      ],
       relatedCandidates: matchedCandidate ? [matchedCandidate] : undefined,
+      slug: `submitted-candidate-declaration-${randomUUID()}`,
+      sourceRole: 'candidacy_declaration',
       submissionStatus: 'submitted',
       submittedBy: userId,
       title: `Déclaration de candidature proposée: ${candidateName}`,
       type: 'candidacy_declaration',
-      url: declarationUrl,
       verificationStatus: 'pending',
     },
     draft: true,

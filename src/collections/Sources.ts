@@ -17,7 +17,9 @@ export const Sources: CollectionConfig = {
   admin: {
     defaultColumns: [
       'title',
+      'slug',
       'type',
+      'sourceRole',
       'publisher',
       'publishedAt',
       'processingStatus',
@@ -31,6 +33,13 @@ export const Sources: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      index: true,
+      required: true,
+      unique: true,
     },
     {
       name: 'type',
@@ -51,6 +60,34 @@ export const Sources: CollectionConfig = {
       required: true,
     },
     {
+      name: 'sourceRole',
+      type: 'select',
+      defaultValue: 'other',
+      index: true,
+      options: [
+        { label: 'Program index', value: 'program_index' },
+        { label: 'Program chapter', value: 'program_chapter' },
+        { label: 'Program section', value: 'program_section' },
+        { label: 'Manifesto', value: 'manifesto' },
+        { label: 'Candidacy declaration', value: 'candidacy_declaration' },
+        { label: 'Speech', value: 'speech' },
+        { label: 'Interview', value: 'interview' },
+        { label: 'Supporting document', value: 'supporting_document' },
+        { label: 'Archive', value: 'archive' },
+        { label: 'Other', value: 'other' },
+      ],
+      required: true,
+    },
+    {
+      name: 'parentSource',
+      type: 'relationship',
+      index: true,
+      relationTo: 'sources',
+      admin: {
+        description: 'Parent source for structured corpora, such as a programme index.',
+      },
+    },
+    {
       name: 'platform',
       type: 'select',
       defaultValue: 'other',
@@ -66,19 +103,61 @@ export const Sources: CollectionConfig = {
       required: true,
     },
     {
-      name: 'url',
-      type: 'text',
-      index: true,
-    },
-    {
-      name: 'canonicalUrl',
-      type: 'text',
-      index: true,
-    },
-    {
-      name: 'externalId',
-      type: 'text',
-      index: true,
+      name: 'references',
+      type: 'array',
+      admin: {
+        description:
+          'Concrete locations or identifiers for this source. A source may combine several URLs, files, archives, or institutional references.',
+      },
+      fields: [
+        {
+          name: 'kind',
+          type: 'select',
+          defaultValue: 'url',
+          options: [
+            { label: 'URL', value: 'url' },
+            { label: 'File', value: 'file' },
+            { label: 'Archive URL', value: 'archive' },
+            { label: 'Institutional identifier', value: 'institution_id' },
+            { label: 'Manual reference', value: 'manual' },
+            { label: 'Other', value: 'other' },
+          ],
+          required: true,
+        },
+        {
+          name: 'label',
+          type: 'text',
+        },
+        {
+          name: 'url',
+          type: 'text',
+          index: true,
+        },
+        {
+          name: 'canonicalUrl',
+          type: 'text',
+          index: true,
+        },
+        {
+          name: 'file',
+          type: 'upload',
+          relationTo: 'media',
+        },
+        {
+          name: 'externalId',
+          type: 'text',
+          index: true,
+        },
+        {
+          name: 'isPrimary',
+          type: 'checkbox',
+          defaultValue: false,
+        },
+        {
+          name: 'notes',
+          type: 'textarea',
+        },
+      ],
     },
     {
       name: 'relatedCandidates',
@@ -151,15 +230,6 @@ export const Sources: CollectionConfig = {
       access: {
         read: isAdminField,
       },
-    },
-    {
-      name: 'archivedUrl',
-      type: 'text',
-    },
-    {
-      name: 'file',
-      type: 'upload',
-      relationTo: 'media',
     },
     {
       name: 'publisher',

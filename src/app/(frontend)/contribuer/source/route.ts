@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 import { getPayload } from 'payload'
 
 import { requireChatSession } from '@/features/ai/server'
@@ -74,6 +76,16 @@ function getUrl(value: unknown) {
   }
 }
 
+function getUrls(value: unknown) {
+  const values = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/\r?\n/)
+      : []
+
+  return Array.from(new Set(values.map(getUrl).filter(Boolean))) as string[]
+}
+
 function getCandidateId(value: unknown) {
   const id = Number(value)
 
@@ -116,11 +128,11 @@ export async function POST(request: Request) {
   }
 
   const candidateId = getCandidateId(body.candidateId)
-  const url = getUrl(body.url)
+  const urls = getUrls(body.references ?? body.urls ?? body.url)
 
-  if (!candidateId || !url) {
+  if (!candidateId || urls.length === 0) {
     return Response.json(
-      { error: 'A candidate and a valid source URL are required' },
+      { error: 'A candidate and at least one valid source reference URL are required' },
       { status: 400 },
     )
   }
@@ -137,7 +149,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Candidate not found' }, { status: 404 })
   }
 
-  const parsedUrl = new URL(url)
+  const parsedUrl = new URL(urls[0])
   const userId = Number(session.user.id)
   const source = await payload.create({
     collection: 'sources',
@@ -146,13 +158,19 @@ export async function POST(request: Request) {
       platform: getSourcePlatform(body.platform),
       processingStatus: 'queued',
       publisher: getOptionalString(body.publisher, maxPublisherLength),
+      references: urls.map((url, index) => ({
+        isPrimary: index === 0,
+        kind: 'url' as const,
+        url,
+      })),
       relatedCandidates: [candidateId],
+      slug: `submitted-source-${randomUUID()}`,
+      sourceRole: 'other',
       submissionStatus: 'submitted',
       submittedBy: userId,
       title:
         getOptionalString(body.title, maxTitleLength) || `Source proposée: ${parsedUrl.hostname}`,
       type: getSourceType(body.type),
-      url,
       verificationStatus: 'pending',
     },
     draft: true,

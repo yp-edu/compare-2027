@@ -15,7 +15,7 @@ export const IngestionJobs: CollectionConfig = {
     update: isAdmin,
   },
   admin: {
-    defaultColumns: ['title', 'jobType', 'status', 'inputUrl', 'updatedAt'],
+    defaultColumns: ['title', 'jobType', 'status', 'source', 'updatedAt'],
     group: 'Ingestion',
     useAsTitle: 'title',
   },
@@ -53,10 +53,37 @@ export const IngestionJobs: CollectionConfig = {
       required: true,
     },
     {
-      name: 'inputUrl',
-      type: 'text',
-      index: true,
-      required: true,
+      name: 'inputReferences',
+      type: 'array',
+      admin: {
+        description: 'Concrete references to ingest for this job, such as URLs or external IDs.',
+      },
+      fields: [
+        {
+          name: 'kind',
+          type: 'select',
+          defaultValue: 'url',
+          options: [
+            { label: 'URL', value: 'url' },
+            { label: 'File', value: 'file' },
+            { label: 'Archive URL', value: 'archive' },
+            { label: 'Institutional identifier', value: 'institution_id' },
+            { label: 'Manual reference', value: 'manual' },
+            { label: 'Other', value: 'other' },
+          ],
+          required: true,
+        },
+        {
+          name: 'url',
+          type: 'text',
+          index: true,
+        },
+        {
+          name: 'externalId',
+          type: 'text',
+          index: true,
+        },
+      ],
     },
     {
       name: 'source',

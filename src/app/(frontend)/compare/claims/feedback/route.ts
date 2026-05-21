@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto'
+
 import { getPayload } from 'payload'
 
 import { requireChatSession } from '@/features/ai/server'
@@ -152,12 +154,21 @@ export async function POST(request: Request) {
       _status: 'draft',
       platform: inferPlatform(invalidatingSourceUrl),
       processingStatus: 'queued',
+      references: [
+        {
+          isPrimary: true,
+          kind: 'url',
+          label: 'Source de mise à jour proposée',
+          url: invalidatingSourceUrl,
+        },
+      ],
       relatedCandidates: actorCandidateId ? [actorCandidateId] : undefined,
+      slug: `submitted-claim-feedback-source-${randomUUID()}`,
+      sourceRole: 'other',
       submissionStatus: 'submitted',
       submittedBy: userId,
       title: `Source de mise à jour proposée pour claim ${claim.id}`,
       type: 'other',
-      url: invalidatingSourceUrl,
       verificationStatus: 'pending',
     },
     draft: true,

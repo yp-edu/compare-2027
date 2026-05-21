@@ -5,9 +5,21 @@ import config from '@/payload.config'
 type NamedValue = {
   displayName?: string | null
   name?: string | null
+  references?: SourceReference[] | null
+  sources?: ProgramSource[] | null
   shortName?: string | null
   title?: string | null
+}
+
+type SourceReference = {
+  isPrimary?: boolean | null
+  label?: string | null
   url?: string | null
+}
+
+type ProgramSource = {
+  role?: string | null
+  source?: NamedValue | number | string | null
 }
 
 type PolymorphicRelation = {
@@ -50,8 +62,21 @@ function getSourceReference(source: unknown) {
 
   const named = source as NamedValue
   const title = getNamedValue(source)
+  const primaryReference = (named.references || []).find((reference) => reference.isPrimary)
+  const fallbackReference = (named.references || []).find((reference) => reference.url)
+  const url = primaryReference?.url || fallbackReference?.url
 
-  return named.url ? `${title} (${named.url})` : title
+  return url ? `${title} (${url})` : title
+}
+
+function getProgramSources(program: NamedValue) {
+  if (!Array.isArray(program.sources) || program.sources.length === 0) {
+    return 'sources non renseignées'
+  }
+
+  return program.sources
+    .map((entry) => `${getSourceReference(entry.source)}${entry.role ? ` [${entry.role}]` : ''}`)
+    .join('; ')
 }
 
 export async function getComparisonContext() {
@@ -145,7 +170,7 @@ export async function getComparisonContext() {
   )
   const programLines = programs.docs.map(
     (program) =>
-      `- ${program.title} | acteur: ${getActorName(program.actor)} | date: ${program.programDate || 'non datée'} | résumé: ${program.summary || 'pas de résumé'}`,
+      `- ${program.title} | acteur: ${getActorName(program.actor)} | date: ${program.programDate || 'non datée'} | résumé: ${program.summary || 'pas de résumé'} | sources: ${getProgramSources(program)}`,
   )
 
   return [

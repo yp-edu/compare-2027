@@ -66,7 +66,7 @@ export function SubmissionForms({ candidates }: SubmissionFormsProps) {
         publisher: getFormValue(formData, 'publisher'),
         title: getFormValue(formData, 'title'),
         type: getFormValue(formData, 'type'),
-        url: getFormValue(formData, 'url'),
+        references: getFormValue(formData, 'references'),
       }),
       headers: {
         'Content-Type': 'application/json',
@@ -155,14 +155,13 @@ export function SubmissionForms({ candidates }: SubmissionFormsProps) {
               </select>
             </label>
             <label className="block text-sm font-semibold">
-              URL de la source
-              <input
-                className="mt-2 w-full rounded-lg border border-input bg-background px-3 py-2"
+              Références de la source
+              <textarea
+                className="mt-2 min-h-24 w-full rounded-lg border border-input bg-background px-3 py-2"
                 disabled={isDisabled || sourceStatus === 'submitting'}
-                name="url"
-                placeholder="https://..."
+                name="references"
+                placeholder="Une URL par ligne"
                 required
-                type="url"
               />
             </label>
             <label className="block text-sm font-semibold">
