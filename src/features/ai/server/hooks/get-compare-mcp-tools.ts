@@ -86,17 +86,14 @@ function getEnabledPermissionCount(value: Record<string, unknown>) {
 
     return Boolean(
       permission &&
-        typeof permission === 'object' &&
-        'find' in permission &&
-        (permission as { find?: unknown }).find === true,
+      typeof permission === 'object' &&
+      'find' in permission &&
+      (permission as { find?: unknown }).find === true,
     )
   }).length
 }
 
-async function getOrCreateMcpBearerToken(
-  userId: number,
-  options: McpDiagnosticsOptions = {},
-) {
+async function getOrCreateMcpBearerToken(userId: number, options: McpDiagnosticsOptions = {}) {
   try {
     const payload = await getPayload({ config })
     const { docs } = await payload.find({
