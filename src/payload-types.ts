@@ -82,9 +82,11 @@ export interface Config {
     'ingestion-jobs': IngestionJob
     parties: Party
     candidates: Candidate
+    'candidate-submissions': CandidateSubmission
     topics: Topic
     claims: Claim
     'claim-evidence': ClaimEvidence
+    'claim-feedback': ClaimFeedback
     programs: Program
     proposals: Proposal
     'public-positions': PublicPosition
@@ -117,9 +119,11 @@ export interface Config {
     'ingestion-jobs': IngestionJobsSelect<false> | IngestionJobsSelect<true>
     parties: PartiesSelect<false> | PartiesSelect<true>
     candidates: CandidatesSelect<false> | CandidatesSelect<true>
+    'candidate-submissions': CandidateSubmissionsSelect<false> | CandidateSubmissionsSelect<true>
     topics: TopicsSelect<false> | TopicsSelect<true>
     claims: ClaimsSelect<false> | ClaimsSelect<true>
     'claim-evidence': ClaimEvidenceSelect<false> | ClaimEvidenceSelect<true>
+    'claim-feedback': ClaimFeedbackSelect<false> | ClaimFeedbackSelect<true>
     programs: ProgramsSelect<false> | ProgramsSelect<true>
     proposals: ProposalsSelect<false> | ProposalsSelect<true>
     'public-positions': PublicPositionsSelect<false> | PublicPositionsSelect<true>
@@ -421,21 +425,60 @@ export interface Media {
 export interface Source {
   id: number
   title: string
+  slug: string
   type:
     | 'official_program'
     | 'speech'
     | 'interview'
     | 'press_release'
+    | 'candidacy_declaration'
+    | 'social_post'
     | 'vote'
     | 'article'
     | 'report'
     | 'other'
+  sourceRole:
+    | 'program_index'
+    | 'program_chapter'
+    | 'program_section'
+    | 'manifesto'
+    | 'candidacy_declaration'
+    | 'speech'
+    | 'interview'
+    | 'supporting_document'
+    | 'archive'
+    | 'other'
+  /**
+   * Parent source for structured corpora, such as a programme index.
+   */
+  parentSource?: (number | null) | Source
   platform: 'party_site' | 'x' | 'assemblee' | 'datan' | 'press' | 'institution' | 'other'
-  url?: string | null
-  canonicalUrl?: string | null
-  externalId?: string | null
-  archivedUrl?: string | null
-  file?: (number | null) | Media
+  /**
+   * Concrete locations or identifiers for this source. A source may combine several URLs, files, archives, or institutional references.
+   */
+  references?:
+    | {
+        kind: 'url' | 'file' | 'archive' | 'institution_id' | 'manual' | 'other'
+        label?: string | null
+        url?: string | null
+        canonicalUrl?: string | null
+        file?: (number | null) | Media
+        externalId?: string | null
+        isPrimary?: boolean | null
+        notes?: string | null
+        id?: string | null
+      }[]
+    | null
+  /**
+   * Candidates this source is expected to support or invalidate claims for.
+   */
+  relatedCandidates?: (number | Candidate)[] | null
+  submittedBy?: (number | null) | User
+  submissionStatus: 'internal' | 'submitted' | 'accepted' | 'rejected'
+  processingStatus: 'queued' | 'processing' | 'completed' | 'failed' | 'skipped'
+  processedAt?: string | null
+  processingError?: string | null
+  llmModel?: string | null
   publisher?: string | null
   publishedAt?: string | null
   retrievedAt?: string | null
@@ -459,6 +502,53 @@ export interface Source {
     | boolean
     | null
   verificationStatus: 'pending' | 'verified' | 'disputed' | 'archived'
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "candidates".
+ */
+export interface Candidate {
+  id: number
+  firstName: string
+  lastName: string
+  displayName: string
+  slug: string
+  photo?: (number | null) | Media
+  currentParty?: (number | null) | Party
+  candidacyStatus: 'declared' | 'expected' | 'exploring' | 'withdrawn' | 'not_candidate'
+  /**
+   * Primary source proving that the candidate has declared or changed status.
+   */
+  declarationSource?: (number | null) | Source
+  declaredAt?: string | null
+  website?: string | null
+  bio?: string | null
+  sources?: (number | Source)[] | null
+  sortOrder?: number | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parties".
+ */
+export interface Party {
+  id: number
+  name: string
+  slug: string
+  shortName?: string | null
+  logo?: (number | null) | Media
+  /**
+   * Hex color used for visual grouping, e.g. #123456.
+   */
+  color?: string | null
+  website?: string | null
+  description?: string | null
+  sources?: (number | Source)[] | null
   updatedAt: string
   createdAt: string
   _status?: ('draft' | 'published') | null
@@ -576,7 +666,17 @@ export interface IngestionJob {
   title: string
   jobType: 'url' | 'document' | 'social_post' | 'vote_import' | 'scheduled_crawl'
   status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled'
-  inputUrl: string
+  /**
+   * Concrete references to ingest for this job, such as URLs or external IDs.
+   */
+  inputReferences?:
+    | {
+        kind: 'url' | 'file' | 'archive' | 'institution_id' | 'manual' | 'other'
+        url?: string | null
+        externalId?: string | null
+        id?: string | null
+      }[]
+    | null
   source?: (number | null) | Source
   submittedBy?: (number | null) | User
   attempts: number
@@ -598,45 +698,22 @@ export interface IngestionJob {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "parties".
+ * via the `definition` "candidate-submissions".
  */
-export interface Party {
+export interface CandidateSubmission {
   id: number
-  name: string
-  slug: string
-  shortName?: string | null
-  logo?: (number | null) | Media
+  candidateName: string
   /**
-   * Hex color used for visual grouping, e.g. #123456.
+   * Optional context supplied by the user for a newly declared candidate.
    */
-  color?: string | null
-  website?: string | null
-  description?: string | null
-  sources?: (number | Source)[] | null
+  candidateDetails?: string | null
+  matchedCandidate?: (number | null) | Candidate
+  declarationSource: number | Source
+  submittedBy: number | User
+  status: 'pending' | 'accepted' | 'rejected' | 'duplicate'
+  reviewNotes?: string | null
   updatedAt: string
   createdAt: string
-  _status?: ('draft' | 'published') | null
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "candidates".
- */
-export interface Candidate {
-  id: number
-  firstName: string
-  lastName: string
-  displayName: string
-  slug: string
-  photo?: (number | null) | Media
-  currentParty?: (number | null) | Party
-  candidacyStatus: 'declared' | 'expected' | 'exploring' | 'withdrawn' | 'not_candidate'
-  website?: string | null
-  bio?: string | null
-  sources?: (number | Source)[] | null
-  sortOrder?: number | null
-  updatedAt: string
-  createdAt: string
-  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -755,6 +832,25 @@ export interface ClaimEvidence {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "claim-feedback".
+ */
+export interface ClaimFeedback {
+  id: number
+  claim: number | Claim
+  invalidatingSourceUrl: string
+  invalidatingSource?: (number | null) | Source
+  submittedBy: number | User
+  messageId?: string | null
+  question?: string | null
+  answer?: string | null
+  comment?: string | null
+  status: 'pending' | 'accepted' | 'rejected' | 'duplicate'
+  reviewNotes?: string | null
+  updatedAt: string
+  createdAt: string
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "programs".
  */
 export interface Program {
@@ -770,8 +866,26 @@ export interface Program {
         relationTo: 'parties'
         value: number | Party
       }
-  source?: (number | null) | Source
-  file?: (number | null) | Media
+  /**
+   * Structured source corpus for this programme. Use precise chapter or section sources when available.
+   */
+  sources?:
+    | {
+        source: number | Source
+        role:
+          | 'index'
+          | 'chapter'
+          | 'section'
+          | 'pdf'
+          | 'manifesto'
+          | 'government_declaration'
+          | 'supporting'
+          | 'archive'
+          | 'other'
+        notes?: string | null
+        id?: string | null
+      }[]
+    | null
   programDate?: string | null
   summary?: string | null
   updatedAt: string
@@ -1089,6 +1203,10 @@ export interface PayloadLockedDocument {
         value: number | Candidate
       } | null)
     | ({
+        relationTo: 'candidate-submissions'
+        value: number | CandidateSubmission
+      } | null)
+    | ({
         relationTo: 'topics'
         value: number | Topic
       } | null)
@@ -1099,6 +1217,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'claim-evidence'
         value: number | ClaimEvidence
+      } | null)
+    | ({
+        relationTo: 'claim-feedback'
+        value: number | ClaimFeedback
       } | null)
     | ({
         relationTo: 'programs'
@@ -1290,13 +1412,31 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface SourcesSelect<T extends boolean = true> {
   title?: T
+  slug?: T
   type?: T
+  sourceRole?: T
+  parentSource?: T
   platform?: T
-  url?: T
-  canonicalUrl?: T
-  externalId?: T
-  archivedUrl?: T
-  file?: T
+  references?:
+    | T
+    | {
+        kind?: T
+        label?: T
+        url?: T
+        canonicalUrl?: T
+        file?: T
+        externalId?: T
+        isPrimary?: T
+        notes?: T
+        id?: T
+      }
+  relatedCandidates?: T
+  submittedBy?: T
+  submissionStatus?: T
+  processingStatus?: T
+  processedAt?: T
+  processingError?: T
+  llmModel?: T
   publisher?: T
   publishedAt?: T
   retrievedAt?: T
@@ -1384,7 +1524,14 @@ export interface IngestionJobsSelect<T extends boolean = true> {
   title?: T
   jobType?: T
   status?: T
-  inputUrl?: T
+  inputReferences?:
+    | T
+    | {
+        kind?: T
+        url?: T
+        externalId?: T
+        id?: T
+      }
   source?: T
   submittedBy?: T
   attempts?: T
@@ -1425,6 +1572,8 @@ export interface CandidatesSelect<T extends boolean = true> {
   photo?: T
   currentParty?: T
   candidacyStatus?: T
+  declarationSource?: T
+  declaredAt?: T
   website?: T
   bio?: T
   sources?: T
@@ -1432,6 +1581,21 @@ export interface CandidatesSelect<T extends boolean = true> {
   updatedAt?: T
   createdAt?: T
   _status?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "candidate-submissions_select".
+ */
+export interface CandidateSubmissionsSelect<T extends boolean = true> {
+  candidateName?: T
+  candidateDetails?: T
+  matchedCandidate?: T
+  declarationSource?: T
+  submittedBy?: T
+  status?: T
+  reviewNotes?: T
+  updatedAt?: T
+  createdAt?: T
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1503,14 +1667,38 @@ export interface ClaimEvidenceSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "claim-feedback_select".
+ */
+export interface ClaimFeedbackSelect<T extends boolean = true> {
+  claim?: T
+  invalidatingSourceUrl?: T
+  invalidatingSource?: T
+  submittedBy?: T
+  messageId?: T
+  question?: T
+  answer?: T
+  comment?: T
+  status?: T
+  reviewNotes?: T
+  updatedAt?: T
+  createdAt?: T
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "programs_select".
  */
 export interface ProgramsSelect<T extends boolean = true> {
   title?: T
   slug?: T
   actor?: T
-  source?: T
-  file?: T
+  sources?:
+    | T
+    | {
+        source?: T
+        role?: T
+        notes?: T
+        id?: T
+      }
   programDate?: T
   summary?: T
   updatedAt?: T

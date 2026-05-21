@@ -7,6 +7,7 @@ import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloa
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { LogoutButton as LogoutButton_5a568d0e24198ca3140489e0d330f424 } from 'payload-auth/better-auth/plugin/client'
 import { RSCRedirect as RSCRedirect_5afe2312a68aef77a0242fe42f239ed0 } from 'payload-auth/better-auth/plugin/rsc'
+import { SeedButton as SeedButton_f68a8a4a1e9af2ef625960595d6bafde } from '@/components/admin/seed-button'
 import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 import { AdminLogin as AdminLogin_5afe2312a68aef77a0242fe42f239ed0 } from 'payload-auth/better-auth/plugin/rsc'
 import { AdminSignup as AdminSignup_5afe2312a68aef77a0242fe42f239ed0 } from 'payload-auth/better-auth/plugin/rsc'
@@ -32,6 +33,7 @@ export const importMap = {
   'payload-auth/better-auth/plugin/client#LogoutButton':
     LogoutButton_5a568d0e24198ca3140489e0d330f424,
   'payload-auth/better-auth/plugin/rsc#RSCRedirect': RSCRedirect_5afe2312a68aef77a0242fe42f239ed0,
+  '@/components/admin/seed-button#SeedButton': SeedButton_f68a8a4a1e9af2ef625960595d6bafde,
   '@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler':
     VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e,
   'payload-auth/better-auth/plugin/rsc#AdminLogin': AdminLogin_5afe2312a68aef77a0242fe42f239ed0,

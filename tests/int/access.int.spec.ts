@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest'
 
 import { authenticatedReadPublished } from '@/access/authenticatedReadPublished'
 import { isAdminOrSelf } from '@/access/isAdminOrSelf'
+import { CandidateSubmissions } from '@/collections/CandidateSubmissions'
+import { ClaimFeedback } from '@/collections/ClaimFeedback'
+
+const hookArgs = {
+  collection: {},
+  context: {},
+  req: {},
+} as Parameters<
+  NonNullable<NonNullable<typeof CandidateSubmissions.hooks>['beforeValidate']>[number]
+>[0]
 
 describe('isAdminOrSelf', () => {
   it('restricts non-admin users to their own ID even when another ID is requested', () => {
@@ -60,5 +70,41 @@ describe('authenticatedReadPublished', () => {
     } as unknown as Parameters<typeof authenticatedReadPublished>[0])
 
     expect(access).toBe(true)
+  })
+})
+
+describe('moderated user submissions', () => {
+  it('forces candidate submissions into pending review on create', async () => {
+    const beforeValidate = CandidateSubmissions.hooks?.beforeValidate?.[0]
+
+    const data = await beforeValidate?.({
+      ...hookArgs,
+      data: {
+        candidateName: 'Candidate',
+        reviewNotes: 'approve immediately',
+        status: 'accepted',
+      },
+      operation: 'create',
+    })
+
+    expect(data).toMatchObject({ status: 'pending' })
+    expect(data).not.toHaveProperty('reviewNotes')
+  })
+
+  it('forces claim feedback into pending review on create', async () => {
+    const beforeValidate = ClaimFeedback.hooks?.beforeValidate?.[0]
+
+    const data = await beforeValidate?.({
+      ...hookArgs,
+      data: {
+        invalidatingSourceUrl: 'https://example.com',
+        reviewNotes: 'approve immediately',
+        status: 'accepted',
+      },
+      operation: 'create',
+    })
+
+    expect(data).toMatchObject({ status: 'pending' })
+    expect(data).not.toHaveProperty('reviewNotes')
   })
 })

@@ -9,7 +9,10 @@ import { authClient } from '@/lib/auth-client'
 import { Button } from '@/components/ui/button'
 import { InstallAppButton } from '@/components/pwa/install-app-button'
 
-const navItems = [{ href: '/compare', label: 'Comparer' }]
+const navItems = [
+  { href: '/compare', label: 'Comparer' },
+  { href: '/contribuer', label: 'Contribuer' },
+]
 
 function hasAdminAccess(role: unknown) {
   if (Array.isArray(role)) {

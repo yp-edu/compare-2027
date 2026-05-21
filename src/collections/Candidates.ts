@@ -62,6 +62,19 @@ export const Candidates: CollectionConfig = {
       required: true,
     },
     {
+      name: 'declarationSource',
+      type: 'relationship',
+      relationTo: 'sources',
+      admin: {
+        description: 'Primary source proving that the candidate has declared or changed status.',
+      },
+    },
+    {
+      name: 'declaredAt',
+      type: 'date',
+      index: true,
+    },
+    {
       name: 'website',
       type: 'text',
     },

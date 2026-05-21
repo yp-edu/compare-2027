@@ -19,6 +19,9 @@ const allowedOrigins = getAllowedOrigins()
 export default buildConfig({
   admin: {
     user: 'users',
+    components: {
+      beforeDashboard: ['@/components/admin/seed-button#SeedButton'],
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },

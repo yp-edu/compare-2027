@@ -1,11 +1,13 @@
 import { createAzure } from '@ai-sdk/azure'
-import { convertToModelMessages, streamText, type UIMessage } from 'ai'
+import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from 'ai'
 
+import { getCompareMCPTools } from './get-compare-mcp-tools'
 import { getCompareSystemPrompt } from './get-compare-system-prompt'
 import { getComparisonContext } from './get-comparison-context'
 
 type StreamCompareAnswerArgs = {
   messages: UIMessage[]
+  userId: number
 }
 
 function getAzureOpenAIModel() {
@@ -25,13 +27,17 @@ function getAzureOpenAIModel() {
   return azure(deployment)
 }
 
-export async function streamCompareAnswer({ messages }: StreamCompareAnswerArgs) {
-  const context = await getComparisonContext()
+export async function streamCompareAnswer({ messages, userId }: StreamCompareAnswerArgs) {
+  const [context, mcpTools] = await Promise.all([
+    getComparisonContext(),
+    getCompareMCPTools(userId).catch(() => undefined),
+  ])
 
   return streamText({
     maxOutputTokens: 900,
     messages: await convertToModelMessages(messages),
     model: getAzureOpenAIModel(),
+    ...(mcpTools ? { stopWhen: stepCountIs(4), tools: mcpTools } : {}),
     system: getCompareSystemPrompt(context),
     temperature: 0.2,
   })

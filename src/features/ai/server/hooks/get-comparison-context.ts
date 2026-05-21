@@ -4,9 +4,24 @@ import config from '@/payload.config'
 
 type NamedValue = {
   displayName?: string | null
+  id?: number | string
   name?: string | null
+  references?: SourceReference[] | null
+  slug?: string | null
+  sources?: ProgramSource[] | null
   shortName?: string | null
   title?: string | null
+}
+
+type SourceReference = {
+  isPrimary?: boolean | null
+  label?: string | null
+  url?: string | null
+}
+
+type ProgramSource = {
+  role?: string | null
+  source?: NamedValue | number | string | null
 }
 
 type PolymorphicRelation = {
@@ -42,12 +57,37 @@ function getTopicNames(topics: unknown) {
   return topics.map(getNamedValue).join(', ') || 'Sans thème'
 }
 
+function getSourceReference(source: unknown) {
+  if (!source || typeof source !== 'object') {
+    return getNamedValue(source)
+  }
+
+  const named = source as NamedValue
+  const title = getNamedValue(source)
+  const sourceId = named.id ? `source:${named.id} ` : ''
+  const primaryReference = (named.references || []).find((reference) => reference.isPrimary)
+  const fallbackReference = (named.references || []).find((reference) => reference.url)
+  const url = primaryReference?.url || fallbackReference?.url
+
+  return url ? `${sourceId}${title} (${url})` : `${sourceId}${title}`
+}
+
+function getProgramSources(program: NamedValue) {
+  if (!Array.isArray(program.sources) || program.sources.length === 0) {
+    return 'sources non renseignées'
+  }
+
+  return program.sources
+    .map((entry) => `${getSourceReference(entry.source)}${entry.role ? ` [${entry.role}]` : ''}`)
+    .join('; ')
+}
+
 export async function getComparisonContext() {
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
   const publishedOnly = { _status: { equals: 'published' } } as const
 
-  const [topics, candidates, parties, proposals, positions, programs] = await Promise.all([
+  const [topics, candidates, parties, claims, proposals, positions, programs] = await Promise.all([
     payload.find({
       collection: 'topics',
       depth: 0,
@@ -68,6 +108,22 @@ export async function getComparisonContext() {
       limit: 20,
       sort: 'name',
       where: publishedOnly,
+    }),
+    payload.find({
+      collection: 'claims',
+      depth: 2,
+      limit: 50,
+      sort: '-positionDate',
+      where: {
+        and: [
+          publishedOnly,
+          {
+            reviewStatus: {
+              equals: 'reviewed',
+            },
+          },
+        ],
+      },
     }),
     payload.find({
       collection: 'proposals',
@@ -103,6 +159,10 @@ export async function getComparisonContext() {
     (party) =>
       `- ${party.name}${party.shortName ? ` (${party.shortName})` : ''}: ${party.description || 'pas de description'}`,
   )
+  const claimLines = claims.docs.map(
+    (claim) =>
+      `- [claim:${claim.id}] ${claim.title} | acteur: ${getActorName(claim.actor)} | thèmes: ${getTopicNames(claim.topics)} | type: ${claim.claimType} | position: ${claim.stance} | date: ${claim.positionDate || 'non datée'} | affirmation: ${claim.claimText} | source: ${getSourceReference(claim.primarySource)}${claim.evidenceQuote ? ` | citation: ${claim.evidenceQuote}` : ''}`,
+  )
   const proposalLines = proposals.docs.map(
     (proposal) =>
       `- ${proposal.title} | acteur: ${getActorName(proposal.actor)} | thèmes: ${getTopicNames(proposal.topics)} | résumé: ${proposal.summary}`,
@@ -113,7 +173,7 @@ export async function getComparisonContext() {
   )
   const programLines = programs.docs.map(
     (program) =>
-      `- ${program.title} | acteur: ${getActorName(program.actor)} | date: ${program.programDate || 'non datée'} | résumé: ${program.summary || 'pas de résumé'}`,
+      `- ${program.title} | acteur: ${getActorName(program.actor)} | date: ${program.programDate || 'non datée'} | résumé: ${program.summary || 'pas de résumé'} | sources: ${getProgramSources(program)}`,
   )
 
   return [
@@ -123,6 +183,8 @@ export async function getComparisonContext() {
     candidateLines.join('\n') || '- Aucun candidat publié',
     'PARTIS PUBLIÉS',
     partyLines.join('\n') || '- Aucun parti publié',
+    'CLAIMS REVUES PUBLIÉES',
+    claimLines.join('\n') || '- Aucune claim revue publiée',
     'PROPOSITIONS PUBLIÉES',
     proposalLines.join('\n') || '- Aucune proposition publiée',
     'POSITIONS PUBLIQUES PUBLIÉES',

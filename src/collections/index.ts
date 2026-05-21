@@ -1,5 +1,7 @@
 import { Candidates } from './Candidates'
+import { CandidateSubmissions } from './CandidateSubmissions'
 import { ClaimEvidence } from './ClaimEvidence'
+import { ClaimFeedback } from './ClaimFeedback'
 import { Claims } from './Claims'
 import { DocumentChunks } from './DocumentChunks'
 import { IngestionJobs } from './IngestionJobs'
@@ -23,9 +25,11 @@ export const collections = [
   IngestionJobs,
   Parties,
   Candidates,
+  CandidateSubmissions,
   Topics,
   Claims,
   ClaimEvidence,
+  ClaimFeedback,
   Programs,
   Proposals,
   PublicPositions,

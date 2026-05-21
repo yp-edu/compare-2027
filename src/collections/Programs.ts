@@ -35,14 +35,41 @@ export const Programs: CollectionConfig = {
       required: true,
     },
     {
-      name: 'source',
-      type: 'relationship',
-      relationTo: 'sources',
-    },
-    {
-      name: 'file',
-      type: 'upload',
-      relationTo: 'media',
+      name: 'sources',
+      type: 'array',
+      admin: {
+        description:
+          'Structured source corpus for this programme. Use precise chapter or section sources when available.',
+      },
+      fields: [
+        {
+          name: 'source',
+          type: 'relationship',
+          relationTo: 'sources',
+          required: true,
+        },
+        {
+          name: 'role',
+          type: 'select',
+          defaultValue: 'supporting',
+          options: [
+            { label: 'Index', value: 'index' },
+            { label: 'Chapter', value: 'chapter' },
+            { label: 'Section', value: 'section' },
+            { label: 'PDF', value: 'pdf' },
+            { label: 'Manifesto', value: 'manifesto' },
+            { label: 'Government declaration', value: 'government_declaration' },
+            { label: 'Supporting', value: 'supporting' },
+            { label: 'Archive', value: 'archive' },
+            { label: 'Other', value: 'other' },
+          ],
+          required: true,
+        },
+        {
+          name: 'notes',
+          type: 'textarea',
+        },
+      ],
     },
     {
       name: 'programDate',

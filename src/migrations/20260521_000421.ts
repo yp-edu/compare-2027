@@ -4,13 +4,21 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    CREATE TYPE "public"."enum_users_role" AS ENUM('admin', 'editor', 'user');
   CREATE TYPE "public"."enum_admin_invitations_role" AS ENUM('admin', 'editor', 'user');
-  CREATE TYPE "public"."enum_sources_type" AS ENUM('official_program', 'speech', 'interview', 'press_release', 'vote', 'article', 'report', 'other');
+  CREATE TYPE "public"."enum_sources_references_kind" AS ENUM('url', 'file', 'archive', 'institution_id', 'manual', 'other');
+  CREATE TYPE "public"."enum_sources_type" AS ENUM('official_program', 'speech', 'interview', 'press_release', 'candidacy_declaration', 'social_post', 'vote', 'article', 'report', 'other');
+  CREATE TYPE "public"."enum_sources_source_role" AS ENUM('program_index', 'program_chapter', 'program_section', 'manifesto', 'candidacy_declaration', 'speech', 'interview', 'supporting_document', 'archive', 'other');
   CREATE TYPE "public"."enum_sources_platform" AS ENUM('party_site', 'x', 'assemblee', 'datan', 'press', 'institution', 'other');
+  CREATE TYPE "public"."enum_sources_submission_status" AS ENUM('internal', 'submitted', 'accepted', 'rejected');
+  CREATE TYPE "public"."enum_sources_processing_status" AS ENUM('queued', 'processing', 'completed', 'failed', 'skipped');
   CREATE TYPE "public"."enum_sources_fetch_status" AS ENUM('not_fetched', 'fetched', 'failed', 'skipped');
   CREATE TYPE "public"."enum_sources_verification_status" AS ENUM('pending', 'verified', 'disputed', 'archived');
   CREATE TYPE "public"."enum_sources_status" AS ENUM('draft', 'published');
-  CREATE TYPE "public"."enum__sources_v_version_type" AS ENUM('official_program', 'speech', 'interview', 'press_release', 'vote', 'article', 'report', 'other');
+  CREATE TYPE "public"."enum__sources_v_version_references_kind" AS ENUM('url', 'file', 'archive', 'institution_id', 'manual', 'other');
+  CREATE TYPE "public"."enum__sources_v_version_type" AS ENUM('official_program', 'speech', 'interview', 'press_release', 'candidacy_declaration', 'social_post', 'vote', 'article', 'report', 'other');
+  CREATE TYPE "public"."enum__sources_v_version_source_role" AS ENUM('program_index', 'program_chapter', 'program_section', 'manifesto', 'candidacy_declaration', 'speech', 'interview', 'supporting_document', 'archive', 'other');
   CREATE TYPE "public"."enum__sources_v_version_platform" AS ENUM('party_site', 'x', 'assemblee', 'datan', 'press', 'institution', 'other');
+  CREATE TYPE "public"."enum__sources_v_version_submission_status" AS ENUM('internal', 'submitted', 'accepted', 'rejected');
+  CREATE TYPE "public"."enum__sources_v_version_processing_status" AS ENUM('queued', 'processing', 'completed', 'failed', 'skipped');
   CREATE TYPE "public"."enum__sources_v_version_fetch_status" AS ENUM('not_fetched', 'fetched', 'failed', 'skipped');
   CREATE TYPE "public"."enum__sources_v_version_verification_status" AS ENUM('pending', 'verified', 'disputed', 'archived');
   CREATE TYPE "public"."enum__sources_v_version_status" AS ENUM('draft', 'published');
@@ -23,6 +31,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TYPE "public"."enum_document_chunks_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum__document_chunks_v_version_embedding_status" AS ENUM('pending', 'embedded', 'failed', 'skipped');
   CREATE TYPE "public"."enum__document_chunks_v_version_status" AS ENUM('draft', 'published');
+  CREATE TYPE "public"."enum_ingestion_jobs_input_references_kind" AS ENUM('url', 'file', 'archive', 'institution_id', 'manual', 'other');
   CREATE TYPE "public"."enum_ingestion_jobs_job_type" AS ENUM('url', 'document', 'social_post', 'vote_import', 'scheduled_crawl');
   CREATE TYPE "public"."enum_ingestion_jobs_status" AS ENUM('queued', 'running', 'completed', 'failed', 'cancelled');
   CREATE TYPE "public"."enum_parties_status" AS ENUM('draft', 'published');
@@ -31,6 +40,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TYPE "public"."enum_candidates_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum__candidates_v_version_candidacy_status" AS ENUM('declared', 'expected', 'exploring', 'withdrawn', 'not_candidate');
   CREATE TYPE "public"."enum__candidates_v_version_status" AS ENUM('draft', 'published');
+  CREATE TYPE "public"."enum_candidate_submissions_status" AS ENUM('pending', 'accepted', 'rejected', 'duplicate');
   CREATE TYPE "public"."enum_topics_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum__topics_v_version_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum_claims_claim_type" AS ENUM('program', 'public_position', 'vote', 'promise', 'factual_record', 'biography', 'criticism', 'other');
@@ -47,7 +57,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TYPE "public"."enum_claim_evidence_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum__claim_evidence_v_version_review_status" AS ENUM('pending', 'reviewed', 'rejected', 'disputed');
   CREATE TYPE "public"."enum__claim_evidence_v_version_status" AS ENUM('draft', 'published');
+  CREATE TYPE "public"."enum_claim_feedback_status" AS ENUM('pending', 'accepted', 'rejected', 'duplicate');
+  CREATE TYPE "public"."enum_programs_sources_role" AS ENUM('index', 'chapter', 'section', 'pdf', 'manifesto', 'government_declaration', 'supporting', 'archive', 'other');
   CREATE TYPE "public"."enum_programs_status" AS ENUM('draft', 'published');
+  CREATE TYPE "public"."enum__programs_v_version_sources_role" AS ENUM('index', 'chapter', 'section', 'pdf', 'manifesto', 'government_declaration', 'supporting', 'archive', 'other');
   CREATE TYPE "public"."enum__programs_v_version_status" AS ENUM('draft', 'published');
   CREATE TYPE "public"."enum_proposals_proposal_status" AS ENUM('announced', 'confirmed', 'changed', 'withdrawn', 'unclear');
   CREATE TYPE "public"."enum_proposals_status" AS ENUM('draft', 'published');
@@ -157,16 +170,34 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"focal_y" numeric
   );
   
+  CREATE TABLE "sources_references" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"kind" "enum_sources_references_kind" DEFAULT 'url',
+  	"label" varchar,
+  	"url" varchar,
+  	"canonical_url" varchar,
+  	"file_id" integer,
+  	"external_id" varchar,
+  	"is_primary" boolean DEFAULT false,
+  	"notes" varchar
+  );
+  
   CREATE TABLE "sources" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"title" varchar,
+  	"slug" varchar,
   	"type" "enum_sources_type" DEFAULT 'other',
+  	"source_role" "enum_sources_source_role" DEFAULT 'other',
+  	"parent_source_id" integer,
   	"platform" "enum_sources_platform" DEFAULT 'other',
-  	"url" varchar,
-  	"canonical_url" varchar,
-  	"external_id" varchar,
-  	"archived_url" varchar,
-  	"file_id" integer,
+  	"submitted_by_id" integer,
+  	"submission_status" "enum_sources_submission_status" DEFAULT 'internal',
+  	"processing_status" "enum_sources_processing_status" DEFAULT 'queued',
+  	"processed_at" timestamp(3) with time zone,
+  	"processing_error" varchar,
+  	"llm_model" varchar,
   	"publisher" varchar,
   	"published_at" timestamp(3) with time zone,
   	"retrieved_at" timestamp(3) with time zone,
@@ -184,17 +215,44 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"_status" "enum_sources_status" DEFAULT 'draft'
   );
   
+  CREATE TABLE "sources_rels" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"order" integer,
+  	"parent_id" integer NOT NULL,
+  	"path" varchar NOT NULL,
+  	"candidates_id" integer
+  );
+  
+  CREATE TABLE "_sources_v_version_references" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"kind" "enum__sources_v_version_references_kind" DEFAULT 'url',
+  	"label" varchar,
+  	"url" varchar,
+  	"canonical_url" varchar,
+  	"file_id" integer,
+  	"external_id" varchar,
+  	"is_primary" boolean DEFAULT false,
+  	"notes" varchar,
+  	"_uuid" varchar
+  );
+  
   CREATE TABLE "_sources_v" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"parent_id" integer,
   	"version_title" varchar,
+  	"version_slug" varchar,
   	"version_type" "enum__sources_v_version_type" DEFAULT 'other',
+  	"version_source_role" "enum__sources_v_version_source_role" DEFAULT 'other',
+  	"version_parent_source_id" integer,
   	"version_platform" "enum__sources_v_version_platform" DEFAULT 'other',
-  	"version_url" varchar,
-  	"version_canonical_url" varchar,
-  	"version_external_id" varchar,
-  	"version_archived_url" varchar,
-  	"version_file_id" integer,
+  	"version_submitted_by_id" integer,
+  	"version_submission_status" "enum__sources_v_version_submission_status" DEFAULT 'internal',
+  	"version_processing_status" "enum__sources_v_version_processing_status" DEFAULT 'queued',
+  	"version_processed_at" timestamp(3) with time zone,
+  	"version_processing_error" varchar,
+  	"version_llm_model" varchar,
   	"version_publisher" varchar,
   	"version_published_at" timestamp(3) with time zone,
   	"version_retrieved_at" timestamp(3) with time zone,
@@ -213,6 +271,14 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
   	"latest" boolean
+  );
+  
+  CREATE TABLE "_sources_v_rels" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"order" integer,
+  	"parent_id" integer NOT NULL,
+  	"path" varchar NOT NULL,
+  	"candidates_id" integer
   );
   
   CREATE TABLE "source_snapshots" (
@@ -319,12 +385,20 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"latest" boolean
   );
   
+  CREATE TABLE "ingestion_jobs_input_references" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"kind" "enum_ingestion_jobs_input_references_kind" DEFAULT 'url' NOT NULL,
+  	"url" varchar,
+  	"external_id" varchar
+  );
+  
   CREATE TABLE "ingestion_jobs" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"title" varchar NOT NULL,
   	"job_type" "enum_ingestion_jobs_job_type" DEFAULT 'url' NOT NULL,
   	"status" "enum_ingestion_jobs_status" DEFAULT 'queued' NOT NULL,
-  	"input_url" varchar NOT NULL,
   	"source_id" integer,
   	"submitted_by_id" integer,
   	"attempts" numeric DEFAULT 0 NOT NULL,
@@ -394,6 +468,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"photo_id" integer,
   	"current_party_id" integer,
   	"candidacy_status" "enum_candidates_candidacy_status" DEFAULT 'expected',
+  	"declaration_source_id" integer,
+  	"declared_at" timestamp(3) with time zone,
   	"website" varchar,
   	"bio" varchar,
   	"sort_order" numeric DEFAULT 0,
@@ -420,6 +496,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"version_photo_id" integer,
   	"version_current_party_id" integer,
   	"version_candidacy_status" "enum__candidates_v_version_candidacy_status" DEFAULT 'expected',
+  	"version_declaration_source_id" integer,
+  	"version_declared_at" timestamp(3) with time zone,
   	"version_website" varchar,
   	"version_bio" varchar,
   	"version_sort_order" numeric DEFAULT 0,
@@ -437,6 +515,19 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"parent_id" integer NOT NULL,
   	"path" varchar NOT NULL,
   	"sources_id" integer
+  );
+  
+  CREATE TABLE "candidate_submissions" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"candidate_name" varchar NOT NULL,
+  	"candidate_details" varchar,
+  	"matched_candidate_id" integer,
+  	"declaration_source_id" integer NOT NULL,
+  	"submitted_by_id" integer NOT NULL,
+  	"status" "enum_candidate_submissions_status" DEFAULT 'pending' NOT NULL,
+  	"review_notes" varchar,
+  	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+  	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
   );
   
   CREATE TABLE "topics" (
@@ -591,12 +682,35 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"latest" boolean
   );
   
+  CREATE TABLE "claim_feedback" (
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"claim_id" integer NOT NULL,
+  	"invalidating_source_url" varchar NOT NULL,
+  	"invalidating_source_id" integer,
+  	"submitted_by_id" integer NOT NULL,
+  	"message_id" varchar,
+  	"question" varchar,
+  	"answer" varchar,
+  	"comment" varchar,
+  	"status" "enum_claim_feedback_status" DEFAULT 'pending' NOT NULL,
+  	"review_notes" varchar,
+  	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
+  	"created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
+  );
+  
+  CREATE TABLE "programs_sources" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" varchar PRIMARY KEY NOT NULL,
+  	"source_id" integer,
+  	"role" "enum_programs_sources_role" DEFAULT 'supporting',
+  	"notes" varchar
+  );
+  
   CREATE TABLE "programs" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"title" varchar,
   	"slug" varchar,
-  	"source_id" integer,
-  	"file_id" integer,
   	"program_date" timestamp(3) with time zone,
   	"summary" varchar,
   	"updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -613,13 +727,21 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"parties_id" integer
   );
   
+  CREATE TABLE "_programs_v_version_sources" (
+  	"_order" integer NOT NULL,
+  	"_parent_id" integer NOT NULL,
+  	"id" serial PRIMARY KEY NOT NULL,
+  	"source_id" integer,
+  	"role" "enum__programs_v_version_sources_role" DEFAULT 'supporting',
+  	"notes" varchar,
+  	"_uuid" varchar
+  );
+  
   CREATE TABLE "_programs_v" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"parent_id" integer,
   	"version_title" varchar,
   	"version_slug" varchar,
-  	"version_source_id" integer,
-  	"version_file_id" integer,
   	"version_program_date" timestamp(3) with time zone,
   	"version_summary" varchar,
   	"version_updated_at" timestamp(3) with time zone,
@@ -841,9 +963,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"ingestion_jobs_id" integer,
   	"parties_id" integer,
   	"candidates_id" integer,
+  	"candidate_submissions_id" integer,
   	"topics_id" integer,
   	"claims_id" integer,
   	"claim_evidence_id" integer,
+  	"claim_feedback_id" integer,
   	"programs_id" integer,
   	"proposals_id" integer,
   	"public_positions_id" integer,
@@ -889,9 +1013,19 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "sessions" ADD CONSTRAINT "sessions_impersonated_by_id_users_id_fk" FOREIGN KEY ("impersonated_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "two_factors" ADD CONSTRAINT "two_factors_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
-  ALTER TABLE "sources" ADD CONSTRAINT "sources_file_id_media_id_fk" FOREIGN KEY ("file_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "sources_references" ADD CONSTRAINT "sources_references_file_id_media_id_fk" FOREIGN KEY ("file_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "sources_references" ADD CONSTRAINT "sources_references_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."sources"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "sources" ADD CONSTRAINT "sources_parent_source_id_sources_id_fk" FOREIGN KEY ("parent_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "sources" ADD CONSTRAINT "sources_submitted_by_id_users_id_fk" FOREIGN KEY ("submitted_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "sources_rels" ADD CONSTRAINT "sources_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."sources"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "sources_rels" ADD CONSTRAINT "sources_rels_candidates_fk" FOREIGN KEY ("candidates_id") REFERENCES "public"."candidates"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "_sources_v_version_references" ADD CONSTRAINT "_sources_v_version_references_file_id_media_id_fk" FOREIGN KEY ("file_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "_sources_v_version_references" ADD CONSTRAINT "_sources_v_version_references_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."_sources_v"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_sources_v" ADD CONSTRAINT "_sources_v_parent_id_sources_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
-  ALTER TABLE "_sources_v" ADD CONSTRAINT "_sources_v_version_file_id_media_id_fk" FOREIGN KEY ("version_file_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "_sources_v" ADD CONSTRAINT "_sources_v_version_parent_source_id_sources_id_fk" FOREIGN KEY ("version_parent_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "_sources_v" ADD CONSTRAINT "_sources_v_version_submitted_by_id_users_id_fk" FOREIGN KEY ("version_submitted_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "_sources_v_rels" ADD CONSTRAINT "_sources_v_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."_sources_v"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "_sources_v_rels" ADD CONSTRAINT "_sources_v_rels_candidates_fk" FOREIGN KEY ("candidates_id") REFERENCES "public"."candidates"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "source_snapshots" ADD CONSTRAINT "source_snapshots_source_id_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "source_documents" ADD CONSTRAINT "source_documents_source_id_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "source_documents" ADD CONSTRAINT "source_documents_snapshot_id_source_snapshots_id_fk" FOREIGN KEY ("snapshot_id") REFERENCES "public"."source_snapshots"("id") ON DELETE set null ON UPDATE no action;
@@ -905,6 +1039,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "_document_chunks_v" ADD CONSTRAINT "_document_chunks_v_version_document_id_source_documents_id_fk" FOREIGN KEY ("version_document_id") REFERENCES "public"."source_documents"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_document_chunks_v" ADD CONSTRAINT "_document_chunks_v_version_source_id_sources_id_fk" FOREIGN KEY ("version_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_document_chunks_v" ADD CONSTRAINT "_document_chunks_v_version_snapshot_id_source_snapshots_id_fk" FOREIGN KEY ("version_snapshot_id") REFERENCES "public"."source_snapshots"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "ingestion_jobs_input_references" ADD CONSTRAINT "ingestion_jobs_input_references_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."ingestion_jobs"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "ingestion_jobs" ADD CONSTRAINT "ingestion_jobs_source_id_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "ingestion_jobs" ADD CONSTRAINT "ingestion_jobs_submitted_by_id_users_id_fk" FOREIGN KEY ("submitted_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "parties" ADD CONSTRAINT "parties_logo_id_media_id_fk" FOREIGN KEY ("logo_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
@@ -916,13 +1051,18 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "_parties_v_rels" ADD CONSTRAINT "_parties_v_rels_sources_fk" FOREIGN KEY ("sources_id") REFERENCES "public"."sources"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "candidates" ADD CONSTRAINT "candidates_photo_id_media_id_fk" FOREIGN KEY ("photo_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "candidates" ADD CONSTRAINT "candidates_current_party_id_parties_id_fk" FOREIGN KEY ("current_party_id") REFERENCES "public"."parties"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "candidates" ADD CONSTRAINT "candidates_declaration_source_id_sources_id_fk" FOREIGN KEY ("declaration_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "candidates_rels" ADD CONSTRAINT "candidates_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."candidates"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "candidates_rels" ADD CONSTRAINT "candidates_rels_sources_fk" FOREIGN KEY ("sources_id") REFERENCES "public"."sources"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_candidates_v" ADD CONSTRAINT "_candidates_v_parent_id_candidates_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."candidates"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_candidates_v" ADD CONSTRAINT "_candidates_v_version_photo_id_media_id_fk" FOREIGN KEY ("version_photo_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_candidates_v" ADD CONSTRAINT "_candidates_v_version_current_party_id_parties_id_fk" FOREIGN KEY ("version_current_party_id") REFERENCES "public"."parties"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "_candidates_v" ADD CONSTRAINT "_candidates_v_version_declaration_source_id_sources_id_fk" FOREIGN KEY ("version_declaration_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_candidates_v_rels" ADD CONSTRAINT "_candidates_v_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."_candidates_v"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_candidates_v_rels" ADD CONSTRAINT "_candidates_v_rels_sources_fk" FOREIGN KEY ("sources_id") REFERENCES "public"."sources"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "candidate_submissions" ADD CONSTRAINT "candidate_submissions_matched_candidate_id_candidates_id_fk" FOREIGN KEY ("matched_candidate_id") REFERENCES "public"."candidates"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "candidate_submissions" ADD CONSTRAINT "candidate_submissions_declaration_source_id_sources_id_fk" FOREIGN KEY ("declaration_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "candidate_submissions" ADD CONSTRAINT "candidate_submissions_submitted_by_id_users_id_fk" FOREIGN KEY ("submitted_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "topics" ADD CONSTRAINT "topics_parent_id_topics_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."topics"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_topics_v" ADD CONSTRAINT "_topics_v_parent_id_topics_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."topics"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_topics_v" ADD CONSTRAINT "_topics_v_version_parent_id_topics_id_fk" FOREIGN KEY ("version_parent_id") REFERENCES "public"."topics"("id") ON DELETE set null ON UPDATE no action;
@@ -952,14 +1092,17 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "_claim_evidence_v" ADD CONSTRAINT "_claim_evidence_v_version_snapshot_id_source_snapshots_id_fk" FOREIGN KEY ("version_snapshot_id") REFERENCES "public"."source_snapshots"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_claim_evidence_v" ADD CONSTRAINT "_claim_evidence_v_version_document_id_source_documents_id_fk" FOREIGN KEY ("version_document_id") REFERENCES "public"."source_documents"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_claim_evidence_v" ADD CONSTRAINT "_claim_evidence_v_version_chunk_id_document_chunks_id_fk" FOREIGN KEY ("version_chunk_id") REFERENCES "public"."document_chunks"("id") ON DELETE set null ON UPDATE no action;
-  ALTER TABLE "programs" ADD CONSTRAINT "programs_source_id_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
-  ALTER TABLE "programs" ADD CONSTRAINT "programs_file_id_media_id_fk" FOREIGN KEY ("file_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "claim_feedback" ADD CONSTRAINT "claim_feedback_claim_id_claims_id_fk" FOREIGN KEY ("claim_id") REFERENCES "public"."claims"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "claim_feedback" ADD CONSTRAINT "claim_feedback_invalidating_source_id_sources_id_fk" FOREIGN KEY ("invalidating_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "claim_feedback" ADD CONSTRAINT "claim_feedback_submitted_by_id_users_id_fk" FOREIGN KEY ("submitted_by_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "programs_sources" ADD CONSTRAINT "programs_sources_source_id_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "programs_sources" ADD CONSTRAINT "programs_sources_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."programs"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "programs_rels" ADD CONSTRAINT "programs_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."programs"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "programs_rels" ADD CONSTRAINT "programs_rels_candidates_fk" FOREIGN KEY ("candidates_id") REFERENCES "public"."candidates"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "programs_rels" ADD CONSTRAINT "programs_rels_parties_fk" FOREIGN KEY ("parties_id") REFERENCES "public"."parties"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "_programs_v_version_sources" ADD CONSTRAINT "_programs_v_version_sources_source_id_sources_id_fk" FOREIGN KEY ("source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "_programs_v_version_sources" ADD CONSTRAINT "_programs_v_version_sources_parent_id_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."_programs_v"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_programs_v" ADD CONSTRAINT "_programs_v_parent_id_programs_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."programs"("id") ON DELETE set null ON UPDATE no action;
-  ALTER TABLE "_programs_v" ADD CONSTRAINT "_programs_v_version_source_id_sources_id_fk" FOREIGN KEY ("version_source_id") REFERENCES "public"."sources"("id") ON DELETE set null ON UPDATE no action;
-  ALTER TABLE "_programs_v" ADD CONSTRAINT "_programs_v_version_file_id_media_id_fk" FOREIGN KEY ("version_file_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_programs_v_rels" ADD CONSTRAINT "_programs_v_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."_programs_v"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_programs_v_rels" ADD CONSTRAINT "_programs_v_rels_candidates_fk" FOREIGN KEY ("candidates_id") REFERENCES "public"."candidates"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_programs_v_rels" ADD CONSTRAINT "_programs_v_rels_parties_fk" FOREIGN KEY ("parties_id") REFERENCES "public"."parties"("id") ON DELETE cascade ON UPDATE no action;
@@ -1013,9 +1156,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_ingestion_jobs_fk" FOREIGN KEY ("ingestion_jobs_id") REFERENCES "public"."ingestion_jobs"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_parties_fk" FOREIGN KEY ("parties_id") REFERENCES "public"."parties"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_candidates_fk" FOREIGN KEY ("candidates_id") REFERENCES "public"."candidates"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_candidate_submissions_fk" FOREIGN KEY ("candidate_submissions_id") REFERENCES "public"."candidate_submissions"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_topics_fk" FOREIGN KEY ("topics_id") REFERENCES "public"."topics"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_claims_fk" FOREIGN KEY ("claims_id") REFERENCES "public"."claims"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_claim_evidence_fk" FOREIGN KEY ("claim_evidence_id") REFERENCES "public"."claim_evidence"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_claim_feedback_fk" FOREIGN KEY ("claim_feedback_id") REFERENCES "public"."claim_feedback"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_programs_fk" FOREIGN KEY ("programs_id") REFERENCES "public"."programs"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_proposals_fk" FOREIGN KEY ("proposals_id") REFERENCES "public"."proposals"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "payload_locked_documents_rels" ADD CONSTRAINT "payload_locked_documents_rels_public_positions_fk" FOREIGN KEY ("public_positions_id") REFERENCES "public"."public_positions"("id") ON DELETE cascade ON UPDATE no action;
@@ -1052,20 +1197,40 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "media_updated_at_idx" ON "media" USING btree ("updated_at");
   CREATE INDEX "media_created_at_idx" ON "media" USING btree ("created_at");
   CREATE UNIQUE INDEX "media_filename_idx" ON "media" USING btree ("filename");
-  CREATE INDEX "sources_url_idx" ON "sources" USING btree ("url");
-  CREATE INDEX "sources_canonical_url_idx" ON "sources" USING btree ("canonical_url");
-  CREATE INDEX "sources_external_id_idx" ON "sources" USING btree ("external_id");
-  CREATE INDEX "sources_file_idx" ON "sources" USING btree ("file_id");
+  CREATE INDEX "sources_references_order_idx" ON "sources_references" USING btree ("_order");
+  CREATE INDEX "sources_references_parent_id_idx" ON "sources_references" USING btree ("_parent_id");
+  CREATE INDEX "sources_references_url_idx" ON "sources_references" USING btree ("url");
+  CREATE INDEX "sources_references_canonical_url_idx" ON "sources_references" USING btree ("canonical_url");
+  CREATE INDEX "sources_references_file_idx" ON "sources_references" USING btree ("file_id");
+  CREATE INDEX "sources_references_external_id_idx" ON "sources_references" USING btree ("external_id");
+  CREATE UNIQUE INDEX "sources_slug_idx" ON "sources" USING btree ("slug");
+  CREATE INDEX "sources_source_role_idx" ON "sources" USING btree ("source_role");
+  CREATE INDEX "sources_parent_source_idx" ON "sources" USING btree ("parent_source_id");
+  CREATE INDEX "sources_submitted_by_idx" ON "sources" USING btree ("submitted_by_id");
+  CREATE INDEX "sources_submission_status_idx" ON "sources" USING btree ("submission_status");
+  CREATE INDEX "sources_processing_status_idx" ON "sources" USING btree ("processing_status");
   CREATE INDEX "sources_published_at_idx" ON "sources" USING btree ("published_at");
   CREATE INDEX "sources_content_hash_idx" ON "sources" USING btree ("content_hash");
   CREATE INDEX "sources_updated_at_idx" ON "sources" USING btree ("updated_at");
   CREATE INDEX "sources_created_at_idx" ON "sources" USING btree ("created_at");
   CREATE INDEX "sources__status_idx" ON "sources" USING btree ("_status");
+  CREATE INDEX "sources_rels_order_idx" ON "sources_rels" USING btree ("order");
+  CREATE INDEX "sources_rels_parent_idx" ON "sources_rels" USING btree ("parent_id");
+  CREATE INDEX "sources_rels_path_idx" ON "sources_rels" USING btree ("path");
+  CREATE INDEX "sources_rels_candidates_id_idx" ON "sources_rels" USING btree ("candidates_id");
+  CREATE INDEX "_sources_v_version_references_order_idx" ON "_sources_v_version_references" USING btree ("_order");
+  CREATE INDEX "_sources_v_version_references_parent_id_idx" ON "_sources_v_version_references" USING btree ("_parent_id");
+  CREATE INDEX "_sources_v_version_references_url_idx" ON "_sources_v_version_references" USING btree ("url");
+  CREATE INDEX "_sources_v_version_references_canonical_url_idx" ON "_sources_v_version_references" USING btree ("canonical_url");
+  CREATE INDEX "_sources_v_version_references_file_idx" ON "_sources_v_version_references" USING btree ("file_id");
+  CREATE INDEX "_sources_v_version_references_external_id_idx" ON "_sources_v_version_references" USING btree ("external_id");
   CREATE INDEX "_sources_v_parent_idx" ON "_sources_v" USING btree ("parent_id");
-  CREATE INDEX "_sources_v_version_version_url_idx" ON "_sources_v" USING btree ("version_url");
-  CREATE INDEX "_sources_v_version_version_canonical_url_idx" ON "_sources_v" USING btree ("version_canonical_url");
-  CREATE INDEX "_sources_v_version_version_external_id_idx" ON "_sources_v" USING btree ("version_external_id");
-  CREATE INDEX "_sources_v_version_version_file_idx" ON "_sources_v" USING btree ("version_file_id");
+  CREATE INDEX "_sources_v_version_version_slug_idx" ON "_sources_v" USING btree ("version_slug");
+  CREATE INDEX "_sources_v_version_version_source_role_idx" ON "_sources_v" USING btree ("version_source_role");
+  CREATE INDEX "_sources_v_version_version_parent_source_idx" ON "_sources_v" USING btree ("version_parent_source_id");
+  CREATE INDEX "_sources_v_version_version_submitted_by_idx" ON "_sources_v" USING btree ("version_submitted_by_id");
+  CREATE INDEX "_sources_v_version_version_submission_status_idx" ON "_sources_v" USING btree ("version_submission_status");
+  CREATE INDEX "_sources_v_version_version_processing_status_idx" ON "_sources_v" USING btree ("version_processing_status");
   CREATE INDEX "_sources_v_version_version_published_at_idx" ON "_sources_v" USING btree ("version_published_at");
   CREATE INDEX "_sources_v_version_version_content_hash_idx" ON "_sources_v" USING btree ("version_content_hash");
   CREATE INDEX "_sources_v_version_version_updated_at_idx" ON "_sources_v" USING btree ("version_updated_at");
@@ -1074,6 +1239,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "_sources_v_created_at_idx" ON "_sources_v" USING btree ("created_at");
   CREATE INDEX "_sources_v_updated_at_idx" ON "_sources_v" USING btree ("updated_at");
   CREATE INDEX "_sources_v_latest_idx" ON "_sources_v" USING btree ("latest");
+  CREATE INDEX "_sources_v_rels_order_idx" ON "_sources_v_rels" USING btree ("order");
+  CREATE INDEX "_sources_v_rels_parent_idx" ON "_sources_v_rels" USING btree ("parent_id");
+  CREATE INDEX "_sources_v_rels_path_idx" ON "_sources_v_rels" USING btree ("path");
+  CREATE INDEX "_sources_v_rels_candidates_id_idx" ON "_sources_v_rels" USING btree ("candidates_id");
   CREATE INDEX "source_snapshots_source_idx" ON "source_snapshots" USING btree ("source_id");
   CREATE INDEX "source_snapshots_canonical_url_idx" ON "source_snapshots" USING btree ("canonical_url");
   CREATE INDEX "source_snapshots_external_id_idx" ON "source_snapshots" USING btree ("external_id");
@@ -1118,8 +1287,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "_document_chunks_v_created_at_idx" ON "_document_chunks_v" USING btree ("created_at");
   CREATE INDEX "_document_chunks_v_updated_at_idx" ON "_document_chunks_v" USING btree ("updated_at");
   CREATE INDEX "_document_chunks_v_latest_idx" ON "_document_chunks_v" USING btree ("latest");
+  CREATE INDEX "ingestion_jobs_input_references_order_idx" ON "ingestion_jobs_input_references" USING btree ("_order");
+  CREATE INDEX "ingestion_jobs_input_references_parent_id_idx" ON "ingestion_jobs_input_references" USING btree ("_parent_id");
+  CREATE INDEX "ingestion_jobs_input_references_url_idx" ON "ingestion_jobs_input_references" USING btree ("url");
+  CREATE INDEX "ingestion_jobs_input_references_external_id_idx" ON "ingestion_jobs_input_references" USING btree ("external_id");
   CREATE INDEX "ingestion_jobs_status_idx" ON "ingestion_jobs" USING btree ("status");
-  CREATE INDEX "ingestion_jobs_input_url_idx" ON "ingestion_jobs" USING btree ("input_url");
   CREATE INDEX "ingestion_jobs_source_idx" ON "ingestion_jobs" USING btree ("source_id");
   CREATE INDEX "ingestion_jobs_submitted_by_idx" ON "ingestion_jobs" USING btree ("submitted_by_id");
   CREATE INDEX "ingestion_jobs_priority_idx" ON "ingestion_jobs" USING btree ("priority");
@@ -1150,6 +1322,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE UNIQUE INDEX "candidates_slug_idx" ON "candidates" USING btree ("slug");
   CREATE INDEX "candidates_photo_idx" ON "candidates" USING btree ("photo_id");
   CREATE INDEX "candidates_current_party_idx" ON "candidates" USING btree ("current_party_id");
+  CREATE INDEX "candidates_declaration_source_idx" ON "candidates" USING btree ("declaration_source_id");
+  CREATE INDEX "candidates_declared_at_idx" ON "candidates" USING btree ("declared_at");
   CREATE INDEX "candidates_sort_order_idx" ON "candidates" USING btree ("sort_order");
   CREATE INDEX "candidates_updated_at_idx" ON "candidates" USING btree ("updated_at");
   CREATE INDEX "candidates_created_at_idx" ON "candidates" USING btree ("created_at");
@@ -1162,6 +1336,8 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "_candidates_v_version_version_slug_idx" ON "_candidates_v" USING btree ("version_slug");
   CREATE INDEX "_candidates_v_version_version_photo_idx" ON "_candidates_v" USING btree ("version_photo_id");
   CREATE INDEX "_candidates_v_version_version_current_party_idx" ON "_candidates_v" USING btree ("version_current_party_id");
+  CREATE INDEX "_candidates_v_version_version_declaration_source_idx" ON "_candidates_v" USING btree ("version_declaration_source_id");
+  CREATE INDEX "_candidates_v_version_version_declared_at_idx" ON "_candidates_v" USING btree ("version_declared_at");
   CREATE INDEX "_candidates_v_version_version_sort_order_idx" ON "_candidates_v" USING btree ("version_sort_order");
   CREATE INDEX "_candidates_v_version_version_updated_at_idx" ON "_candidates_v" USING btree ("version_updated_at");
   CREATE INDEX "_candidates_v_version_version_created_at_idx" ON "_candidates_v" USING btree ("version_created_at");
@@ -1173,6 +1349,12 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "_candidates_v_rels_parent_idx" ON "_candidates_v_rels" USING btree ("parent_id");
   CREATE INDEX "_candidates_v_rels_path_idx" ON "_candidates_v_rels" USING btree ("path");
   CREATE INDEX "_candidates_v_rels_sources_id_idx" ON "_candidates_v_rels" USING btree ("sources_id");
+  CREATE INDEX "candidate_submissions_matched_candidate_idx" ON "candidate_submissions" USING btree ("matched_candidate_id");
+  CREATE INDEX "candidate_submissions_declaration_source_idx" ON "candidate_submissions" USING btree ("declaration_source_id");
+  CREATE INDEX "candidate_submissions_submitted_by_idx" ON "candidate_submissions" USING btree ("submitted_by_id");
+  CREATE INDEX "candidate_submissions_status_idx" ON "candidate_submissions" USING btree ("status");
+  CREATE INDEX "candidate_submissions_updated_at_idx" ON "candidate_submissions" USING btree ("updated_at");
+  CREATE INDEX "candidate_submissions_created_at_idx" ON "candidate_submissions" USING btree ("created_at");
   CREATE UNIQUE INDEX "topics_slug_idx" ON "topics" USING btree ("slug");
   CREATE INDEX "topics_parent_idx" ON "topics" USING btree ("parent_id");
   CREATE INDEX "topics_order_idx" ON "topics" USING btree ("order");
@@ -1247,9 +1429,17 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "_claim_evidence_v_created_at_idx" ON "_claim_evidence_v" USING btree ("created_at");
   CREATE INDEX "_claim_evidence_v_updated_at_idx" ON "_claim_evidence_v" USING btree ("updated_at");
   CREATE INDEX "_claim_evidence_v_latest_idx" ON "_claim_evidence_v" USING btree ("latest");
+  CREATE INDEX "claim_feedback_claim_idx" ON "claim_feedback" USING btree ("claim_id");
+  CREATE INDEX "claim_feedback_invalidating_source_idx" ON "claim_feedback" USING btree ("invalidating_source_id");
+  CREATE INDEX "claim_feedback_submitted_by_idx" ON "claim_feedback" USING btree ("submitted_by_id");
+  CREATE INDEX "claim_feedback_message_id_idx" ON "claim_feedback" USING btree ("message_id");
+  CREATE INDEX "claim_feedback_status_idx" ON "claim_feedback" USING btree ("status");
+  CREATE INDEX "claim_feedback_updated_at_idx" ON "claim_feedback" USING btree ("updated_at");
+  CREATE INDEX "claim_feedback_created_at_idx" ON "claim_feedback" USING btree ("created_at");
+  CREATE INDEX "programs_sources_order_idx" ON "programs_sources" USING btree ("_order");
+  CREATE INDEX "programs_sources_parent_id_idx" ON "programs_sources" USING btree ("_parent_id");
+  CREATE INDEX "programs_sources_source_idx" ON "programs_sources" USING btree ("source_id");
   CREATE UNIQUE INDEX "programs_slug_idx" ON "programs" USING btree ("slug");
-  CREATE INDEX "programs_source_idx" ON "programs" USING btree ("source_id");
-  CREATE INDEX "programs_file_idx" ON "programs" USING btree ("file_id");
   CREATE INDEX "programs_program_date_idx" ON "programs" USING btree ("program_date");
   CREATE INDEX "programs_updated_at_idx" ON "programs" USING btree ("updated_at");
   CREATE INDEX "programs_created_at_idx" ON "programs" USING btree ("created_at");
@@ -1259,10 +1449,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "programs_rels_path_idx" ON "programs_rels" USING btree ("path");
   CREATE INDEX "programs_rels_candidates_id_idx" ON "programs_rels" USING btree ("candidates_id");
   CREATE INDEX "programs_rels_parties_id_idx" ON "programs_rels" USING btree ("parties_id");
+  CREATE INDEX "_programs_v_version_sources_order_idx" ON "_programs_v_version_sources" USING btree ("_order");
+  CREATE INDEX "_programs_v_version_sources_parent_id_idx" ON "_programs_v_version_sources" USING btree ("_parent_id");
+  CREATE INDEX "_programs_v_version_sources_source_idx" ON "_programs_v_version_sources" USING btree ("source_id");
   CREATE INDEX "_programs_v_parent_idx" ON "_programs_v" USING btree ("parent_id");
   CREATE INDEX "_programs_v_version_version_slug_idx" ON "_programs_v" USING btree ("version_slug");
-  CREATE INDEX "_programs_v_version_version_source_idx" ON "_programs_v" USING btree ("version_source_id");
-  CREATE INDEX "_programs_v_version_version_file_idx" ON "_programs_v" USING btree ("version_file_id");
   CREATE INDEX "_programs_v_version_version_program_date_idx" ON "_programs_v" USING btree ("version_program_date");
   CREATE INDEX "_programs_v_version_version_updated_at_idx" ON "_programs_v" USING btree ("version_updated_at");
   CREATE INDEX "_programs_v_version_version_created_at_idx" ON "_programs_v" USING btree ("version_created_at");
@@ -1375,9 +1566,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "payload_locked_documents_rels_ingestion_jobs_id_idx" ON "payload_locked_documents_rels" USING btree ("ingestion_jobs_id");
   CREATE INDEX "payload_locked_documents_rels_parties_id_idx" ON "payload_locked_documents_rels" USING btree ("parties_id");
   CREATE INDEX "payload_locked_documents_rels_candidates_id_idx" ON "payload_locked_documents_rels" USING btree ("candidates_id");
+  CREATE INDEX "payload_locked_documents_rels_candidate_submissions_id_idx" ON "payload_locked_documents_rels" USING btree ("candidate_submissions_id");
   CREATE INDEX "payload_locked_documents_rels_topics_id_idx" ON "payload_locked_documents_rels" USING btree ("topics_id");
   CREATE INDEX "payload_locked_documents_rels_claims_id_idx" ON "payload_locked_documents_rels" USING btree ("claims_id");
   CREATE INDEX "payload_locked_documents_rels_claim_evidence_id_idx" ON "payload_locked_documents_rels" USING btree ("claim_evidence_id");
+  CREATE INDEX "payload_locked_documents_rels_claim_feedback_id_idx" ON "payload_locked_documents_rels" USING btree ("claim_feedback_id");
   CREATE INDEX "payload_locked_documents_rels_programs_id_idx" ON "payload_locked_documents_rels" USING btree ("programs_id");
   CREATE INDEX "payload_locked_documents_rels_proposals_id_idx" ON "payload_locked_documents_rels" USING btree ("proposals_id");
   CREATE INDEX "payload_locked_documents_rels_public_positions_id_idx" ON "payload_locked_documents_rels" USING btree ("public_positions_id");
@@ -1406,13 +1599,18 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "two_factors" CASCADE;
   DROP TABLE "admin_invitations" CASCADE;
   DROP TABLE "media" CASCADE;
+  DROP TABLE "sources_references" CASCADE;
   DROP TABLE "sources" CASCADE;
+  DROP TABLE "sources_rels" CASCADE;
+  DROP TABLE "_sources_v_version_references" CASCADE;
   DROP TABLE "_sources_v" CASCADE;
+  DROP TABLE "_sources_v_rels" CASCADE;
   DROP TABLE "source_snapshots" CASCADE;
   DROP TABLE "source_documents" CASCADE;
   DROP TABLE "_source_documents_v" CASCADE;
   DROP TABLE "document_chunks" CASCADE;
   DROP TABLE "_document_chunks_v" CASCADE;
+  DROP TABLE "ingestion_jobs_input_references" CASCADE;
   DROP TABLE "ingestion_jobs" CASCADE;
   DROP TABLE "parties" CASCADE;
   DROP TABLE "parties_rels" CASCADE;
@@ -1422,6 +1620,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "candidates_rels" CASCADE;
   DROP TABLE "_candidates_v" CASCADE;
   DROP TABLE "_candidates_v_rels" CASCADE;
+  DROP TABLE "candidate_submissions" CASCADE;
   DROP TABLE "topics" CASCADE;
   DROP TABLE "_topics_v" CASCADE;
   DROP TABLE "claims" CASCADE;
@@ -1430,8 +1629,11 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "_claims_v_rels" CASCADE;
   DROP TABLE "claim_evidence" CASCADE;
   DROP TABLE "_claim_evidence_v" CASCADE;
+  DROP TABLE "claim_feedback" CASCADE;
+  DROP TABLE "programs_sources" CASCADE;
   DROP TABLE "programs" CASCADE;
   DROP TABLE "programs_rels" CASCADE;
+  DROP TABLE "_programs_v_version_sources" CASCADE;
   DROP TABLE "_programs_v" CASCADE;
   DROP TABLE "_programs_v_rels" CASCADE;
   DROP TABLE "proposals" CASCADE;
@@ -1455,13 +1657,21 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "database" CASCADE;
   DROP TYPE "public"."enum_users_role";
   DROP TYPE "public"."enum_admin_invitations_role";
+  DROP TYPE "public"."enum_sources_references_kind";
   DROP TYPE "public"."enum_sources_type";
+  DROP TYPE "public"."enum_sources_source_role";
   DROP TYPE "public"."enum_sources_platform";
+  DROP TYPE "public"."enum_sources_submission_status";
+  DROP TYPE "public"."enum_sources_processing_status";
   DROP TYPE "public"."enum_sources_fetch_status";
   DROP TYPE "public"."enum_sources_verification_status";
   DROP TYPE "public"."enum_sources_status";
+  DROP TYPE "public"."enum__sources_v_version_references_kind";
   DROP TYPE "public"."enum__sources_v_version_type";
+  DROP TYPE "public"."enum__sources_v_version_source_role";
   DROP TYPE "public"."enum__sources_v_version_platform";
+  DROP TYPE "public"."enum__sources_v_version_submission_status";
+  DROP TYPE "public"."enum__sources_v_version_processing_status";
   DROP TYPE "public"."enum__sources_v_version_fetch_status";
   DROP TYPE "public"."enum__sources_v_version_verification_status";
   DROP TYPE "public"."enum__sources_v_version_status";
@@ -1474,6 +1684,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TYPE "public"."enum_document_chunks_status";
   DROP TYPE "public"."enum__document_chunks_v_version_embedding_status";
   DROP TYPE "public"."enum__document_chunks_v_version_status";
+  DROP TYPE "public"."enum_ingestion_jobs_input_references_kind";
   DROP TYPE "public"."enum_ingestion_jobs_job_type";
   DROP TYPE "public"."enum_ingestion_jobs_status";
   DROP TYPE "public"."enum_parties_status";
@@ -1482,6 +1693,7 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TYPE "public"."enum_candidates_status";
   DROP TYPE "public"."enum__candidates_v_version_candidacy_status";
   DROP TYPE "public"."enum__candidates_v_version_status";
+  DROP TYPE "public"."enum_candidate_submissions_status";
   DROP TYPE "public"."enum_topics_status";
   DROP TYPE "public"."enum__topics_v_version_status";
   DROP TYPE "public"."enum_claims_claim_type";
@@ -1498,7 +1710,10 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TYPE "public"."enum_claim_evidence_status";
   DROP TYPE "public"."enum__claim_evidence_v_version_review_status";
   DROP TYPE "public"."enum__claim_evidence_v_version_status";
+  DROP TYPE "public"."enum_claim_feedback_status";
+  DROP TYPE "public"."enum_programs_sources_role";
   DROP TYPE "public"."enum_programs_status";
+  DROP TYPE "public"."enum__programs_v_version_sources_role";
   DROP TYPE "public"."enum__programs_v_version_status";
   DROP TYPE "public"."enum_proposals_proposal_status";
   DROP TYPE "public"."enum_proposals_status";

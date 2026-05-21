@@ -1,7 +1,7 @@
 import type { PayloadRequest } from 'payload'
 
 export const adminRoles = ['admin'] as const
-export const adminPanelRoles = ['admin', 'editor'] as const
+export const adminPanelRoles = ['admin'] as const
 export const publicRoles = ['user', 'editor', 'admin'] as const
 
 export type UserRole = (typeof publicRoles)[number]
