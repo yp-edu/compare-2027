@@ -42,6 +42,16 @@ type McpDiagnosticsOptions = {
   requestId?: string
 }
 
+class McpHTTPError extends Error {
+  status: number
+
+  constructor(status: number) {
+    super(`MCP request failed with status ${status}`)
+    this.name = 'McpHTTPError'
+    this.status = status
+  }
+}
+
 function getErrorDetails(error: unknown) {
   if (error instanceof Error) {
     return {
@@ -203,6 +213,10 @@ function getMcpRequestHeaders(bearerToken: string) {
   return headers
 }
 
+function isMcpAuthError(error: unknown) {
+  return error instanceof McpHTTPError && (error.status === 401 || error.status === 403)
+}
+
 function parseSSEJson(text: string) {
   const data = text
     .split('\n')
@@ -306,7 +320,7 @@ async function callMcp<T>(
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
-    const error = new Error(`MCP request failed with status ${response.status}`)
+    const error = new McpHTTPError(response.status)
 
     logMcpError('mcp-http', error, {
       bodyPreview: getBodyPreview(text),
@@ -355,6 +369,10 @@ export async function getCompareMCPTools(userId: number, options: McpDiagnostics
   try {
     toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list', undefined, options)
   } catch (error) {
+    if (!isMcpAuthError(error)) {
+      throw error
+    }
+
     logMcpInfo('mcp-api-key-refresh-retry', {
       reason: getErrorDetails(error).message,
       requestId: options.requestId,

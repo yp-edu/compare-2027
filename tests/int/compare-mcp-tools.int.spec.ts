@@ -121,7 +121,7 @@ describe('compare MCP tools', () => {
 
     const fetchMock = vi
       .fn()
-      .mockRejectedValueOnce(new TypeError('Cannot convert argument to a ByteString'))
+      .mockResolvedValueOnce(new Response('Unauthorized', { status: 401 }))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -188,5 +188,37 @@ describe('compare MCP tools', () => {
         id: 1,
       }),
     )
+  })
+
+  it('does not refresh the MCP API key when tools/list fails for non-auth reasons', async () => {
+    const update = vi.fn()
+
+    vi.mocked(getPayload).mockResolvedValue({
+      find: vi.fn().mockResolvedValue({
+        docs: [
+          {
+            apiKey: 'mcp-api-key',
+            candidates: { find: true },
+            enableAPIKey: true,
+            id: 1,
+            label: 'Compare chat MCP',
+          },
+        ],
+      }),
+      update,
+    } as unknown as Awaited<ReturnType<typeof getPayload>>)
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response('Internal server error', { status: 500 }))
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(getCompareMCPTools(123, { requestId: 'chat-request-id' })).rejects.toThrow(
+      'MCP request failed with status 500',
+    )
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(update).not.toHaveBeenCalled()
   })
 })
