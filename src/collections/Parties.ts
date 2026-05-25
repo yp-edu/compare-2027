@@ -1,13 +1,13 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticatedReadPublished, isAdmin } from '@/access'
+import { isAdmin, publishedOrAuthenticated } from '@/access'
 
 export const Parties: CollectionConfig = {
   slug: 'parties',
   access: {
     create: isAdmin,
     delete: isAdmin,
-    read: authenticatedReadPublished,
+    read: publishedOrAuthenticated,
     update: isAdmin,
   },
   admin: {
