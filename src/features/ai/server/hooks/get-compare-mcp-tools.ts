@@ -93,7 +93,11 @@ function getEnabledPermissionCount(value: Record<string, unknown>) {
   }).length
 }
 
-async function getOrCreateMcpBearerToken(userId: number, options: McpDiagnosticsOptions = {}) {
+async function getOrCreateMcpBearerToken(
+  userId: number,
+  options: McpDiagnosticsOptions = {},
+  { refresh = false }: { refresh?: boolean } = {},
+) {
   try {
     const payload = await getPayload({ config })
     const { docs } = await payload.find({
@@ -111,7 +115,7 @@ async function getOrCreateMcpBearerToken(userId: number, options: McpDiagnostics
 
     const existingKey = docs[0]
 
-    if (existingKey?.enableAPIKey && existingKey.apiKey) {
+    if (!refresh && existingKey?.enableAPIKey && existingKey.apiKey) {
       const enabledPermissionCount = getEnabledPermissionCount(
         existingKey as unknown as Record<string, unknown>,
       )
@@ -145,12 +149,26 @@ async function getOrCreateMcpBearerToken(userId: number, options: McpDiagnostics
         id: existingKey.id,
       })
 
+      logMcpInfo('mcp-api-key-selected', {
+        keyAction: refresh ? 'refreshed' : 'updated',
+        keyId: existingKey.id,
+        requestId: options.requestId,
+        userId,
+      })
+
       return apiKey
     }
 
-    await payload.create({
+    const createdKey = await payload.create({
       collection: 'payload-mcp-api-keys',
       data,
+    })
+
+    logMcpInfo('mcp-api-key-selected', {
+      keyAction: 'created',
+      keyId: createdKey.id,
+      requestId: options.requestId,
+      userId,
     })
 
     return apiKey
@@ -331,8 +349,21 @@ function getToolText(result: MCPToolCallResult) {
 }
 
 export async function getCompareMCPTools(userId: number, options: McpDiagnosticsOptions = {}) {
-  const bearerToken = await getOrCreateMcpBearerToken(userId, options)
-  const toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list', undefined, options)
+  let bearerToken = await getOrCreateMcpBearerToken(userId, options)
+  let toolsList: MCPToolsListResult
+
+  try {
+    toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list', undefined, options)
+  } catch (error) {
+    logMcpInfo('mcp-api-key-refresh-retry', {
+      reason: getErrorDetails(error).message,
+      requestId: options.requestId,
+      userId,
+    })
+    bearerToken = await getOrCreateMcpBearerToken(userId, options, { refresh: true })
+    toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list', undefined, options)
+  }
+
   const mcpTools = toolsList?.tools || []
   const toolNames = mcpTools.map((tool) => tool.name)
 
