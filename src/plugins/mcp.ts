@@ -18,11 +18,12 @@ const mcpCollections = {
   },
   claims: {
     description:
-      'Published structured political claims extracted from programs, positions, votes, and documents.',
+      'Published structured political claims extracted from programs, positions, votes, and documents. Query claim body text with claimText.',
     enabled: readOnly,
   },
   'document-chunks': {
-    description: 'Published chunks of parsed source documents used for retrieval and citations.',
+    description:
+      'Published chunks of parsed source documents used for retrieval and citations. Query chunk body text with text.',
     enabled: readOnly,
   },
   parties: {

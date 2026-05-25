@@ -21,6 +21,19 @@ vi.mock('@/plugins/mcp', () => ({
   }),
 }))
 
+type TestTool = {
+  execute: (input: unknown) => Promise<string>
+}
+
+function getRequestBody(fetchMock: ReturnType<typeof vi.fn>, callIndex: number) {
+  return JSON.parse(fetchMock.mock.calls[callIndex]?.[1]?.body as string) as {
+    params?: {
+      arguments?: Record<string, unknown>
+      name?: string
+    }
+  }
+}
+
 describe('compare MCP tools', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
   let consoleInfoSpy: ReturnType<typeof vi.spyOn>
@@ -220,5 +233,154 @@ describe('compare MCP tools', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(update).not.toHaveBeenCalled()
+  })
+
+  it('constrains generated find tools to published selected fields', async () => {
+    vi.mocked(getPayload).mockResolvedValueOnce({
+      find: vi.fn().mockResolvedValue({
+        docs: [
+          {
+            apiKey: 'mcp-api-key',
+            candidates: { find: true },
+            enableAPIKey: true,
+            id: 1,
+            label: 'Compare chat MCP',
+          },
+        ],
+      }),
+    } as unknown as Awaited<ReturnType<typeof getPayload>>)
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 'request-id',
+            jsonrpc: '2.0',
+            result: {
+              tools: [
+                {
+                  description: 'Find claims',
+                  inputSchema: {
+                    additionalProperties: false,
+                    properties: {},
+                    type: 'object',
+                  },
+                  name: 'findClaims',
+                },
+              ],
+            },
+          }),
+          {
+            headers: { 'content-type': 'application/json' },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 'request-id',
+            jsonrpc: '2.0',
+            result: {
+              content: [{ text: 'ok', type: 'text' }],
+            },
+          }),
+          {
+            headers: { 'content-type': 'application/json' },
+            status: 200,
+          },
+        ),
+      )
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const tools = await getCompareMCPTools(123, { requestId: 'chat-request-id' })
+    const result = await (tools as unknown as { findClaims: TestTool }).findClaims.execute({
+      depth: 6,
+      draft: true,
+      id: 42,
+      limit: 100,
+      select: '{"rawExtraction": true}',
+      where: '{"claimText":{"contains":"école"}}',
+    })
+
+    expect(result).toBe('ok')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    const requestBody = getRequestBody(fetchMock, 1)
+    const args = requestBody.params?.arguments || {}
+    const select = JSON.parse(args.select as string) as Record<string, unknown>
+    const where = JSON.parse(args.where as string)
+
+    expect(requestBody.params?.name).toBe('findClaims')
+    expect(args.id).toBeUndefined()
+    expect(args.depth).toBe(1)
+    expect(args.draft).toBe(false)
+    expect(args.limit).toBe(10)
+    expect(select).toMatchObject({ claimText: true, evidenceQuote: true, title: true })
+    expect(select.rawExtraction).toBeUndefined()
+    expect(where).toEqual({
+      and: [
+        { claimText: { contains: 'école' } },
+        { id: { equals: 42 } },
+        { _status: { equals: 'published' } },
+      ],
+    })
+  })
+
+  it('rejects invalid generated query fields before calling MCP', async () => {
+    vi.mocked(getPayload).mockResolvedValueOnce({
+      find: vi.fn().mockResolvedValue({
+        docs: [
+          {
+            apiKey: 'mcp-api-key',
+            candidates: { find: true },
+            enableAPIKey: true,
+            id: 1,
+            label: 'Compare chat MCP',
+          },
+        ],
+      }),
+    } as unknown as Awaited<ReturnType<typeof getPayload>>)
+
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          id: 'request-id',
+          jsonrpc: '2.0',
+          result: {
+            tools: [
+              {
+                description: 'Find document chunks',
+                inputSchema: {
+                  additionalProperties: false,
+                  properties: {},
+                  type: 'object',
+                },
+                name: 'findDocumentChunks',
+              },
+            ],
+          },
+        }),
+        {
+          headers: { 'content-type': 'application/json' },
+          status: 200,
+        },
+      ),
+    )
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const tools = await getCompareMCPTools(123, { requestId: 'chat-request-id' })
+    const result = await (
+      tools as unknown as { findDocumentChunks: TestTool }
+    ).findDocumentChunks.execute({
+      where: '{"chunkText":{"contains":"école"},"content":{"contains":"école"}}',
+    })
+
+    expect(result).toContain('Invalid query fields for findDocumentChunks: chunkText, content')
+    expect(result).toContain('Use text for chunk body text')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })

@@ -42,6 +42,270 @@ type McpDiagnosticsOptions = {
   requestId?: string
 }
 
+type ChatMcpToolPolicy = {
+  invalidFieldHint?: string
+  select: Record<string, true>
+  whereFields: readonly string[]
+}
+
+type NormalizeMcpToolInputResult =
+  | {
+      arguments: Record<string, unknown>
+      ok: true
+    }
+  | {
+      message: string
+      ok: false
+    }
+
+const chatMcpMaxDepth = 1
+const chatMcpMaxLimit = 10
+
+const chatMcpToolPolicies = {
+  findCandidates: {
+    select: {
+      bio: true,
+      candidacyStatus: true,
+      currentParty: true,
+      declaredAt: true,
+      displayName: true,
+      slug: true,
+    },
+    whereFields: [
+      'bio',
+      'candidacyStatus',
+      'currentParty',
+      'declaredAt',
+      'displayName',
+      'id',
+      'slug',
+      '_status',
+    ],
+  },
+  findClaimEvidence: {
+    select: {
+      chunk: true,
+      claim: true,
+      document: true,
+      pageNumber: true,
+      quote: true,
+      reviewStatus: true,
+      sectionTitle: true,
+      source: true,
+      sourceUrl: true,
+      title: true,
+    },
+    whereFields: [
+      'chunk',
+      'claim',
+      'document',
+      'id',
+      'pageNumber',
+      'quote',
+      'reviewStatus',
+      'sectionTitle',
+      'source',
+      'sourceUrl',
+      'title',
+      '_status',
+    ],
+  },
+  findClaims: {
+    invalidFieldHint: 'Use claimText for claim body text.',
+    select: {
+      actor: true,
+      claimText: true,
+      claimType: true,
+      evidenceQuote: true,
+      positionDate: true,
+      primarySource: true,
+      reviewStatus: true,
+      stance: true,
+      title: true,
+      topics: true,
+    },
+    whereFields: [
+      'actor',
+      'claimText',
+      'claimType',
+      'evidenceQuote',
+      'id',
+      'positionDate',
+      'primarySource',
+      'reviewStatus',
+      'stance',
+      'title',
+      'topics',
+      '_status',
+    ],
+  },
+  findDocumentChunks: {
+    invalidFieldHint: 'Use text for chunk body text.',
+    select: {
+      chunkIndex: true,
+      document: true,
+      pageNumber: true,
+      sectionTitle: true,
+      source: true,
+      text: true,
+      title: true,
+    },
+    whereFields: [
+      'chunkIndex',
+      'document',
+      'id',
+      'pageNumber',
+      'sectionTitle',
+      'source',
+      'text',
+      'title',
+      '_status',
+    ],
+  },
+  findParties: {
+    select: {
+      color: true,
+      description: true,
+      name: true,
+      shortName: true,
+      slug: true,
+    },
+    whereFields: ['color', 'description', 'id', 'name', 'shortName', 'slug', '_status'],
+  },
+  findPrograms: {
+    select: {
+      actor: true,
+      programDate: true,
+      slug: true,
+      sources: true,
+      summary: true,
+      title: true,
+    },
+    whereFields: [
+      'actor',
+      'id',
+      'programDate',
+      'slug',
+      'sources.source',
+      'summary',
+      'title',
+      '_status',
+    ],
+  },
+  findProposals: {
+    select: {
+      actor: true,
+      proposalStatus: true,
+      publishedAt: true,
+      slug: true,
+      sources: true,
+      summary: true,
+      title: true,
+      topics: true,
+    },
+    whereFields: [
+      'actor',
+      'id',
+      'proposalStatus',
+      'publishedAt',
+      'slug',
+      'sources',
+      'summary',
+      'title',
+      'topics',
+      '_status',
+    ],
+  },
+  findPublicPositions: {
+    select: {
+      actor: true,
+      positionDate: true,
+      positionType: true,
+      quote: true,
+      slug: true,
+      source: true,
+      stance: true,
+      summary: true,
+      title: true,
+      topics: true,
+    },
+    whereFields: [
+      'actor',
+      'id',
+      'positionDate',
+      'positionType',
+      'quote',
+      'slug',
+      'source',
+      'stance',
+      'summary',
+      'title',
+      'topics',
+      '_status',
+    ],
+  },
+  findSourceDocuments: {
+    select: {
+      language: true,
+      parsedAt: true,
+      parser: true,
+      source: true,
+      summary: true,
+      title: true,
+      wordCount: true,
+    },
+    whereFields: [
+      'id',
+      'language',
+      'parsedAt',
+      'parser',
+      'source',
+      'summary',
+      'title',
+      'wordCount',
+      '_status',
+    ],
+  },
+  findSources: {
+    select: {
+      platform: true,
+      publishedAt: true,
+      publisher: true,
+      references: true,
+      slug: true,
+      sourceRole: true,
+      title: true,
+      type: true,
+      verificationStatus: true,
+    },
+    whereFields: [
+      'id',
+      'platform',
+      'publishedAt',
+      'publisher',
+      'references.url',
+      'slug',
+      'sourceRole',
+      'title',
+      'type',
+      'verificationStatus',
+      '_status',
+    ],
+  },
+  findTopics: {
+    select: {
+      description: true,
+      order: true,
+      parent: true,
+      slug: true,
+      title: true,
+    },
+    whereFields: ['description', 'id', 'order', 'parent', 'slug', 'title', '_status'],
+  },
+} satisfies Record<string, ChatMcpToolPolicy>
+
+const whereLogicalKeys = new Set(['and', 'or'])
+
 class McpHTTPError extends Error {
   status: number
 
@@ -348,6 +612,143 @@ function getInputSchema(inputSchema: unknown): JsonSchemaInput {
   } as JsonSchemaInput
 }
 
+function getBoundedNumber(value: unknown, defaultValue: number, min: number, max: number) {
+  const numberValue = typeof value === 'number' ? value : Number(value)
+
+  if (!Number.isFinite(numberValue)) {
+    return defaultValue
+  }
+
+  return Math.min(Math.max(Math.trunc(numberValue), min), max)
+}
+
+function parseWhereClause(
+  value: unknown,
+): { error: string; where?: never } | { error?: never; where: Record<string, unknown> } {
+  if (value === undefined || value === null || value === '') {
+    return { where: {} as Record<string, unknown> }
+  }
+
+  let parsed: unknown
+
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value)
+    } catch {
+      return { error: 'Invalid JSON in where clause.' }
+    }
+  } else {
+    parsed = value
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { error: 'Where clause must be a JSON object.' }
+  }
+
+  return { where: parsed as Record<string, unknown> }
+}
+
+function collectWhereFields(where: Record<string, unknown>, fields = new Set<string>()) {
+  for (const [key, value] of Object.entries(where)) {
+    if (whereLogicalKeys.has(key)) {
+      const clauses = Array.isArray(value) ? value : [value]
+
+      for (const clause of clauses) {
+        if (clause && typeof clause === 'object' && !Array.isArray(clause)) {
+          collectWhereFields(clause as Record<string, unknown>, fields)
+        }
+      }
+
+      continue
+    }
+
+    fields.add(key)
+  }
+
+  return fields
+}
+
+function getInvalidWhereFields(where: Record<string, unknown>, policy: ChatMcpToolPolicy) {
+  const allowedFields = new Set(policy.whereFields)
+
+  return Array.from(collectWhereFields(where))
+    .filter((field) => !allowedFields.has(field))
+    .sort()
+}
+
+function withPublishedOnlyWhere(where: Record<string, unknown>, id: unknown) {
+  const clauses: Record<string, unknown>[] = []
+
+  if (Object.keys(where).length > 0) {
+    clauses.push(where)
+  }
+
+  if (id !== undefined && id !== null && id !== '') {
+    clauses.push({ id: { equals: id } })
+  }
+
+  clauses.push({ _status: { equals: 'published' } })
+
+  return clauses.length === 1 ? clauses[0] : { and: clauses }
+}
+
+function normalizeMcpToolInput(toolName: string, input: unknown): NormalizeMcpToolInputResult {
+  const policy: ChatMcpToolPolicy | undefined =
+    chatMcpToolPolicies[toolName as keyof typeof chatMcpToolPolicies]
+
+  if (!policy) {
+    return {
+      arguments:
+        input && typeof input === 'object' && !Array.isArray(input)
+          ? (input as Record<string, unknown>)
+          : {},
+      ok: true,
+    }
+  }
+
+  const inputRecord: Record<string, unknown> =
+    input && typeof input === 'object' && !Array.isArray(input)
+      ? (input as Record<string, unknown>)
+      : {}
+  const { error, where = {} } = parseWhereClause(inputRecord.where)
+
+  if (error) {
+    return {
+      message: `Invalid query for ${toolName}: ${error}`,
+      ok: false,
+    }
+  }
+
+  const invalidFields = getInvalidWhereFields(where, policy)
+
+  if (invalidFields.length > 0) {
+    return {
+      message: [
+        `Invalid query fields for ${toolName}: ${invalidFields.join(', ')}.`,
+        policy.invalidFieldHint,
+        `Valid fields: ${policy.whereFields.join(', ')}.`,
+      ]
+        .filter(Boolean)
+        .join(' '),
+      ok: false,
+    }
+  }
+
+  const { id, ...argumentsWithoutID } = inputRecord
+
+  return {
+    arguments: {
+      ...argumentsWithoutID,
+      depth: getBoundedNumber(argumentsWithoutID.depth, chatMcpMaxDepth, 0, chatMcpMaxDepth),
+      draft: false,
+      limit: getBoundedNumber(argumentsWithoutID.limit, chatMcpMaxLimit, 1, chatMcpMaxLimit),
+      select: JSON.stringify(policy.select),
+      where: JSON.stringify(withPublishedOnlyWhere(where, id)),
+    },
+    ok: true,
+  }
+}
+
 function getToolText(result: MCPToolCallResult) {
   const text =
     result.content
@@ -405,11 +806,17 @@ export async function getCompareMCPTools(userId: number, options: McpDiagnostics
       },
       title: mcpTool.title || mcpTool.name,
       execute: async (input) => {
+        const normalizedInput = normalizeMcpToolInput(mcpTool.name, input)
+
+        if (!normalizedInput.ok) {
+          return normalizedInput.message
+        }
+
         const result = await callMcp<MCPToolCallResult>(
           bearerToken,
           'tools/call',
           {
-            arguments: input as Record<string, unknown>,
+            arguments: normalizedInput.arguments,
             name: mcpTool.name,
           },
           options,
