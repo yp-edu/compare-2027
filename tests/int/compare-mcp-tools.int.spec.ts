@@ -114,14 +114,108 @@ describe('compare MCP tools', () => {
     )
   })
 
-  it('refreshes the MCP API key and retries tools/list once when the stored key fails', async () => {
+  it.each([401, 404])(
+    'refreshes the MCP API key and retries tools/list once when the stored key returns %i',
+    async (status) => {
+      const update = vi.fn().mockResolvedValue({ id: 1 })
+
+      vi.mocked(getPayload).mockResolvedValue({
+        find: vi.fn().mockResolvedValue({
+          docs: [
+            {
+              apiKey: 'stale-mcp-api-key',
+              candidates: { find: true },
+              enableAPIKey: true,
+              id: 1,
+              label: 'Compare chat MCP',
+            },
+          ],
+        }),
+        update,
+      } as unknown as Awaited<ReturnType<typeof getPayload>>)
+
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          new Response(status === 401 ? 'Unauthorized' : 'Not Found', { status }),
+        )
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({
+              id: 'request-id',
+              jsonrpc: '2.0',
+              result: {
+                tools: [
+                  {
+                    description: 'Find candidates',
+                    inputSchema: {
+                      additionalProperties: false,
+                      properties: {},
+                      type: 'object',
+                    },
+                    name: 'findCandidates',
+                  },
+                ],
+              },
+            }),
+            {
+              headers: { 'content-type': 'application/json' },
+              status: 200,
+            },
+          ),
+        )
+
+      vi.stubGlobal('fetch', fetchMock)
+
+      await expect(getCompareMCPTools(123, { requestId: 'chat-request-id' })).resolves.toEqual(
+        expect.objectContaining({
+          findCandidates: expect.any(Object),
+        }),
+      )
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        1,
+        'https://preview.example.test/api/mcp',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            authorization: 'Bearer stale-mcp-api-key',
+          }),
+          method: 'POST',
+        }),
+      )
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        2,
+        'https://preview.example.test/api/mcp',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            authorization: expect.stringMatching(/^Bearer [A-Za-z0-9_-]+$/),
+          }),
+          method: 'POST',
+        }),
+      )
+      expect(update).toHaveBeenCalledTimes(1)
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection: 'payload-mcp-api-keys',
+          data: expect.objectContaining({
+            apiKey: expect.not.stringContaining('stale-mcp-api-key'),
+            enableAPIKey: true,
+          }),
+          id: 1,
+        }),
+      )
+    },
+  )
+
+  it('refreshes the MCP API key when the stored key cannot be sent as a header', async () => {
     const update = vi.fn().mockResolvedValue({ id: 1 })
 
     vi.mocked(getPayload).mockResolvedValue({
       find: vi.fn().mockResolvedValue({
         docs: [
           {
-            apiKey: 'stale-mcp-api-key',
+            apiKey: 'm�p-api-key',
             candidates: { find: true },
             enableAPIKey: true,
             id: 1,
@@ -134,7 +228,11 @@ describe('compare MCP tools', () => {
 
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response('Unauthorized', { status: 401 }))
+      .mockRejectedValueOnce(
+        new TypeError(
+          'Cannot convert argument to a ByteString because the character at index 8 has a value of 65533 which is greater than 255.',
+        ),
+      )
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
@@ -175,7 +273,7 @@ describe('compare MCP tools', () => {
       'https://preview.example.test/api/mcp',
       expect.objectContaining({
         headers: expect.objectContaining({
-          authorization: 'Bearer stale-mcp-api-key',
+          authorization: 'Bearer m�p-api-key',
         }),
         method: 'POST',
       }),
@@ -195,7 +293,7 @@ describe('compare MCP tools', () => {
       expect.objectContaining({
         collection: 'payload-mcp-api-keys',
         data: expect.objectContaining({
-          apiKey: expect.not.stringContaining('stale-mcp-api-key'),
+          apiKey: expect.not.stringContaining('�'),
           enableAPIKey: true,
         }),
         id: 1,

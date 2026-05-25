@@ -477,8 +477,11 @@ function getMcpRequestHeaders(bearerToken: string) {
   return headers
 }
 
-function isMcpAuthError(error: unknown) {
-  return error instanceof McpHTTPError && (error.status === 401 || error.status === 403)
+function isRefreshableMcpKeyError(error: unknown) {
+  return (
+    (error instanceof McpHTTPError && [401, 403, 404].includes(error.status)) ||
+    (error instanceof TypeError && error.message.includes('ByteString'))
+  )
 }
 
 function parseSSEJson(text: string) {
@@ -770,7 +773,7 @@ export async function getCompareMCPTools(userId: number, options: McpDiagnostics
   try {
     toolsList = await callMcp<MCPToolsListResult>(bearerToken, 'tools/list', undefined, options)
   } catch (error) {
-    if (!isMcpAuthError(error)) {
+    if (!isRefreshableMcpKeyError(error)) {
       throw error
     }
 
