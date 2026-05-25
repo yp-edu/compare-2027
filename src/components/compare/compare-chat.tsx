@@ -143,8 +143,7 @@ async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
         new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
           detail: {
             ...(chatRequestId ? { requestId: chatRequestId } : {}),
-            status: 'disconnected',
-            toolCount: 0,
+            status: 'unknown',
           },
         }),
       )

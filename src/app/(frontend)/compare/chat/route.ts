@@ -130,7 +130,7 @@ export async function POST(request: Request) {
   let session: Awaited<ReturnType<typeof requireChatSession>>
 
   try {
-    session = await requireChatSession(request)
+    session = await requireChatSession(request, { requestId })
   } catch (error) {
     logChatError(requestId, 'auth', error)
 
