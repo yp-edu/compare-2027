@@ -64,6 +64,7 @@ Open <http://localhost:3000> for the public site and <http://localhost:3000/admi
 - `pnpm dev` starts the Next.js development server.
 - `pnpm build` builds the app for production.
 - `pnpm lint` runs ESLint.
+- `pnpm mcp:inspect` starts the MCP Inspector; connect to `/api/mcp` with Streamable HTTP.
 - `pnpm test` runs integration and end-to-end tests.
 - `pnpm generate` regenerates Payload schema, import map, and types.
 
