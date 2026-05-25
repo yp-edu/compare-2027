@@ -106,6 +106,7 @@ describe('compare chat route', () => {
 
     expect(response.status).toBe(200)
     expect(streamCompareAnswer).toHaveBeenCalledWith({
+      abortSignal: expect.any(AbortSignal),
       messages,
       requestId: expect.any(String),
       userId: 123,

@@ -834,21 +834,6 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const { clearError, error, messages, sendMessage, setMessages, status, stop } = useChat({
     onError: (chatError) => logClientChatError('client-chat', chatError),
-    onFinish: ({ finishReason, isAbort, isDisconnect, isError, messages }) => {
-      if (!isAbort && !isDisconnect && !isError) {
-        return
-      }
-
-      console.warn('[compare-chat]', {
-        finishReason,
-        isAbort,
-        isDisconnect,
-        isError,
-        lastRole: messages.at(-1)?.role,
-        messageCount: messages.length,
-        stage: 'client-finish',
-      })
-    },
     transport: chatTransport,
   })
   const role = (session?.user as { role?: unknown } | undefined)?.role
