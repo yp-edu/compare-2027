@@ -11,6 +11,15 @@ const testUserData = {
   role: ['admin'] as ('admin' | 'editor' | 'user')[],
 }
 
+type TestUserEndpointResult = {
+  ok: true
+  serverURL?: string
+}
+
+type SeedTestUserResult = {
+  serverURL: string
+}
+
 function getServerURL() {
   return (process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
 }
@@ -41,7 +50,7 @@ async function requestTestUserEndpoint(method: 'DELETE' | 'POST') {
   const e2eTestSecret = process.env.E2E_TEST_SECRET
 
   if (!e2eTestSecret) {
-    return false
+    return null
   }
 
   const response = await fetch(`${getServerURL()}/api/e2e/test-user`, {
@@ -53,7 +62,7 @@ async function requestTestUserEndpoint(method: 'DELETE' | 'POST') {
     throw new Error(`Failed to ${method} test user: ${response.status} ${await response.text()}`)
   }
 
-  return true
+  return (await response.json()) as TestUserEndpointResult
 }
 
 async function getLocalPayload() {
@@ -63,12 +72,40 @@ async function getLocalPayload() {
   return getPayloadAuth<ConstructedBetterAuthPluginOptions>(config)
 }
 
+async function deleteTestUserMcpApiKeys(payload: Awaited<ReturnType<typeof getLocalPayload>>) {
+  const { docs: users } = await payload.find({
+    collection: 'users',
+    depth: 0,
+    pagination: false,
+    where: {
+      email: {
+        equals: testUser.email,
+      },
+    },
+  })
+
+  for (const user of users) {
+    await payload.delete({
+      collection: 'payload-mcp-api-keys',
+      where: {
+        user: {
+          equals: user.id,
+        },
+      },
+    })
+  }
+}
+
 /**
  * Seeds a test user for e2e admin tests.
  */
-export async function seedTestUser(): Promise<void> {
-  if (await requestTestUserEndpoint('POST')) {
-    return
+export async function seedTestUser(): Promise<SeedTestUserResult> {
+  const endpointResult = await requestTestUserEndpoint('POST')
+
+  if (endpointResult) {
+    return {
+      serverURL: (endpointResult.serverURL || getServerURL()).replace(/\/$/, ''),
+    }
   }
 
   if (!isLocalServerURL(getServerURL())) {
@@ -78,6 +115,7 @@ export async function seedTestUser(): Promise<void> {
   const payload = await getLocalPayload()
 
   // Delete existing test user if any
+  await deleteTestUserMcpApiKeys(payload)
   await payload.delete({
     collection: 'users',
     where: {
@@ -117,6 +155,8 @@ export async function seedTestUser(): Promise<void> {
     },
     draft: true,
   })
+
+  return { serverURL: getServerURL().replace(/\/$/, '') }
 }
 
 /**
@@ -133,6 +173,7 @@ export async function cleanupTestUser(): Promise<void> {
 
   const payload = await getLocalPayload()
 
+  await deleteTestUserMcpApiKeys(payload)
   await payload.delete({
     collection: 'users',
     where: {

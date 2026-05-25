@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { requireChatSession } from '@/features/ai/server/hooks/get-chat-session'
 
@@ -26,7 +26,14 @@ vi.mock('payload', () => ({
 }))
 
 describe('requireChatSession', () => {
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  })
+
   afterEach(() => {
+    consoleWarnSpy.mockRestore()
     vi.clearAllMocks()
   })
 
@@ -47,6 +54,12 @@ describe('requireChatSession', () => {
     })
 
     await expect(requireChatSession(new Request('http://localhost'))).resolves.toBeNull()
+    expect(consoleWarnSpy).toHaveBeenCalledWith('[compare-chat]', {
+      reason: 'user-not-found',
+      requestId: undefined,
+      stage: 'auth-session',
+      userId: '123',
+    })
     expect(findByID).toHaveBeenCalledWith({
       collection: 'users',
       depth: 0,

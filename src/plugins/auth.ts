@@ -8,16 +8,10 @@ import type { BetterAuthOptions, PayloadAuthOptions } from 'payload-auth/better-
 import { adminPanelRoles, publicRoles } from '@/access'
 import { sendEmailVerificationEmail, sendPasswordResetEmail } from '@/features/email/server'
 import { createLegalConsentAudit } from '@/features/legal/server'
-import { getAllowedHosts, getAllowedOrigins, getServerURL } from '@/lib/server-urls'
+import { getAllowedOrigins, getServerURL } from '@/lib/server-urls'
 
 const baseURL = getServerURL()
-const authBaseURL: BetterAuthOptions['baseURL'] = process.env.VERCEL
-  ? {
-      allowedHosts: getAllowedHosts(),
-      fallback: baseURL,
-      protocol: 'https',
-    }
-  : baseURL
+const authBaseURL: BetterAuthOptions['baseURL'] = baseURL
 const trustedOrigins = getAllowedOrigins()
 const googleClientId = process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET

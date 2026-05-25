@@ -27,8 +27,12 @@ function getVercelProtectionHeaders() {
 }
 
 test.describe('Admin auth diagnostics', () => {
+  let serverURL = getBaseURL()
+
   test.beforeAll(async () => {
-    await seedTestUser()
+    const seedResult = await seedTestUser()
+
+    serverURL = seedResult.serverURL
   })
 
   test.afterAll(async ({}, testInfo) => {
@@ -43,7 +47,7 @@ test.describe('Admin auth diagnostics', () => {
   }, testInfo) => {
     testInfo.setTimeout(60_000)
 
-    const apiResponse = await request.post('/api/auth/sign-in/email', {
+    const apiResponse = await request.post(`${serverURL}/api/auth/sign-in/email`, {
       data: {
         callbackURL: '/admin',
         email: testUser.email,
@@ -54,7 +58,7 @@ test.describe('Admin auth diagnostics', () => {
 
     expect(apiResponse.ok(), await getResponseSummary(apiResponse)).toBe(true)
 
-    await page.goto('/admin/login')
+    await page.goto(`${serverURL}/admin/login`)
 
     const pageOrigin = new URL(page.url()).origin
     const signInRequestPromise = page.waitForRequest(
@@ -104,15 +108,15 @@ test.describe('Admin Panel', () => {
   test.beforeAll(async ({ browser }, testInfo) => {
     testInfo.setTimeout(60_000)
 
-    await seedTestUser()
+    const { serverURL } = await seedTestUser()
 
     const context = await browser.newContext({
-      baseURL: getBaseURL(),
+      baseURL: serverURL,
       extraHTTPHeaders: getVercelProtectionHeaders(),
     })
     page = await context.newPage()
 
-    await login({ page, user: testUser })
+    await login({ page, serverURL, user: testUser })
   })
 
   test.afterAll(async ({}, testInfo) => {
@@ -140,5 +144,31 @@ test.describe('Admin Panel', () => {
     await expect(page).toHaveURL(/\/admin\/collections\/users\/[a-zA-Z0-9-_]+/)
     const editViewArtifact = page.locator('input[name="email"]')
     await expect(editViewArtifact).toBeVisible()
+  })
+
+  test('can verify compare MCP connection', async ({}, testInfo) => {
+    testInfo.setTimeout(120_000)
+
+    await page.goto('/compare')
+
+    await expect(page.getByText('MCP non testé')).toBeVisible()
+
+    const chatResponsePromise = page.waitForResponse(
+      (response) => {
+        const url = new URL(response.url())
+
+        return response.request().method() === 'POST' && url.pathname === '/compare/chat'
+      },
+      { timeout: 60_000 },
+    )
+
+    await page.locator('textarea').fill('NO REPLY')
+    await page.getByRole('button', { name: 'Envoyer' }).click()
+
+    const chatResponse = await chatResponsePromise
+
+    expect(chatResponse.ok(), await getResponseSummary(chatResponse)).toBe(true)
+    expect(chatResponse.headers()['x-compare-mcp-status']).toBe('connected')
+    await expect(page.getByText(/MCP actif \(\d+\)/)).toBeVisible()
   })
 })

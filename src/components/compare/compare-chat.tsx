@@ -20,6 +20,7 @@ import {
   RotateCcw,
   Search,
   SendHorizontal,
+  Sparkles,
   X,
 } from 'lucide-react'
 import { marked } from 'marked'
@@ -142,8 +143,7 @@ async function debugChatFetch(input: RequestInfo | URL, init?: RequestInit) {
         new CustomEvent<CompareMCPAccessStatus>(mcpStatusEventType, {
           detail: {
             ...(chatRequestId ? { requestId: chatRequestId } : {}),
-            status: 'disconnected',
-            toolCount: 0,
+            status: 'unknown',
           },
         }),
       )
@@ -834,21 +834,6 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const { clearError, error, messages, sendMessage, setMessages, status, stop } = useChat({
     onError: (chatError) => logClientChatError('client-chat', chatError),
-    onFinish: ({ finishReason, isAbort, isDisconnect, isError, messages }) => {
-      if (!isAbort && !isDisconnect && !isError) {
-        return
-      }
-
-      console.warn('[compare-chat]', {
-        finishReason,
-        isAbort,
-        isDisconnect,
-        isError,
-        lastRole: messages.at(-1)?.role,
-        messageCount: messages.length,
-        stage: 'client-finish',
-      })
-    },
     transport: chatTransport,
   })
   const role = (session?.user as { role?: unknown } | undefined)?.role
@@ -938,7 +923,12 @@ export function CompareChat({ feedbackEnabled = false }: CompareChatProps) {
       role="region"
     >
       <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 border-b border-border/70 p-3 sm:p-4">
-        <div>{isAdmin ? <McpStatusBadge status={mcpAccess} /> : null}</div>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Sparkles className="size-4" aria-hidden="true" />
+          </span>
+          {isAdmin ? <McpStatusBadge status={mcpAccess} /> : null}
+        </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             aria-label="Commencer une nouvelle conversation"

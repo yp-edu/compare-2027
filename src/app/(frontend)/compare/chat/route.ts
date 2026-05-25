@@ -130,7 +130,7 @@ export async function POST(request: Request) {
   let session: Awaited<ReturnType<typeof requireChatSession>>
 
   try {
-    session = await requireChatSession(request)
+    session = await requireChatSession(request, { requestId })
   } catch (error) {
     logChatError(requestId, 'auth', error)
 
@@ -214,7 +214,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { mcp, result } = await streamCompareAnswer({ messages, requestId, userId })
+    const { mcp, result } = await streamCompareAnswer({
+      abortSignal: request.signal,
+      messages,
+      requestId,
+      userId,
+    })
     const headers: Record<string, string> = {
       'x-chat-request-id': requestId,
       'x-compare-mcp-status': mcp.status,

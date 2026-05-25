@@ -4,6 +4,7 @@ import config from '@payload-config'
 import { getPayloadAuth } from 'payload-auth/better-auth'
 
 import type { ConstructedBetterAuthPluginOptions } from '@/plugins/auth'
+import { getServerURL } from '@/lib/server-urls'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -50,6 +51,27 @@ function authorize(request: Request) {
 
 async function deleteTestUser() {
   const payload = await getPayloadAuth<ConstructedBetterAuthPluginOptions>(config)
+  const { docs: users } = await payload.find({
+    collection: 'users',
+    depth: 0,
+    pagination: false,
+    where: {
+      email: {
+        equals: testUser.email,
+      },
+    },
+  })
+
+  for (const user of users) {
+    await payload.delete({
+      collection: 'payload-mcp-api-keys',
+      where: {
+        user: {
+          equals: user.id,
+        },
+      },
+    })
+  }
 
   await payload.delete({
     collection: 'users',
@@ -105,7 +127,7 @@ export async function POST(request: Request) {
     draft: true,
   })
 
-  return Response.json({ ok: true })
+  return Response.json({ ok: true, serverURL: getServerURL() })
 }
 
 export async function DELETE(request: Request) {
