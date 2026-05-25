@@ -72,6 +72,30 @@ async function getLocalPayload() {
   return getPayloadAuth<ConstructedBetterAuthPluginOptions>(config)
 }
 
+async function deleteTestUserMcpApiKeys(payload: Awaited<ReturnType<typeof getLocalPayload>>) {
+  const { docs: users } = await payload.find({
+    collection: 'users',
+    depth: 0,
+    pagination: false,
+    where: {
+      email: {
+        equals: testUser.email,
+      },
+    },
+  })
+
+  for (const user of users) {
+    await payload.delete({
+      collection: 'payload-mcp-api-keys',
+      where: {
+        user: {
+          equals: user.id,
+        },
+      },
+    })
+  }
+}
+
 /**
  * Seeds a test user for e2e admin tests.
  */
@@ -91,6 +115,7 @@ export async function seedTestUser(): Promise<SeedTestUserResult> {
   const payload = await getLocalPayload()
 
   // Delete existing test user if any
+  await deleteTestUserMcpApiKeys(payload)
   await payload.delete({
     collection: 'users',
     where: {
@@ -148,6 +173,7 @@ export async function cleanupTestUser(): Promise<void> {
 
   const payload = await getLocalPayload()
 
+  await deleteTestUserMcpApiKeys(payload)
   await payload.delete({
     collection: 'users',
     where: {

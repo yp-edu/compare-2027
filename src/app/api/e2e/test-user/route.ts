@@ -51,6 +51,27 @@ function authorize(request: Request) {
 
 async function deleteTestUser() {
   const payload = await getPayloadAuth<ConstructedBetterAuthPluginOptions>(config)
+  const { docs: users } = await payload.find({
+    collection: 'users',
+    depth: 0,
+    pagination: false,
+    where: {
+      email: {
+        equals: testUser.email,
+      },
+    },
+  })
+
+  for (const user of users) {
+    await payload.delete({
+      collection: 'payload-mcp-api-keys',
+      where: {
+        user: {
+          equals: user.id,
+        },
+      },
+    })
+  }
 
   await payload.delete({
     collection: 'users',
