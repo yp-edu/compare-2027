@@ -4,6 +4,7 @@ import config from '@payload-config'
 import { getPayloadAuth } from 'payload-auth/better-auth'
 
 import type { ConstructedBetterAuthPluginOptions } from '@/plugins/auth'
+import { getServerURL } from '@/lib/server-urls'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
     draft: true,
   })
 
-  return Response.json({ ok: true })
+  return Response.json({ ok: true, serverURL: getServerURL() })
 }
 
 export async function DELETE(request: Request) {
