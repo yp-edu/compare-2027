@@ -9,7 +9,7 @@ import { absoluteUrl, createPageMetadata, siteDescription, siteName, siteUrl } f
 export const metadata = createPageMetadata({
   description: siteDescription,
   path: '/',
-  title: 'Comparateur politique impartial pour 2027',
+  title: 'Comparateur politique partial pour 2027',
 })
 
 export default function HomePage() {
